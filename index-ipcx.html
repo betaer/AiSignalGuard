@@ -222,17 +222,43 @@
       .section-heading h2 { margin: 0; font-size: 22px; line-height: 1.1; letter-spacing: -0.04em; }
       .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
       .view-panel { scroll-margin-top: 86px; }
-      .signal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 30px; }
-      .signal-card { min-height: 108px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.82); box-shadow: var(--shadow-small); }
+      .signal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 15px; }
+      .signal-card { min-height: 108px; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.82); box-shadow: var(--shadow-small); transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+      .signal-card:hover { border-color: #b6d7c1; box-shadow: 0 8px 20px rgba(41, 70, 57, 0.1); transform: translateY(-1px); }
+      .signal-card[open] { border-color: #9bc9aa; box-shadow: 0 9px 24px rgba(41, 70, 57, 0.12); }
+      .signal-summary { position: relative; display: block; min-height: 108px; padding: 15px 38px 15px 15px; cursor: pointer; list-style: none; }
+      .signal-summary::-webkit-details-marker { display: none; }
+      .signal-summary::after { position: absolute; top: 17px; right: 15px; color: var(--muted); content: "⌄"; font-size: 16px; font-weight: 900; line-height: 1; transition: transform 160ms ease; }
+      .signal-card[open] .signal-summary::after { color: var(--green-deep); transform: rotate(180deg); }
       .signal-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 15px; }
       .signal-name { color: var(--muted); font-size: 12px; font-weight: 700; }
       .signal-icon { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 9px; color: var(--green-deep); background: var(--green-soft); font-size: 13px; }
       .signal-value { display: block; margin-bottom: 3px; color: var(--ink); font-family: var(--mono); font-size: 15px; font-weight: 800; }
       .signal-note { color: var(--muted); font-size: 11px; }
+      .signal-detail { padding: 12px 15px 15px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 11px; line-height: 1.65; }
+      .signal-detail strong { color: var(--ink); }
 
       .detail-panel { padding: 21px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 255, 255, 0.78); box-shadow: var(--shadow-small); }
       .detail-panel + .detail-panel { margin-top: 15px; }
       .panel-note { margin: -4px 0 17px; color: var(--ink-2); font-size: 13px; }
+      .ip-ownership-panel { margin-bottom: 15px; }
+      .ip-ownership-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: -2px 0 18px; }
+      .ip-ownership-label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 11px; }
+      .ip-ownership-ip { color: var(--ink); font-family: var(--mono); font-size: clamp(20px, 4vw, 27px); font-weight: 900; letter-spacing: -0.06em; }
+      .ip-ownership-state { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; color: var(--green-deep); background: var(--green-soft); font-size: 11px; font-weight: 800; }
+      .ip-ownership-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+      .ip-ownership-item { min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+      .ip-ownership-item span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; }
+      .ip-ownership-item strong { display: block; overflow: hidden; color: var(--ink); font-family: var(--mono); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .ip-ownership-item strong.normal-copy { font-family: inherit; }
+      .evidence-disclosure { margin-top: 13px; border-top: 1px solid var(--line); }
+      .evidence-disclosure summary { padding-top: 13px; color: var(--green-deep); font-size: 11px; font-weight: 800; cursor: pointer; list-style: none; }
+      .evidence-disclosure summary::-webkit-details-marker { display: none; }
+      .evidence-disclosure summary::before { display: inline-block; margin-right: 6px; content: "+"; font-family: var(--mono); font-size: 14px; }
+      .evidence-disclosure[open] summary::before { content: "−"; }
+      .evidence-disclosure p { margin: 9px 0 0; color: var(--ink-2); font-size: 11px; line-height: 1.65; }
+      .source-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+      .source-badge { padding: 4px 7px; border-radius: 7px; color: var(--muted); background: #edf4ef; font-family: var(--mono); font-size: 10px; }
       .comparison { display: grid; gap: 7px; }
       .comparison-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 47px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
       .comparison-label { color: var(--muted); font-size: 12px; }
@@ -305,9 +331,16 @@
         .action-row { margin-bottom: 26px; }
         .action-row .action-button { flex: 1 1 150px; }
         .signal-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
-        .signal-card { min-height: 101px; padding: 12px; }
+        .signal-card { min-height: 101px; }
+        .signal-summary { min-height: 101px; padding: 12px 34px 12px 12px; }
+        .signal-summary::after { top: 14px; right: 12px; }
         .signal-top { margin-bottom: 12px; }
         .signal-value { font-size: 13px; }
+        .signal-detail { padding: 10px 12px 12px; }
+        .ip-ownership-head { display: block; margin-bottom: 14px; }
+        .ip-ownership-state { display: inline-flex; margin-top: 8px; }
+        .ip-ownership-grid { grid-template-columns: repeat(2, 1fr); }
+        .ip-ownership-item { padding: 10px; }
         .detail-panel { padding: 16px; border-radius: 18px; }
         .section-heading h2 { font-size: 20px; }
         .comparison-row { grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px; }
@@ -378,12 +411,27 @@
       <section class="view-panel" id="overview-view" data-panel="overview" aria-labelledby="overview-title">
         <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>一眼看懂本次检测最重要的六项信号</p></div></div>
         <div class="signal-grid">
-          <article class="signal-card"><div class="signal-top"><span class="signal-name">出口 IP</span><span class="signal-icon">◎</span></div><strong class="signal-value">可信 · 住宅</strong><span class="signal-note">未发现明确机房标签</span></article>
-          <article class="signal-card"><div class="signal-top"><span class="signal-name">位置一致性</span><span class="signal-icon">⌖</span></div><strong class="signal-value">部分匹配</strong><span class="signal-note">城市与时区需要核对</span></article>
-          <article class="signal-card"><div class="signal-top"><span class="signal-name">WebRTC</span><span class="signal-icon">✓</span></div><strong class="signal-value">正常</strong><span class="signal-note">候选与出口一致</span></article>
-          <article class="signal-card"><div class="signal-top"><span class="signal-name">DNS</span><span class="signal-icon">◌</span></div><strong class="signal-value">正常</strong><span class="signal-note">10 个解析器一致</span></article>
-          <article class="signal-card"><div class="signal-top"><span class="signal-name">浏览器环境</span><span class="signal-icon">▣</span></div><strong class="signal-value">部分匹配</strong><span class="signal-note">语言与出口地区不同</span></article>
-          <article class="signal-card"><div class="signal-top"><span class="signal-name">多源互证</span><span class="signal-icon">⊙</span></div><strong class="signal-value">6 / 8 可用</strong><span class="signal-note">主流地区判断一致</span></article>
+          <details class="signal-card"><summary class="signal-summary"><div class="signal-top"><span class="signal-name">出口 IP</span><span class="signal-icon">◎</span></div><strong class="signal-value">可信 · 住宅</strong><span class="signal-note">未发现明确机房标签</span></summary><div class="signal-detail"><strong>证据：</strong>6 个来源返回结果，当前网络类型更接近住宅 / 移动网络，未观察到明确机房标签。</div></details>
+          <details class="signal-card"><summary class="signal-summary"><div class="signal-top"><span class="signal-name">位置一致性</span><span class="signal-icon">⌖</span></div><strong class="signal-value">部分匹配</strong><span class="signal-note">城市与时区需要核对</span></summary><div class="signal-detail"><strong>证据：</strong>出口位置为洛杉矶 · 美国，但设备时区为 Asia/Taipei，属于需要人工核对的地区差异。</div></details>
+          <details class="signal-card"><summary class="signal-summary"><div class="signal-top"><span class="signal-name">WebRTC</span><span class="signal-icon">✓</span></div><strong class="signal-value">正常</strong><span class="signal-note">候选与出口一致</span></summary><div class="signal-detail"><strong>证据：</strong>公网候选与 HTTP 出口一致，内网候选由 mDNS 隐藏，本轮没有观察到额外公网泄漏。</div></details>
+          <details class="signal-card"><summary class="signal-summary"><div class="signal-top"><span class="signal-name">DNS</span><span class="signal-icon">◌</span></div><strong class="signal-value">正常</strong><span class="signal-note">10 个解析器一致</span></summary><div class="signal-detail"><strong>证据：</strong>10 个解析器返回美国地区，与出口位置一致，本轮没有发现明显的 DNS 地区冲突。</div></details>
+          <details class="signal-card"><summary class="signal-summary"><div class="signal-top"><span class="signal-name">浏览器环境</span><span class="signal-icon">▣</span></div><strong class="signal-value">部分匹配</strong><span class="signal-note">语言与出口地区不同</span></summary><div class="signal-detail"><strong>证据：</strong>浏览器为 Chrome · macOS，首选语言为 zh-CN、时区为 Asia/Taipei，与美国出口地区存在待核对差异。</div></details>
+          <details class="signal-card"><summary class="signal-summary"><div class="signal-top"><span class="signal-name">多源互证</span><span class="signal-icon">⊙</span></div><strong class="signal-value">6 / 8 可用</strong><span class="signal-note">主流地区判断一致</span></summary><div class="signal-detail"><strong>证据：</strong>8 个情报源中 6 个可用于地理交叉，主流判定为美国，未发现明显地理冲突。</div></details>
+        </div>
+        <div class="detail-panel ip-ownership-panel">
+          <div class="section-heading"><div><h2>IP 归属</h2><p>出口质量与网络属性</p></div><span class="mini-status good">已交叉验证</span></div>
+          <div class="ip-ownership-head"><div><span class="ip-ownership-label">当前公网出口</span><strong class="ip-ownership-ip sensitive-value" data-sensitive="ip">38.92.27.x</strong></div><span class="ip-ownership-state">可信 · 住宅网络</span></div>
+          <div class="ip-ownership-grid" aria-label="IP 归属信息">
+            <div class="ip-ownership-item"><span>IP 类型</span><strong class="normal-copy">住宅 / 移动网络</strong></div>
+            <div class="ip-ownership-item"><span>ISP</span><strong>FiberState, LLC</strong></div>
+            <div class="ip-ownership-item"><span>所属组织</span><strong>Fiberstate LLC</strong></div>
+            <div class="ip-ownership-item"><span>ASN</span><strong>AS26042</strong></div>
+            <div class="ip-ownership-item"><span>城市</span><strong class="normal-copy">洛杉矶 · 美国</strong></div>
+            <div class="ip-ownership-item"><span>注册机构</span><strong>ARIN</strong></div>
+            <div class="ip-ownership-item"><span>威胁状态</span><strong class="normal-copy">无威胁记录</strong></div>
+            <div class="ip-ownership-item"><span>代理状态</span><strong class="normal-copy">未发现代理标签</strong></div>
+          </div>
+          <details class="evidence-disclosure"><summary>查看 IP 质量证据</summary><p>6 个来源返回结果，其中 6 个可用于地理交叉；主流判定为 US，网络类型没有出现明显的机房或代理标签。</p><div class="source-badges" aria-label="IP 信息来源"><span class="source-badge">ipwho.is</span><span class="source-badge">ip.sb</span><span class="source-badge">country.is</span><span class="source-badge">ASN lookup</span></div></details>
         </div>
         <div class="detail-panel">
           <div class="section-heading"><div><h2>为什么需要核对？</h2><p>只展示最有影响的三项原因</p></div><span class="mini-status warn">2 项待核对</span></div>
