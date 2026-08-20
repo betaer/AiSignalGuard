@@ -142,3 +142,5 @@ npm run test:connectivity-live
 ## 免责声明
 
 本项目用于数字环境分析、网络诊断、隐私自查和安全研究。身份匹配分与高级风险诊断均为启发式参考，不代表任何平台的真实风控结论，也不承诺账号、服务或网络可用性。
+
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=github.com/betaer/AiSignalGuard)
