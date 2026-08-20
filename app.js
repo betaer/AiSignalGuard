@@ -74,6 +74,10 @@ import { analyzeIdentity } from "./identityAnalysis.js";
     appStage: "select",
     selectedIdentityId: "",
     identityProfileId: "",
+    starPrompt: {
+      pending: null,
+      initialAcknowledged: false
+    },
     identityAnalysis: null,
     identitySignalOpen: {},
     region: "cnhk",
@@ -5693,7 +5697,7 @@ import { analyzeIdentity } from "./identityAnalysis.js";
     var remaining = Math.max(0, Math.ceil(millisecondsLeft / 1000));
     if (remaining <= 0) {
       cancelIdentityAutoCountdown();
-      startIdentityAnalysis("generic");
+      requestIdentityAnalysis("generic");
       return;
     }
     if (remaining !== identityAutoCountdown.remaining) {
@@ -7441,16 +7445,16 @@ import { analyzeIdentity } from "./identityAnalysis.js";
       identityForm.addEventListener("submit", function (event) {
         event.preventDefault();
         if (state.selectedIdentityId) {
-          startIdentityAnalysis(state.selectedIdentityId);
+          requestIdentityAnalysis(state.selectedIdentityId);
         } else if (identityAutoCountdown.active) {
-          startIdentityAnalysis("generic");
+          requestIdentityAnalysis("generic");
         }
       });
     }
     var genericButton = $("#identity-generic");
     if (genericButton) {
       genericButton.addEventListener("click", function () {
-        startIdentityAnalysis("generic");
+        requestIdentityAnalysis("generic");
       });
     }
     var networkRiskReselect = $("#network-risk-reselect");
@@ -7461,33 +7465,24 @@ import { analyzeIdentity } from "./identityAnalysis.js";
     if (runAllButton) {
       runAllButton.addEventListener("click", function () {
         if (!state.identityProfileId) {
-          startIdentityAnalysis("generic");
+          requestIdentityAnalysis("generic");
           return;
         }
-        openStarSupportDialog();
+        openStarSupportDialog({ type: "retest" });
       });
     }
     var starSupportDialog = $("#star-support-dialog");
     var starSupportClose = $("#star-support-close");
     var starSupportContinue = $("#star-support-continue");
-    var starSupportGithub = $("#star-support-github");
     if (starSupportClose) {
       starSupportClose.addEventListener("click", closeStarSupportDialog);
     }
     if (starSupportContinue) {
-      starSupportContinue.addEventListener("click", function () {
-        closeStarSupportDialog();
-        runAll();
-      });
-    }
-    if (starSupportGithub) {
-      starSupportGithub.addEventListener("click", closeStarSupportDialog);
+      starSupportContinue.addEventListener("click", continueStarSupport);
     }
     if (starSupportDialog) {
-      starSupportDialog.addEventListener("click", function (event) {
-        if (event.target === starSupportDialog) {
-          closeStarSupportDialog();
-        }
+      starSupportDialog.addEventListener("cancel", function (event) {
+        event.preventDefault();
       });
     }
     var copyAiReportButton = $("#copy-ai-report");
@@ -8009,20 +8004,62 @@ import { analyzeIdentity } from "./identityAnalysis.js";
     }, 1800);
   }
 
+  function executeStarSupportAction(action) {
+    if (!action) {
+      return;
+    }
+    if (action.type === "identity") {
+      state.starPrompt.initialAcknowledged = true;
+      startIdentityAnalysis(action.profileId || "generic");
+      return;
+    }
+    if (action.type === "retest") {
+      runAll();
+    }
+  }
+
   function closeStarSupportDialog() {
     var dialog = $("#star-support-dialog");
+    state.starPrompt.pending = null;
     if (dialog && dialog.open) {
       dialog.close();
     }
   }
 
-  function openStarSupportDialog() {
+  function continueStarSupport() {
+    var action = state.starPrompt.pending;
+    state.starPrompt.pending = null;
+    closeStarSupportDialog();
+    executeStarSupportAction(action);
+  }
+
+  function openStarSupportDialog(action) {
     var dialog = $("#star-support-dialog");
-    if (!dialog || dialog.open || typeof dialog.showModal !== "function") {
-      runAll();
+    if (!action) {
       return;
     }
+    if (!dialog || typeof dialog.showModal !== "function") {
+      executeStarSupportAction(action);
+      return;
+    }
+    if (dialog.open) {
+      return;
+    }
+    state.starPrompt.pending = action;
     dialog.showModal();
+  }
+
+  function requestIdentityAnalysis(profileId) {
+    var normalizedProfileId = profileId || "generic";
+    cancelIdentityAutoCountdown();
+    if (state.starPrompt.initialAcknowledged) {
+      return startIdentityAnalysis(normalizedProfileId);
+    }
+    openStarSupportDialog({
+      type: "identity",
+      profileId: normalizedProfileId
+    });
+    return true;
   }
 
   document.addEventListener("DOMContentLoaded", function () {

@@ -3056,10 +3056,20 @@ const scenarios = [
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await routeFixtures(page, base.origin, { autoStart: false, autoContinueStarPrompt: false });
       await page.goto(base.href);
+      const dialog = page.locator("#star-support-dialog");
       await page.locator("#identity-generic").click();
+      await dialog.waitFor({ state: "visible" });
+      ok(
+        "首次检测会先显示正向 Star 引导",
+        await dialog.evaluate((node) => node.open) && (await dialog.locator("h2").textContent()).includes("测试当然可以"),
+        "initial prompt visible",
+      );
+      await dialog.evaluate((node) => node.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+      ok("点击黑色弹窗区域不会收起提示", await dialog.evaluate((node) => node.open), "dialog stays open");
+      await page.locator("#star-support-continue").click();
+      await page.waitForFunction(() => !document.querySelector("#star-support-dialog")?.open);
       await waitForScore(page);
       await page.locator("#run-all").click();
-      const dialog = page.locator("#star-support-dialog");
       await dialog.waitFor({ state: "visible" });
       const prompt = await dialog.evaluate((node) => ({
         open: node.open,
