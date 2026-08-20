@@ -284,6 +284,28 @@ async function routeFixtures(target, baseOrigin, opts = {}) {
       });
     });
   }
+  if (opts.autoContinueStarPrompt !== false && typeof target.addInitScript === "function") {
+    await target.addInitScript(() => {
+      const installStarPromptCompatibility = () => {
+        const observer = new MutationObserver(() => {
+          const dialog = document.querySelector("#star-support-dialog");
+          if (dialog?.open) {
+            document.querySelector("#star-support-continue")?.click();
+          }
+        });
+        observer.observe(document.documentElement, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["open"],
+        });
+      };
+      if (document.documentElement) {
+        installStarPromptCompatibility();
+      } else {
+        document.addEventListener("DOMContentLoaded", installStarPromptCompatibility, { once: true });
+      }
+    });
+  }
   await target.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === baseOrigin) {
@@ -3026,6 +3048,43 @@ const scenarios = [
         JSON.stringify(layoutAudits),
       );
       await layoutPage.close();
+    },
+  },
+  {
+    name: "重新测试 Star 引导：正向提示可关闭并继续完整检测",
+    async run({ browser, base, ok }) {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+      await routeFixtures(page, base.origin, { autoStart: false, autoContinueStarPrompt: false });
+      await page.goto(base.href);
+      await page.locator("#identity-generic").click();
+      await waitForScore(page);
+      await page.locator("#run-all").click();
+      const dialog = page.locator("#star-support-dialog");
+      await dialog.waitFor({ state: "visible" });
+      const prompt = await dialog.evaluate((node) => ({
+        open: node.open,
+        emoji: node.querySelector(".star-support-emoji")?.textContent.trim(),
+        title: node.querySelector("h2")?.textContent.trim(),
+        primary: node.querySelector(".star-support-primary")?.textContent.replace(/\s+/g, " ").trim(),
+        secondary: node.querySelector(".star-support-secondary")?.textContent.trim(),
+      }));
+      ok(
+        "重新测试会显示正向 Star 引导而不是负面表情",
+        prompt.open && prompt.emoji === "🤩" && prompt.title.includes("测试当然可以") && prompt.primary.includes("Star"),
+        JSON.stringify(prompt),
+      );
+      await page.locator("#star-support-continue").click();
+      await page.waitForFunction(() => !document.querySelector("#star-support-dialog")?.open);
+      ok(
+        "继续测试会关闭提示并重新启动检测",
+        !(await dialog.evaluate((node) => node.open)) && (await page.locator("#run-all").evaluate((node) => node.classList.contains("is-running"))),
+        JSON.stringify({ open: await dialog.evaluate((node) => node.open), stage: await page.locator("body").getAttribute("data-app-stage") }),
+      );
+      await page.locator("#run-all").click();
+      await dialog.waitFor({ state: "visible" });
+      await page.locator("#star-support-close").click();
+      ok("关闭按钮只关闭引导，不会额外启动一次检测", !(await dialog.evaluate((node) => node.open)), "dialog closed");
+      await page.close();
     },
   },
   {

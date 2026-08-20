@@ -23,14 +23,14 @@
     <meta name="twitter:image" content="https://betaer.github.io/AiSignalGuard/assets/og.png">
     <meta name="twitter:image:alt" content="AI Signal Guard 数字身份匹配分析">
     <link rel="icon" href="favicon.svg?v=20260708-3" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.min.css?v=20260720-2">
+    <link rel="stylesheet" href="styles.min.css?v=20260821-1">
     <script>
       window.dataLayer = window.dataLayer || [];
       window.gtag = window.gtag || function () {
         window.dataLayer.push(arguments);
       };
     </script>
-    <script vite-ignore src="app.min.js?v=20260720-2" defer></script>
+    <script vite-ignore src="app.min.js?v=20260821-1" defer></script>
   </head>
   <body data-app-stage="select">
     <a class="skip-link" href="#main">跳到主要内容</a>
@@ -459,5 +459,32 @@
       </a>
       <span class="visually-hidden" id="floating-action-status" aria-live="polite"></span>
     </nav>
+
+    <dialog class="star-support-dialog" id="star-support-dialog" aria-labelledby="star-support-title" aria-describedby="star-support-copy">
+      <button class="star-support-close" id="star-support-close" type="button" aria-label="关闭提示">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="m6 6 12 12"></path>
+          <path d="m18 6-12 12"></path>
+        </svg>
+      </button>
+      <div class="star-support-emoji" aria-hidden="true">🤩</div>
+      <p class="star-support-kicker">太棒了，准备开始</p>
+      <h2 id="star-support-title">测试当然可以，但来都来了……</h2>
+      <p class="star-support-copy" id="star-support-copy">
+        这个项目免费开源，顺手留颗 Star，作者能高兴一整天。你的支持会让它继续变得更好。
+      </p>
+      <a class="star-support-primary" id="star-support-github" href="https://github.com/betaer/AiSignalGuard" target="_blank" rel="noopener noreferrer">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M12 .7a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2.24c-3.22.7-3.9-1.37-3.9-1.37-.52-1.34-1.28-1.7-1.28-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.57-.3-5.28-1.29-5.28-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.06 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.16-1.18 3.16-1.18.62 1.59.23 2.77.11 3.06.74.81 1.18 1.84 1.18 3.1 0 4.42-2.71 5.39-5.29 5.68.42.36.78 1.07.78 2.15v3.27c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"></path>
+        </svg>
+        <span>行，给你一颗 Star</span>
+        <svg class="star-support-external" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M14 5h5v5"></path>
+          <path d="m13 11 6-6"></path>
+          <path d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4"></path>
+        </svg>
+      </a>
+      <button class="star-support-secondary" id="star-support-continue" type="button">先测试，用好了再回来</button>
+    </dialog>
   </body>
 </html>

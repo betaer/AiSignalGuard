@@ -7464,7 +7464,30 @@ import { analyzeIdentity } from "./identityAnalysis.js";
           startIdentityAnalysis("generic");
           return;
         }
+        openStarSupportDialog();
+      });
+    }
+    var starSupportDialog = $("#star-support-dialog");
+    var starSupportClose = $("#star-support-close");
+    var starSupportContinue = $("#star-support-continue");
+    var starSupportGithub = $("#star-support-github");
+    if (starSupportClose) {
+      starSupportClose.addEventListener("click", closeStarSupportDialog);
+    }
+    if (starSupportContinue) {
+      starSupportContinue.addEventListener("click", function () {
+        closeStarSupportDialog();
         runAll();
+      });
+    }
+    if (starSupportGithub) {
+      starSupportGithub.addEventListener("click", closeStarSupportDialog);
+    }
+    if (starSupportDialog) {
+      starSupportDialog.addEventListener("click", function (event) {
+        if (event.target === starSupportDialog) {
+          closeStarSupportDialog();
+        }
       });
     }
     var copyAiReportButton = $("#copy-ai-report");
@@ -7984,6 +8007,22 @@ import { analyzeIdentity } from "./identityAnalysis.js";
         runAiStatus();
       }
     }, 1800);
+  }
+
+  function closeStarSupportDialog() {
+    var dialog = $("#star-support-dialog");
+    if (dialog && dialog.open) {
+      dialog.close();
+    }
+  }
+
+  function openStarSupportDialog() {
+    var dialog = $("#star-support-dialog");
+    if (!dialog || dialog.open || typeof dialog.showModal !== "function") {
+      runAll();
+      return;
+    }
+    dialog.showModal();
   }
 
   document.addEventListener("DOMContentLoaded", function () {
