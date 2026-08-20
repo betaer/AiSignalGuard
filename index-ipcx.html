@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#eef2f0">
+    <title>AI Signal Guard · 移动检测卡 Demo</title>
+    <style>
+      :root {
+        --bg: #eef2f0;
+        --bg-deep: #e5ebe7;
+        --surface: #ffffff;
+        --surface-soft: #f7faf8;
+        --ink: #17221e;
+        --ink-2: #405049;
+        --muted: #74817b;
+        --line: #dce5df;
+        --line-strong: #c5d1c9;
+        --green: #159868;
+        --green-deep: #08754e;
+        --green-soft: #e0f3e8;
+        --amber: #a46a18;
+        --amber-soft: #fff2d9;
+        --red: #b44442;
+        --red-soft: #fde9e7;
+        --blue: #4c6e9b;
+        --blue-soft: #e8eff9;
+        --shadow: 0 18px 46px rgba(41, 70, 57, 0.1);
+        --shadow-small: 0 8px 22px rgba(41, 70, 57, 0.08);
+        --radius-card: 22px;
+        --radius-control: 12px;
+        --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html { min-width: 320px; background: var(--bg); scroll-behavior: smooth; }
+      body {
+        min-height: 100dvh;
+        margin: 0;
+        overflow-x: clip;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 16% -8%, rgba(123, 190, 148, 0.2), transparent 28rem),
+          linear-gradient(180deg, #f4f7f5 0, var(--bg) 34rem);
+        font-family: var(--sans);
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      body::before {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        content: "";
+        opacity: 0.35;
+        background-image: linear-gradient(rgba(23, 34, 30, 0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(23, 34, 30, 0.025) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: linear-gradient(to bottom, black, transparent 70%);
+      }
+      button { font: inherit; }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      button:focus-visible, a:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.45); outline-offset: 3px; }
+      button:active { transform: translateY(1px) scale(0.99); }
+      a { color: inherit; }
+
+      .skip-link {
+        position: fixed;
+        top: 10px;
+        left: 12px;
+        z-index: 20;
+        padding: 9px 12px;
+        border-radius: 10px;
+        color: white;
+        background: var(--ink);
+        transform: translateY(-140%);
+      }
+      .skip-link:focus { transform: translateY(0); }
+
+      .demo-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 68px;
+        padding: 10px max(18px, calc((100vw - 1120px) / 2));
+        border-bottom: 1px solid rgba(197, 209, 201, 0.74);
+        background: rgba(244, 247, 245, 0.86);
+        backdrop-filter: blur(18px);
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        overflow: hidden;
+        border: 1px solid #c9d8cc;
+        border-radius: 11px;
+        background: #fafffb;
+      }
+      .brand-mark img { width: 25px; height: 25px; }
+      .brand-copy { display: grid; gap: 1px; }
+      .brand-name { font-size: 14px; font-weight: 800; letter-spacing: 0.02em; }
+      .brand-note { color: var(--muted); font-size: 11px; }
+      .header-actions { display: flex; align-items: center; gap: 8px; }
+      .quiet-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        color: var(--ink-2);
+        background: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+      }
+      .quiet-control[data-active="true"] { color: var(--green-deep); border-color: #a8d8bb; background: var(--green-soft); }
+      .tiny-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(21, 152, 104, 0.12); }
+
+      .page-shell { width: min(100% - 32px, 860px); margin: 0 auto; padding: 54px 0 110px; }
+      .intro { max-width: 640px; margin-bottom: 27px; }
+      .eyebrow { margin: 0 0 11px; color: var(--green-deep); font-family: var(--mono); font-size: 11px; font-weight: 800; letter-spacing: 0.16em; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { max-width: 620px; margin-bottom: 12px; font-size: clamp(32px, 6vw, 54px); line-height: 1.05; letter-spacing: -0.06em; }
+      h1 span { color: var(--green-deep); }
+      .intro p { max-width: 590px; margin-bottom: 0; color: var(--ink-2); font-size: 16px; }
+
+      .module-tabs {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+        margin-bottom: 17px;
+        padding: 5px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.62);
+        scrollbar-width: none;
+      }
+      .module-tabs::-webkit-scrollbar { display: none; }
+      .module-tab {
+        flex: 1 0 145px;
+        min-height: 42px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 11px;
+        color: var(--muted);
+        background: transparent;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .module-tab small { display: block; margin-top: -2px; color: inherit; font-size: 10px; font-weight: 500; opacity: 0.76; }
+      .module-tab[aria-selected="true"] { color: white; background: var(--green); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
+
+      .result-card {
+        position: relative;
+        padding: clamp(20px, 4vw, 30px);
+        overflow: hidden;
+        border: 1px solid #bdd7c7;
+        border-radius: var(--radius-card);
+        background: linear-gradient(140deg, #ffffff 0%, #f4fbf6 100%);
+        box-shadow: var(--shadow);
+      }
+      .result-card::after {
+        position: absolute;
+        top: -110px;
+        right: -80px;
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        content: "";
+        background: radial-gradient(circle, rgba(97, 185, 126, 0.18), transparent 69%);
+        pointer-events: none;
+      }
+      .result-head, .card-foot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .result-kicker, .card-foot { color: var(--muted); font-size: 12px; }
+      .result-kicker strong { color: var(--ink-2); font-weight: 800; }
+      .status-badge, .chip, .mini-status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-weight: 800; white-space: nowrap; }
+      .status-badge { padding: 6px 10px; color: var(--amber); background: var(--amber-soft); font-size: 12px; }
+      .status-badge::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: currentColor; }
+      .score-layout { position: relative; z-index: 1; display: grid; grid-template-columns: 152px minmax(0, 1fr); gap: 25px; align-items: center; padding: 26px 0 23px; }
+      .score-ring { display: grid; place-items: center; width: 142px; height: 142px; padding: 10px; border-radius: 50%; background: conic-gradient(var(--green) 0 87%, #dcebe1 87% 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7); }
+      .score-ring-inner { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: #f7fcf8; }
+      .score-number { display: block; color: var(--green-deep); font-family: var(--mono); font-size: 38px; font-weight: 900; line-height: 1; letter-spacing: -0.09em; }
+      .score-label { margin-top: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+      .result-title { margin: 0 0 6px; font-size: clamp(23px, 4vw, 31px); line-height: 1.1; letter-spacing: -0.045em; }
+      .result-copy { margin: 0 0 13px; color: var(--ink-2); font-size: 14px; }
+      .tag-row { display: flex; flex-wrap: wrap; gap: 7px; }
+      .chip { padding: 5px 9px; font-size: 11px; }
+      .chip.good { color: var(--green-deep); background: var(--green-soft); }
+      .chip.warn { color: var(--amber); background: var(--amber-soft); }
+      .chip.bad { color: var(--red); background: var(--red-soft); }
+      .chip.neutral { color: var(--blue); background: var(--blue-soft); }
+      .result-data-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .data-item { min-width: 0; padding: 13px 12px 12px; border-right: 1px solid var(--line); }
+      .data-item:last-child { border-right: 0; }
+      .data-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 11px; }
+      .data-value { display: block; overflow: hidden; color: var(--ink); font-family: var(--mono); font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+      .card-foot { position: relative; z-index: 1; padding-top: 14px; }
+      .local-note { display: inline-flex; align-items: center; gap: 6px; }
+      .local-note::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: var(--green); }
+
+      .action-row { display: flex; flex-wrap: wrap; gap: 9px; margin: 16px 0 31px; }
+      .action-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 15px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); color: var(--ink-2); background: rgba(255, 255, 255, 0.76); font-size: 13px; font-weight: 800; cursor: pointer; }
+      .action-button.primary { border-color: var(--green); color: white; background: var(--green); box-shadow: 0 8px 16px rgba(21, 152, 104, 0.16); }
+      .action-button.ghost { color: var(--green-deep); border-color: #a9d5ba; background: var(--green-soft); }
+      .action-button:disabled { cursor: wait; opacity: 0.62; }
+
+      .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+      .section-heading h2 { margin: 0; font-size: 22px; line-height: 1.1; letter-spacing: -0.04em; }
+      .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+      .view-panel { scroll-margin-top: 86px; }
+      .signal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 30px; }
+      .signal-card { min-height: 108px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.82); box-shadow: var(--shadow-small); }
+      .signal-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 15px; }
+      .signal-name { color: var(--muted); font-size: 12px; font-weight: 700; }
+      .signal-icon { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 9px; color: var(--green-deep); background: var(--green-soft); font-size: 13px; }
+      .signal-value { display: block; margin-bottom: 3px; color: var(--ink); font-family: var(--mono); font-size: 15px; font-weight: 800; }
+      .signal-note { color: var(--muted); font-size: 11px; }
+
+      .detail-panel { padding: 21px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 255, 255, 0.78); box-shadow: var(--shadow-small); }
+      .detail-panel + .detail-panel { margin-top: 15px; }
+      .panel-note { margin: -4px 0 17px; color: var(--ink-2); font-size: 13px; }
+      .comparison { display: grid; gap: 7px; }
+      .comparison-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 47px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+      .comparison-label { color: var(--muted); font-size: 12px; }
+      .comparison-value { min-width: 0; overflow: hidden; font-family: var(--mono); font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+      .mini-status { padding: 4px 7px; font-size: 10px; }
+      .mini-status.good { color: var(--green-deep); background: var(--green-soft); }
+      .mini-status.warn { color: var(--amber); background: var(--amber-soft); }
+      .mini-status.bad { color: var(--red); background: var(--red-soft); }
+      .server-list { display: grid; gap: 6px; margin-top: 16px; }
+      .server-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+      .server-name { font-size: 13px; font-weight: 800; }
+      .server-region { display: block; margin-top: 2px; color: var(--muted); font-family: var(--mono); font-size: 10px; }
+      .latency { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+      .fingerprint-tabs { display: flex; gap: 5px; margin-bottom: 16px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+      .fingerprint-tab { flex: 1; min-height: 37px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
+      .fingerprint-tab[aria-selected="true"] { color: white; background: var(--green); }
+      .fingerprint-id { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 17px; border: 1px solid #c1dec9; border-radius: 15px; background: #f4fbf6; }
+      .fingerprint-id span { display: block; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 0.14em; }
+      .fingerprint-id code { color: var(--ink); font-family: var(--mono); font-size: clamp(13px, 3vw, 17px); font-weight: 900; letter-spacing: -0.04em; }
+      .copy-mini { flex: 0 0 auto; min-width: 42px; min-height: 36px; border: 1px solid var(--line-strong); border-radius: 9px; color: var(--ink-2); background: white; cursor: pointer; }
+      .evidence-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin: 15px 0 0; padding: 0; list-style: none; }
+      .evidence-list li { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink-2); background: var(--surface-soft); font-size: 12px; }
+      .evidence-list strong { display: block; margin-bottom: 2px; color: var(--ink); font-size: 11px; }
+      .privacy-callout { display: flex; align-items: flex-start; gap: 11px; margin-top: 15px; padding: 13px 15px; border: 1px solid #cfe2d5; border-radius: 13px; color: var(--green-deep); background: var(--green-soft); font-size: 12px; }
+      .privacy-callout b { display: block; margin-bottom: 2px; }
+
+      .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; color: var(--muted); font-size: 11px; }
+      .site-footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; }
+      .mobile-actions { position: fixed; right: max(14px, calc((100vw - 860px) / 2)); bottom: max(14px, env(safe-area-inset-bottom)); left: max(14px, calc((100vw - 860px) / 2)); z-index: 8; display: none; grid-template-columns: 1.35fr 1fr 1fr; gap: 6px; padding: 6px; border: 1px solid rgba(197, 209, 201, 0.9); border-radius: 17px; background: rgba(247, 250, 248, 0.91); box-shadow: 0 14px 32px rgba(41, 70, 57, 0.16); backdrop-filter: blur(16px); }
+      .mobile-action { min-height: 43px; border: 0; border-radius: 11px; color: var(--ink-2); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
+      .mobile-action.primary { color: white; background: var(--green); }
+
+      dialog { width: min(100% - 28px, 430px); padding: 0; border: 0; border-radius: 24px; background: transparent; color: var(--ink); box-shadow: 0 26px 80px rgba(0, 0, 0, 0.22); }
+      dialog::backdrop { background: rgba(21, 31, 26, 0.55); backdrop-filter: blur(8px); }
+      .dialog-card { padding: 20px; border: 1px solid #cfddd3; border-radius: 24px; background: var(--bg); }
+      .dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+      .dialog-head h2 { margin: 0; font-size: 19px; letter-spacing: -0.04em; }
+      .dialog-close { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--ink-2); background: white; cursor: pointer; }
+      .preview-card { padding: 20px; border: 1px solid #bdd7c7; border-radius: 19px; background: linear-gradient(140deg, #ffffff 0%, #f4fbf6 100%); }
+      .preview-card .preview-title { margin: 18px 0 5px; font-size: 26px; letter-spacing: -0.06em; }
+      .preview-score { display: flex; align-items: center; gap: 14px; }
+      .preview-number { color: var(--green-deep); font-family: var(--mono); font-size: 42px; font-weight: 900; line-height: 1; }
+      .preview-copy { color: var(--ink-2); font-size: 12px; }
+      .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+      .toast { position: fixed; top: 82px; left: 50%; z-index: 30; min-width: 180px; padding: 10px 14px; border: 1px solid #b7ddc5; border-radius: 999px; color: var(--green-deep); background: #f1fbf4; box-shadow: var(--shadow-small); font-size: 12px; font-weight: 800; text-align: center; transform: translate(-50%, -12px); opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+      .toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
+
+      @media (max-width: 680px) {
+        .demo-header { min-height: 61px; padding: 8px 15px; }
+        .brand-note { display: none; }
+        .quiet-control { min-height: 35px; padding: 0 10px; font-size: 11px; }
+        .page-shell { width: min(100% - 28px, 560px); padding-top: 32px; }
+        .intro { margin-bottom: 20px; }
+        .eyebrow { margin-bottom: 9px; font-size: 9px; }
+        h1 { font-size: 34px; }
+        .intro p { font-size: 14px; }
+        .module-tab { flex-basis: 122px; padding: 0 11px; font-size: 12px; }
+        .module-tab small { font-size: 9px; }
+        .score-layout { grid-template-columns: 116px minmax(0, 1fr); gap: 15px; padding: 22px 0 19px; }
+        .score-ring { width: 112px; height: 112px; padding: 8px; }
+        .score-number { font-size: 31px; }
+        .result-title { font-size: 23px; }
+        .result-copy { font-size: 12px; }
+        .result-data-grid { grid-template-columns: repeat(2, 1fr); }
+        .data-item:nth-child(2) { border-right: 0; }
+        .data-item:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+        .data-value { font-size: 12px; }
+        .card-foot { display: block; font-size: 10px; }
+        .card-foot span + span { display: block; margin-top: 3px; }
+        .action-row { margin-bottom: 26px; }
+        .action-row .action-button { flex: 1 1 150px; }
+        .signal-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
+        .signal-card { min-height: 101px; padding: 12px; }
+        .signal-top { margin-bottom: 12px; }
+        .signal-value { font-size: 13px; }
+        .detail-panel { padding: 16px; border-radius: 18px; }
+        .section-heading h2 { font-size: 20px; }
+        .comparison-row { grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px; }
+        .comparison-value { grid-column: 1 / -1; grid-row: 2; font-size: 11px; }
+        .comparison-row .mini-status { grid-column: 2; grid-row: 1; }
+        .evidence-list { grid-template-columns: 1fr; }
+        .site-footer { display: block; padding-bottom: 32px; }
+        .site-footer span { display: block; margin-bottom: 6px; }
+        .mobile-actions { display: grid; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="demo-header">
+      <a class="brand" href="index.html" aria-label="返回 AI Signal Guard 首页">
+        <span class="brand-mark" aria-hidden="true"><img src="favicon.svg" alt=""></span>
+        <span class="brand-copy"><span class="brand-name">AI Signal Guard</span><span class="brand-note">移动检测卡 Demo</span></span>
+      </a>
+      <div class="header-actions">
+        <button class="quiet-control" id="privacy-toggle" type="button" aria-pressed="true" data-active="true"><span class="tiny-dot" aria-hidden="true"></span><span id="privacy-label">隐私开启</span></button>
+      </div>
+    </header>
+
+    <main class="page-shell" id="main">
+      <section class="intro" aria-labelledby="demo-title">
+        <p class="eyebrow">AI SIGNAL GUARD / MOBILE RESULT CARD</p>
+        <h1 id="demo-title">先给结论，<span>再看证据。</span></h1>
+        <p>一个专门为手机截图和对外分享设计的检测结果 Demo。当前使用本地模拟数据，不会发送任何检测请求。</p>
+      </section>
+
+      <nav class="module-tabs" aria-label="检测模块">
+        <button class="module-tab" type="button" data-view="overview" aria-selected="true">总览<small>快速结论</small></button>
+        <button class="module-tab" type="button" data-view="webrtc" aria-selected="false">WebRTC<small>地址泄漏</small></button>
+        <button class="module-tab" type="button" data-view="fingerprint" aria-selected="false">浏览器指纹<small>设备信号</small></button>
+      </nav>
+
+      <section class="result-card" id="share-card" aria-labelledby="result-title">
+        <div class="result-head"><span class="result-kicker"><strong>本次检测完成</strong> · <span id="run-time">2026.08.21 20:16</span></span><span class="status-badge">需要核对</span></div>
+        <div class="score-layout">
+          <div class="score-ring" aria-label="网络信号参考分 87 分，满分 100 分"><div class="score-ring-inner"><div><span class="score-number">87</span><span class="score-label">网络参考分</span></div></div></div>
+          <div>
+            <h2 class="result-title" id="result-title">通用数字环境</h2>
+            <p class="result-copy">环境基本可用，但位置、时区和语言仍有一处需要核对。没有发现明确的 WebRTC 泄漏。</p>
+            <div class="tag-row" aria-label="关键状态"><span class="chip warn">⚠ 时区待核对</span><span class="chip warn">⚠ 语言待核对</span><span class="chip good">✓ WebRTC 正常</span></div>
+          </div>
+        </div>
+        <div class="result-data-grid">
+          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip">38.92.27.x</span></div>
+          <div class="data-item"><span class="data-label">位置</span><span class="data-value">美国 · 洛杉矶</span></div>
+          <div class="data-item"><span class="data-label">浏览器</span><span class="data-value">Chrome · macOS</span></div>
+          <div class="data-item"><span class="data-label">覆盖率</span><span class="data-value">84%</span></div>
+        </div>
+        <div class="card-foot"><span class="local-note">结果只存在于当前浏览器</span><span>适合手机截图分享</span></div>
+      </section>
+
+      <div class="action-row" aria-label="结果操作">
+        <button class="action-button primary" id="share-button" type="button">生成分享图 ↗</button>
+        <button class="action-button ghost" id="copy-button" type="button">复制摘要</button>
+        <button class="action-button" id="recheck-button" type="button">重新检测</button>
+      </div>
+
+      <section class="view-panel" id="overview-view" data-panel="overview" aria-labelledby="overview-title">
+        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>一眼看懂本次检测最重要的六项信号</p></div></div>
+        <div class="signal-grid">
+          <article class="signal-card"><div class="signal-top"><span class="signal-name">出口 IP</span><span class="signal-icon">◎</span></div><strong class="signal-value">可信 · 住宅</strong><span class="signal-note">未发现明确机房标签</span></article>
+          <article class="signal-card"><div class="signal-top"><span class="signal-name">位置一致性</span><span class="signal-icon">⌖</span></div><strong class="signal-value">部分匹配</strong><span class="signal-note">城市与时区需要核对</span></article>
+          <article class="signal-card"><div class="signal-top"><span class="signal-name">WebRTC</span><span class="signal-icon">✓</span></div><strong class="signal-value">正常</strong><span class="signal-note">候选与出口一致</span></article>
+          <article class="signal-card"><div class="signal-top"><span class="signal-name">DNS</span><span class="signal-icon">◌</span></div><strong class="signal-value">正常</strong><span class="signal-note">10 个解析器一致</span></article>
+          <article class="signal-card"><div class="signal-top"><span class="signal-name">浏览器环境</span><span class="signal-icon">▣</span></div><strong class="signal-value">部分匹配</strong><span class="signal-note">语言与出口地区不同</span></article>
+          <article class="signal-card"><div class="signal-top"><span class="signal-name">多源互证</span><span class="signal-icon">⊙</span></div><strong class="signal-value">6 / 8 可用</strong><span class="signal-note">主流地区判断一致</span></article>
+        </div>
+        <div class="detail-panel">
+          <div class="section-heading"><div><h2>为什么需要核对？</h2><p>只展示最有影响的三项原因</p></div><span class="mini-status warn">2 项待核对</span></div>
+          <ul class="evidence-list">
+            <li><strong>位置与时区</strong>出口显示美国，但设备时区仍是 Asia/Taipei。</li>
+            <li><strong>语言信号</strong>浏览器首选语言为 zh-CN，与出口位置存在差异。</li>
+            <li><strong>网络路径</strong>WebRTC、DNS 和常用服务访问路径目前一致。</li>
+          </ul>
+          <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>这是一张浏览器本地结果卡。分享图默认隐藏 IP 最后一段，不上传检测数据。</div></div>
+        </div>
+      </section>
+
+      <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title" hidden>
+        <div class="section-heading"><div><h2 id="webrtc-title">WebRTC 泄漏摘要</h2><p>把 HTTP 出口和浏览器候选地址放在一起比较</p></div><span class="mini-status good">无额外泄漏</span></div>
+        <div class="detail-panel">
+          <p class="panel-note">本次共探测 8 台 STUN 服务器，其中 6 台返回可用结果。公网候选与 HTTP 出口一致，内网地址由 mDNS 隐藏。</p>
+          <div class="comparison">
+            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.x</strong><span class="mini-status good">已确认</span></div>
+            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.x</strong><span class="mini-status good">一致</span></div>
+            <div class="comparison-row"><span class="comparison-label">WebRTC 内网地址</span><strong class="comparison-value">a1b2c3d4.local</strong><span class="mini-status good">已隐藏</span></div>
+          </div>
+          <div class="server-list" aria-label="STUN 节点结果">
+            <div class="server-row"><div><span class="server-name">IP.cx · 国内节点</span><span class="server-region">stun:cn.stun.im:3478</span></div><span class="mini-status good">一致</span><span class="latency">42ms</span></div>
+            <div class="server-row"><div><span class="server-name">Bilibili</span><span class="server-region">stun:stun.chat.bilibili.com:3478</span></div><span class="mini-status good">一致</span><span class="latency">58ms</span></div>
+            <div class="server-row"><div><span class="server-name">Twilio · Global</span><span class="server-region">stun:global.stun.twilio.com:3478</span></div><span class="mini-status good">一致</span><span class="latency">112ms</span></div>
+            <div class="server-row"><div><span class="server-name">NextCloud · Global</span><span class="server-region">stun:stun.nextcloud.com:3478</span></div><span class="mini-status warn">超时</span><span class="latency">—</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view-panel" id="fingerprint-view" data-panel="fingerprint" aria-labelledby="fingerprint-title" hidden>
+        <div class="section-heading"><div><h2 id="fingerprint-title">浏览器指纹摘要</h2><p>先看稳定性，再展开原始信号</p></div><span class="mini-status warn">中等可识别</span></div>
+        <div class="detail-panel">
+          <div class="fingerprint-tabs" role="tablist" aria-label="指纹算法">
+            <button class="fingerprint-tab" type="button" role="tab" aria-selected="true" data-fingerprint="v3">FingerprintJS v3+</button>
+            <button class="fingerprint-tab" type="button" role="tab" aria-selected="false" data-fingerprint="v2">FingerprintJS2</button>
+            <button class="fingerprint-tab" type="button" role="tab" aria-selected="false" data-fingerprint="tls">JA3 / JA4</button>
+          </div>
+          <p class="panel-note" id="fingerprint-description">只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。</p>
+          <div class="fingerprint-id"><div><span id="fingerprint-label">VISITOR ID</span><code id="fingerprint-value">8a4e1e96••••••••</code></div><button class="copy-mini" id="fingerprint-copy" type="button" aria-label="复制指纹摘要">⧉</button></div>
+          <ul class="evidence-list" id="fingerprint-evidence">
+            <li><strong>平台</strong>MacIntel · Chrome</li>
+            <li><strong>屏幕</strong>2560 × 1440 · DPR 2</li>
+            <li><strong>字体度量</strong>检测到 5 组稳定差异</li>
+            <li><strong>Canvas / WebGL</strong>信号可读取</li>
+          </ul>
+          <div class="privacy-callout"><span aria-hidden="true">i</span><div><b>分享时默认隐藏完整 ID</b>原始 Canvas、音频和字体数据不进入分享图；详情只在当前浏览器展示。</div></div>
+        </div>
+      </section>
+
+      <footer class="site-footer"><span>本 Demo 只使用本地模拟数据 · 不会发起检测请求</span><a href="index.html">返回正式首页 →</a></footer>
+    </main>
+
+    <div class="mobile-actions" aria-label="快捷操作">
+      <button class="mobile-action primary" id="mobile-share" type="button">分享结果图</button>
+      <button class="mobile-action" id="mobile-copy" type="button">复制摘要</button>
+      <button class="mobile-action" id="mobile-privacy" type="button">隐私开启</button>
+    </div>
+
+    <dialog id="share-dialog" aria-labelledby="share-title">
+      <div class="dialog-card">
+        <div class="dialog-head"><h2 id="share-title">分享结果图</h2><button class="dialog-close" id="dialog-close" type="button" aria-label="关闭分享预览">×</button></div>
+        <div class="preview-card" id="share-preview-card">
+          <div class="result-head"><span class="result-kicker"><strong>AI SIGNAL GUARD</strong> · 本地检测</span><span class="status-badge">需要核对</span></div>
+          <h3 class="preview-title">通用数字环境</h3>
+          <div class="preview-score"><span class="preview-number">87</span><span class="preview-copy">网络参考分<br>2 项信号需要核对</span></div>
+          <div class="tag-row" style="margin-top:17px"><span class="chip warn">时区待核对</span><span class="chip good">WebRTC 正常</span></div>
+          <div class="card-foot" style="margin-top:22px"><span class="local-note">IP 已脱敏</span><span>2026.08.21</span></div>
+        </div>
+        <div class="dialog-actions"><button class="action-button primary" id="download-image" type="button">下载 PNG</button><button class="action-button" id="dialog-copy" type="button">复制文字</button></div>
+      </div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const state = { view: "overview", fingerprint: "v3", privacy: true, running: false, runCount: 0 };
+        const fullIp = "38.92.27.182";
+        const fullFingerprint = "8a4e1e964646b8cbce87b14cc21a7413";
+        const fingerprintInfo = {
+          v3: { label: "VISITOR ID", value: fullFingerprint, description: "只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。" },
+          v2: { label: "LEGACY ID", value: "4e01a2a9812bff1c7d85b13e0a89d004", description: "旧版采集面更宽，但现代浏览器里稳定性通常不如 v3+。" },
+          tls: { label: "JA3 / JA4", value: "ja4_t13d1516h2_••••", description: "TLS 握手摘要用于判断客户端类型，不等同于设备指纹。" }
+        };
+
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+        function maskedIp() { return state.privacy ? "38.92.27.x" : fullIp; }
+        function maskedFingerprint() {
+          const data = fingerprintInfo[state.fingerprint];
+          return state.privacy ? data.value.slice(0, 8) + "••••••••" : data.value;
+        }
+        function showToast(message) {
+          const toast = $("#toast");
+          toast.textContent = message;
+          toast.classList.add("is-visible");
+          window.clearTimeout(showToast.timer);
+          showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
+        }
+        function updateSensitiveValues() {
+          $$("[data-sensitive='ip']").forEach((node) => { node.textContent = maskedIp(); });
+          $("#fingerprint-value").textContent = maskedFingerprint();
+          $("#privacy-label").textContent = state.privacy ? "隐私开启" : "显示原值";
+          $("#mobile-privacy").textContent = state.privacy ? "隐私开启" : "显示原值";
+          $("#privacy-toggle").dataset.active = String(state.privacy);
+          $("#privacy-toggle").setAttribute("aria-pressed", String(state.privacy));
+        }
+        function setView(view) {
+          state.view = view;
+          $$(".module-tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.view === view)));
+          $$("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== view; });
+          const activePanel = $(`[data-panel='${view}']`);
+          if (activePanel) activePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        function copyText(text, success = "已复制到剪贴板") {
+          const fallback = () => {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            textarea.remove();
+          };
+          if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).catch(fallback); else fallback();
+          showToast(success);
+        }
+        function summaryText() {
+          return `AI Signal Guard · 通用数字环境\n网络参考分：87/100 · 需要核对\n关键状态：时区待核对、语言待核对、WebRTC 正常\n出口 IP：${maskedIp()} · 位置：美国 · 洛杉矶\n结果只存在于当前浏览器，不上传检测数据。`;
+        }
+        function updateFingerprintView() {
+          const data = fingerprintInfo[state.fingerprint];
+          $("#fingerprint-label").textContent = data.label;
+          $("#fingerprint-description").textContent = data.description;
+          $("#fingerprint-value").textContent = maskedFingerprint();
+          $$(".fingerprint-tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.fingerprint === state.fingerprint)));
+        }
+        function openShareDialog() {
+          updateSensitiveValues();
+          $("#share-dialog").showModal();
+        }
+        function roundedRect(ctx, x, y, width, height, radius) {
+          ctx.beginPath();
+          ctx.roundRect(x, y, width, height, radius);
+        }
+        function drawShareImage() {
+          const canvas = document.createElement("canvas");
+          canvas.width = 1080;
+          canvas.height = 1350;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#eef2f0";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          const gradient = ctx.createRadialGradient(160, 90, 0, 160, 90, 560);
+          gradient.addColorStop(0, "rgba(119, 194, 145, .28)");
+          gradient.addColorStop(1, "rgba(238, 242, 240, 0)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, canvas.width, 700);
+          ctx.fillStyle = "#17221e";
+          ctx.font = '800 31px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("AI Signal Guard", 72, 98);
+          ctx.fillStyle = "#74817b";
+          ctx.font = '500 21px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("移动检测结果 · 浏览器本地完成", 72, 135);
+          roundedRect(ctx, 54, 190, 972, 850, 34);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.strokeStyle = "#bdd7c7";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = "#74817b";
+          ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("本次检测完成", 92, 258);
+          ctx.fillStyle = "#a46a18";
+          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("● 需要核对", 815, 258);
+          ctx.fillStyle = "#159868";
+          ctx.beginPath();
+          ctx.arc(235, 475, 132, 0, Math.PI * 2);
+          ctx.strokeStyle = "#dcebe1";
+          ctx.lineWidth = 22;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(235, 475, 132, -Math.PI / 2, Math.PI * 0.74 - Math.PI / 2);
+          ctx.strokeStyle = "#159868";
+          ctx.stroke();
+          ctx.fillStyle = "#08754e";
+          ctx.font = '900 75px ui-monospace, Menlo, monospace';
+          ctx.textAlign = "center";
+          ctx.fillText("87", 235, 478);
+          ctx.fillStyle = "#74817b";
+          ctx.font = '700 21px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("网络参考分", 235, 520);
+          ctx.textAlign = "left";
+          ctx.fillStyle = "#17221e";
+          ctx.font = '900 48px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("通用数字环境", 430, 415);
+          ctx.fillStyle = "#405049";
+          ctx.font = '500 24px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("环境基本可用，但有 2 项信号需要核对。", 430, 470);
+          ctx.fillStyle = "#a46a18";
+          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("⚠ 时区待核对   ⚠ 语言待核对", 430, 530);
+          ctx.fillStyle = "#08754e";
+          ctx.fillText("✓ WebRTC 正常", 430, 580);
+          ctx.strokeStyle = "#dce5df";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(92, 665);
+          ctx.lineTo(988, 665);
+          ctx.stroke();
+          const rows = [["出口 IP", maskedIp()], ["位置", "美国 · 洛杉矶"], ["浏览器", "Chrome · macOS"], ["覆盖率", "84%"]];
+          rows.forEach((row, index) => {
+            const x = index % 2 === 0 ? 92 : 545;
+            const y = index < 2 ? 735 : 865;
+            ctx.fillStyle = "#74817b";
+            ctx.font = '500 21px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+            ctx.fillText(row[0], x, y);
+            ctx.fillStyle = "#17221e";
+            ctx.font = '800 25px ui-monospace, Menlo, monospace';
+            ctx.fillText(row[1], x, y + 39);
+          });
+          ctx.fillStyle = "#08754e";
+          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("✓ 结果只存在于当前浏览器", 92, 1000);
+          ctx.fillStyle = "#74817b";
+          ctx.font = '500 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
+          ctx.fillText("IP 已脱敏 · 2026.08.21", 72, 1160);
+          ctx.fillText("AI Signal Guard / mobile result card", 72, 1210);
+          const link = document.createElement("a");
+          link.download = "aisg-mobile-result.png";
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+          showToast("分享 PNG 已生成");
+        }
+
+        $$(".module-tab").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
+        $$(".fingerprint-tab").forEach((button) => button.addEventListener("click", () => { state.fingerprint = button.dataset.fingerprint; updateFingerprintView(); }));
+        $("#privacy-toggle").addEventListener("click", () => { state.privacy = !state.privacy; updateSensitiveValues(); showToast(state.privacy ? "已开启隐私遮罩" : "已显示原始值"); });
+        $("#mobile-privacy").addEventListener("click", () => $("#privacy-toggle").click());
+        $("#share-button").addEventListener("click", openShareDialog);
+        $("#mobile-share").addEventListener("click", openShareDialog);
+        $("#download-image").addEventListener("click", drawShareImage);
+        $("#copy-button").addEventListener("click", () => copyText(summaryText()));
+        $("#mobile-copy").addEventListener("click", () => $("#copy-button").click());
+        $("#dialog-copy").addEventListener("click", () => copyText(summaryText(), "摘要已复制"));
+        $("#fingerprint-copy").addEventListener("click", () => copyText(maskedFingerprint(), "指纹摘要已复制"));
+        $("#dialog-close").addEventListener("click", () => $("#share-dialog").close());
+        $("#share-dialog").addEventListener("click", (event) => { if (event.target === $("#share-dialog")) $("#share-dialog").close(); });
+        $("#recheck-button").addEventListener("click", () => {
+          if (state.running) return;
+          state.running = true;
+          state.runCount += 1;
+          const button = $("#recheck-button");
+          button.disabled = true;
+          button.textContent = "检测中…";
+          $(".status-badge").textContent = "正在检测";
+          $(".status-badge").style.color = "var(--blue)";
+          $(".status-badge").style.background = "var(--blue-soft)";
+          $("[aria-live='polite']").textContent = "正在重新核对网络、浏览器与服务路径…";
+          window.setTimeout(() => {
+            state.running = false;
+            button.disabled = false;
+            button.textContent = "重新检测";
+            $(".status-badge").textContent = "需要核对";
+            $(".status-badge").style.color = "var(--amber)";
+            $(".status-badge").style.background = "var(--amber-soft)";
+            $("[aria-live='polite']").textContent = `检测完成，第 ${state.runCount} 次本地模拟结果已更新。`;
+            showToast("检测完成 ✦");
+          }, 1400);
+        });
+
+        const liveStatus = document.createElement("div");
+        liveStatus.setAttribute("aria-live", "polite");
+        liveStatus.className = "visually-hidden";
+        liveStatus.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap";
+        document.body.appendChild(liveStatus);
+        updateSensitiveValues();
+        updateFingerprintView();
+      })();
+    </script>
+  </body>
+</html>
