@@ -20,13 +20,13 @@
 
 ## 架构
 
-采用“浏览器直接检测 + 受限 Worker 聚合”的混合架构：
+采用浏览器直连架构，保持 GitHub Pages 静态部署能力：
 
-1. 浏览器负责读取本地环境、出口地址、自身可跨域访问的 IP 情报接口、DNS 泄漏和 WebRTC/STUN。
-2. Worker 只代理存在 CORS、重定向或服务端凭据限制的固定白名单服务，并标准化路由与注册响应。
-3. Worker 不是通用代理：请求目标由代码内白名单决定，只接受经过严格规范化的 IPv4/IPv6 参数。
-4. 前端通过统一记录模型合并直连与 Worker 结果；失败状态原样保留，不回退到模拟数据。
-5. GitHub Pages 继续提供页面，Worker 提供独立 API；本地开发通过 `127.0.0.1` 使用同一协议进行验证。
+1. 浏览器负责读取本地环境、出口地址、IP 情报接口、路由与注册接口、DNS 泄漏和 WebRTC/STUN。
+2. 10 家 IP 情报和 10 路路由与注册来源均已验证具有浏览器可用的 HTTPS/CORS 路径；核心检测不依赖额外 Worker。
+3. 每个上游地址由代码内白名单固定，用户输入只允许作为经过规范化的 IPv4/IPv6 参数使用，不能形成任意 URL 请求。
+4. 前端通过统一记录模型合并所有来源；失败状态原样保留，不回退到模拟数据。
+5. GitHub Pages、`127.0.0.1` 和直接打开本地文件共用同一套检测逻辑；个别浏览器禁止 `file:` 跨域请求时，页面如实显示网络错误并提示使用本地服务器。
 
 ## 十家 IP 情报来源
 
@@ -74,8 +74,8 @@
 1. IANA RDAP Bootstrap
 2. 权威 RIR RDAP（ARIN、RIPE、APNIC、LACNIC 或 AFRINIC）
 3. RIPEstat RIS Network Info
-4. RouteViews Prefix API
-5. Team Cymru IP-to-ASN
+4. RIPEstat Whois
+5. Team Cymru IP-to-ASN（通过标准 DoH 查询）
 6. PeeringDB
 7. IP.guide Network
 8. IPinfo.app IP-to-ASN
@@ -138,10 +138,9 @@ https://betaer.github.io/AiSignalGuard/
 
 ## 安全与隐私
 
-- Worker 只允许本站、GitHub Pages 和本地开发源跨域访问。
 - 严格验证 IP 参数，拒绝私网、回环、链路本地、保留地址和任意 URL。
 - 上游服务使用固定 HTTPS 地址、独立超时、响应体大小限制和并发限制。
-- API Key 只存放在 Worker Secret；浏览器包和仓库不得出现密钥。
+- 本轮只使用无需私密凭据的公开接口；浏览器包和仓库不得出现 API Key。
 - 页面明确说明目标 IP 会发送给列出的第三方服务，并提供隐私遮罩控制。
 
 ## 验收标准
@@ -155,4 +154,4 @@ https://betaer.github.io/AiSignalGuard/
 - 二级详情左右间距视觉一致，桌面和手机均无横向溢出。
 - 首屏不显示“回到顶部”，滚动超过一个视口后显示。
 - AI 诊断复制内容含项目链接，并且不再输出固定演示数字。
-- 单元测试、Worker 测试、构建检查和桌面/移动端浏览器测试全部通过。
+- 单元测试、构建检查和桌面/移动端浏览器测试全部通过。
