@@ -15,7 +15,7 @@
     "build:css": "node scripts/build-css.mjs",
     "test:identity": "node --test tests/identity-analysis.test.mjs",
     "test:star-prompt": "node --test tests/star-prompt-flow.test.mjs",
-    "test:ipcx": "node --test tests/ipcx-contract.test.mjs",
+    "test:ipcx": "node --test tests/ipcx-evidence.test.mjs tests/ipcx-contract.test.mjs",
     "test:connectivity-live": "node tests/connectivity-live.mjs",
     "test": "npm run test:identity && npm run test:star-prompt && npm run test:ipcx && npm run build && node --test tests/sites-worker.test.mjs",
     "test:e2e": "node tests/e2e-smoke.mjs",

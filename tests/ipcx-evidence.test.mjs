@@ -1,0 +1,197 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+await import("../ipcxEvidence.js");
+
+const api = globalThis.AISGIpEvidence;
+
+test("三类实时来源注册表均为 10 个唯一成员", () => {
+  assert.ok(api, "AISGIpEvidence 应挂载到 globalThis");
+
+  for (const registry of [
+    api.IP_INTEL_SOURCES,
+    api.ROUTE_SOURCES,
+    api.STUN_NODES,
+  ]) {
+    assert.equal(registry.length, 10);
+    assert.equal(new Set(registry.map(({ id }) => id)).size, 10);
+    assert.ok(registry.every(({ id, name }) => id && name));
+  }
+
+  assert.deepEqual(
+    api.IP_INTEL_SOURCES.map(({ id }) => id),
+    [
+      "ipwho",
+      "ipsb",
+      "geojs",
+      "dbip",
+      "ipapiis",
+      "ipinfo",
+      "countryis",
+      "iplocation",
+      "freeipapi",
+      "ipguide",
+    ],
+  );
+});
+
+test("IP 情报响应按各家真实字段规范化且不互相借值", () => {
+  const ipwho = api.normalizeIntelPayload(
+    "ipwho",
+    {
+      success: true,
+      ip: "203.0.113.9",
+      country_code: "US",
+      country: "United States",
+      city: "Seattle",
+      connection: { asn: 64501, org: "Example Transit", type: "isp" },
+      security: { proxy: false, hosting: false, tor: false },
+    },
+    { targetIp: "203.0.113.9" },
+  );
+
+  assert.equal(ipwho.state, "success");
+  assert.equal(ipwho.countryCode, "US");
+  assert.equal(ipwho.asn, "AS64501");
+  assert.equal(ipwho.organization, "Example Transit");
+  assert.equal(ipwho.proxy, false);
+
+  const countryOnly = api.normalizeIntelPayload(
+    "countryis",
+    { ip: "203.0.113.9", country: "US" },
+    { targetIp: "203.0.113.9" },
+  );
+  assert.equal(countryOnly.state, "partial");
+  assert.equal(countryOnly.countryCode, "US");
+  assert.equal(countryOnly.asn, null);
+  assert.equal(countryOnly.organization, null);
+
+  const mismatch = api.normalizeIntelPayload(
+    "dbip",
+    { ipAddress: "203.0.113.10", countryCode: "US" },
+    { targetIp: "203.0.113.9" },
+  );
+  assert.equal(mismatch.state, "path_mismatch");
+  assert.equal(mismatch.voteEligible, false);
+});
+
+test("来源统计保留失败项，票数只使用真实可用字段", () => {
+  const records = api.createPendingRecords(api.IP_INTEL_SOURCES).map(
+    (record, index) => {
+      if (index < 6) {
+        return {
+          ...record,
+          state: "success",
+          voteEligible: true,
+          countryCode: index === 5 ? "CA" : "US",
+          asn: "AS64501",
+          organization: "Example Transit",
+        };
+      }
+      if (index === 6) {
+        return {
+          ...record,
+          state: "partial",
+          voteEligible: true,
+          countryCode: "US",
+        };
+      }
+      return { ...record, state: index === 7 ? "timeout" : "network_error" };
+    },
+  );
+
+  const summary = api.summarizeSources(records);
+  assert.deepEqual(summary, {
+    total: 10,
+    responded: 7,
+    usable: 7,
+    complete: 6,
+    partial: 1,
+    failed: 3,
+  });
+
+  const country = api.computeCountryConsensus(records);
+  assert.equal(country.value, "US");
+  assert.equal(country.votes, 6);
+  assert.equal(country.eligible, 7);
+  assert.equal(country.conflicts, 1);
+});
+
+test("runIpIntel 对 10 家逐一请求并保留超时或限流状态", async () => {
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(url);
+    const sourceIndex = calls.length - 1;
+    if (sourceIndex === 8) {
+      return new Response("busy", { status: 429 });
+    }
+    return new Response(
+      JSON.stringify({
+        ip: "203.0.113.9",
+        ipAddress: "203.0.113.9",
+        country: sourceIndex === 6 ? "US" : "United States",
+        country_code: "US",
+        countryCode: "US",
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+  };
+  const snapshots = [];
+  const records = await api.runIpIntel({
+    targetIp: "203.0.113.9",
+    fetchImpl,
+    timeoutMs: 100,
+    onUpdate(next) {
+      snapshots.push(next);
+    },
+  });
+
+  assert.equal(calls.length, 10);
+  assert.equal(records.length, 10);
+  assert.equal(records[8].state, "rate_limited");
+  assert.ok(snapshots.length >= 11, "应先发送 pending，再增量发送每家结果");
+  assert.ok(snapshots.every((snapshot) => snapshot.length === 10));
+});
+
+test("每个 STUN 节点使用独立 RTCPeerConnection，不借用其他节点候选", async () => {
+  const iceServerUrls = [];
+
+  function createPeerConnection(config) {
+    const listeners = new Map();
+    const url = config.iceServers[0].urls;
+    iceServerUrls.push(url);
+    return {
+      addEventListener(name, listener) {
+        listeners.set(name, listener);
+      },
+      removeEventListener() {},
+      createDataChannel() {},
+      async createOffer() {
+        return { type: "offer", sdp: "" };
+      },
+      async setLocalDescription() {
+        queueMicrotask(() => {
+          listeners.get("icecandidate")?.({
+            candidate: {
+              type: "srflx",
+              address: "203.0.113.9",
+              candidate: "candidate:1 1 udp 1 203.0.113.9 40000 typ srflx",
+            },
+          });
+        });
+      },
+      close() {},
+    };
+  }
+
+  const records = await api.runStunNodes({
+    createPeerConnection,
+    timeoutMs: 100,
+  });
+
+  assert.equal(records.length, 10);
+  assert.equal(iceServerUrls.length, 10);
+  assert.equal(new Set(iceServerUrls).size, 10);
+  assert.ok(records.every(({ state }) => state === "success"));
+  assert.ok(records.every(({ observedIp }) => observedIp === "203.0.113.9"));
+});
