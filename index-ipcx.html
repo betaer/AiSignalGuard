@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#eef2f0">
-    <title>AI Signal Guard · 移动检测卡 Demo</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <title>AI Signal Guard · 实时网络检测</title>
     <style>
       :root {
         --bg: #eef2f0;
@@ -175,7 +176,7 @@
       .status-badge { padding: 6px 10px; color: var(--amber); background: var(--amber-soft); font-size: 12px; }
       .status-badge::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: currentColor; }
       .score-layout { position: relative; z-index: 1; display: grid; grid-template-columns: 152px minmax(0, 1fr); gap: 25px; align-items: center; padding: 26px 0 23px; }
-      .score-ring { display: grid; place-items: center; width: 142px; height: 142px; padding: 10px; border-radius: 50%; background: conic-gradient(var(--green) 0 87%, #dcebe1 87% 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7); }
+      .score-ring { display: grid; place-items: center; width: 142px; height: 142px; padding: 10px; border-radius: 50%; background: conic-gradient(var(--blue) 0 0%, #dcebe1 0% 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7); }
       .score-ring-inner { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: #f7fcf8; }
       .score-ring-content { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; text-align: center; transform: translateY(-1px); }
       .score-number { display: block; width: 100%; color: var(--green-deep); font-family: var(--mono); font-size: 38px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; letter-spacing: -0.04em; text-align: center; text-indent: 0.04em; }
@@ -251,7 +252,7 @@
       .signal-row-value.good { color: var(--green-deep); }
       .signal-row-value.warn { color: var(--amber); }
       .signal-row[open] > .signal-row-summary .signal-row-chevron { color: var(--green-deep); transform: rotate(90deg); }
-      .signal-row-body { padding: 12px 14px 14px 33px; border-top: 1px solid var(--line); background: var(--surface-soft); }
+      .signal-row-body { padding: 12px 14px 14px; border-top: 1px solid var(--line); background: var(--surface-soft); }
       .row-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
       .row-detail-item { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: white; }
       .row-detail-item span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 9px; font-weight: 800; }
@@ -310,6 +311,7 @@
       .floating-tool-button:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.26); outline-offset: 4px; }
       .floating-tool-button:disabled { cursor: wait; opacity: 0.66; }
       .floating-tool-button[data-copy-complete="true"] { border-color: rgba(21, 152, 104, 0.64); background: var(--green-soft); }
+      #floating-top[data-visible="false"] { display: none; }
       .floating-ai-button { border-color: rgba(92, 133, 101, 0.5); background: #f1f7eb; }
       .floating-ai-logo { display: block; object-fit: contain; }
       .floating-privacy-button[data-privacy-active="true"] { border-color: rgba(180, 132, 45, 0.48); color: var(--amber); background: #fff8e8; }
@@ -457,7 +459,7 @@
     <header class="demo-header">
       <a class="brand" href="index.html" aria-label="返回 AI Signal Guard 首页">
         <span class="brand-mark" aria-hidden="true"><img src="favicon.svg" alt=""></span>
-        <span class="brand-copy"><span class="brand-name">AI Signal Guard</span><span class="brand-note">移动检测卡 Demo</span></span>
+        <span class="brand-copy"><span class="brand-name">AI Signal Guard</span><span class="brand-note">实时检测卡</span></span>
       </a>
     </header>
 
@@ -465,7 +467,7 @@
       <section class="intro" aria-labelledby="demo-title">
         <p class="eyebrow">AI SIGNAL GUARD / MOBILE RESULT CARD</p>
         <h1 id="demo-title">先给结论，<span>再看证据。</span></h1>
-        <p>一个专门为手机截图和对外分享设计的检测结果 Demo。当前使用本地模拟数据，不会发送任何检测请求。</p>
+        <p>一个专门为手机截图和对外分享设计的实时检测结果页。每个多源指标都会如实列出成功、缺失、超时与失败来源。</p>
       </section>
 
       <nav class="module-tabs" aria-label="检测模块">
@@ -475,20 +477,20 @@
       </nav>
 
       <section class="result-card" id="result-summary-card" aria-labelledby="result-title">
-        <div class="result-head"><span class="result-kicker"><strong>本次检测完成</strong> · <span id="run-time">2026.08.21 20:16</span></span><span class="status-badge">需要核对</span></div>
+        <div class="result-head"><span class="result-kicker"><strong id="result-run-state">正在实时检测</strong> · <span id="run-time">等待完成</span></span><span class="status-badge">检测中</span></div>
         <div class="score-layout">
-          <div class="score-ring" aria-label="网络信号参考分 87 分，满分 100 分"><div class="score-ring-inner"><div class="score-ring-content"><span class="score-number">87</span><span class="score-label">网络参考分</span></div></div></div>
+          <div class="score-ring" aria-label="网络信号参考分正在计算"><div class="score-ring-inner"><div class="score-ring-content"><span class="score-number">—</span><span class="score-label">网络参考分</span></div></div></div>
           <div>
             <h2 class="result-title" id="result-title">通用数字环境</h2>
-            <p class="result-copy">环境基本可用，但时区和语言与当前出口地区不一致。没有发现明确的 WebRTC 泄漏。</p>
-            <div class="tag-row" aria-label="关键状态"><span class="chip warn">⚠ 时区不一致</span><span class="chip warn">⚠ 语言不一致</span><span class="chip good">✓ WebRTC 正常</span></div>
+            <p class="result-copy">正在读取出口地址、浏览器环境、路由注册与 WebRTC 实时证据。</p>
+            <div class="tag-row" aria-label="关键状态"><span class="chip neutral">实时来源检测中</span></div>
           </div>
         </div>
         <div class="result-data-grid">
-          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip">38.92.27.182</span></div>
-          <div class="data-item"><span class="data-label">位置</span><span class="data-value">美国 · 洛杉矶</span></div>
-          <div class="data-item"><span class="data-label">浏览器</span><span class="data-value">Chrome · macOS</span></div>
-          <div class="data-item"><span class="data-label">覆盖率</span><span class="data-value">84%</span></div>
+          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip" id="summary-exit-ip">检测中…</span></div>
+          <div class="data-item"><span class="data-label">位置</span><span class="data-value" id="summary-location">等待来源</span></div>
+          <div class="data-item"><span class="data-label">浏览器</span><span class="data-value" id="summary-browser">读取中…</span></div>
+          <div class="data-item"><span class="data-label">覆盖率</span><span class="data-value" id="summary-coverage">0%</span></div>
         </div>
         <div class="card-foot"><span class="local-note">结果只存在于当前浏览器</span><span>适合手机截图分享</span></div>
       </section>
@@ -508,19 +510,19 @@
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">位置一致性</strong><span class="signal-subsection-note">出口、时区与语言</span></div><span class="signal-subsection-status warn">部分匹配</span></div>
                 <div class="signal-subsection-rows">
                   <details class="signal-row" data-row-id="position-consistency"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>位置一致性</strong><small>出口位置 / 时区 / 语言</small></span><span class="signal-row-value warn">部分匹配</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>存在地区提示差异</strong></div><div class="row-detail-item"><span>证据说明</span><p>出口显示美国 · 洛杉矶，系统时区为 Asia/Taipei，浏览器语言为 zh-CN。</p></div><div class="row-detail-item"><span>建议</span><p>核对设备时区、首选语言与实际使用地区，避免长期画像出现不必要矛盾。</p></div></div></div></details>
-                  <details class="signal-row" data-row-id="asn-organization"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>ASN 与组织</strong><small>ARIN · AS26042</small></span><span class="signal-row-value">FiberState, LLC</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>归属信息可核对</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN、ipwho.is 与 ASN lookup 返回的 ASN、组织名称保持一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若后续 ASN 或组织发生变化，再与实际运营商线路核对。</p></div></div></div></details>
-                  <details class="signal-row" data-row-id="geo-cross-check"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>多源地区判断</strong><small>地理来源交叉验证</small></span><span class="signal-row-value good">主流判定 US</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地理冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 等 6 个可用来源均指向美国。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；城市粒度轻微变化属于数据库差异，国家冲突才需优先核对。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="asn-organization"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>ASN 与组织</strong><small>10 家来源逐一核对</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待真实来源</strong></div><div class="row-detail-item"><span>证据说明</span><p>将逐家列出真实返回的 ASN 与组织字段。</p></div><div class="row-detail-item"><span>建议</span><p>以可用来源的多数结果为准，缺失字段不视为冲突。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="geo-cross-check"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>多源地区判断</strong><small>10 家地理来源交叉验证</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待真实来源</strong></div><div class="row-detail-item"><span>证据说明</span><p>将按来源展示国家与城市，并只统计真实返回的票数。</p></div><div class="row-detail-item"><span>建议</span><p>城市粒度轻微变化属于数据库差异，国家冲突才需优先核对。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="网络类型">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络类型</strong><span class="signal-subsection-note">IP 质量与运营商</span></div><span class="signal-subsection-status good">匹配</span></div>
                 <div class="signal-snapshot">
-                  <div class="signal-snapshot-head"><div><span class="signal-snapshot-label">当前公网出口</span><strong class="signal-snapshot-value sensitive-value" data-sensitive="ip">38.92.27.182</strong></div><span class="signal-snapshot-status">可信 · 移动运营商</span></div>
-                  <div class="signal-fact-grid"><div class="signal-fact"><span>位置</span><strong>美国 · 洛杉矶</strong></div><div class="signal-fact"><span>ASN</span><strong>AS26042</strong></div><div class="signal-fact"><span>组织 / ISP</span><strong>FiberState, LLC</strong></div><div class="signal-fact"><span>服务商类型</span><strong>住宅 / 移动网络</strong></div></div>
+                  <div class="signal-snapshot-head"><div><span class="signal-snapshot-label">当前公网出口</span><strong class="signal-snapshot-value sensitive-value" data-sensitive="ip" id="snapshot-exit-ip">检测中…</strong></div><span class="signal-snapshot-status" id="snapshot-status">等待来源</span></div>
+                  <div class="signal-fact-grid"><div class="signal-fact"><span>位置</span><strong id="snapshot-location">等待来源</strong></div><div class="signal-fact"><span>ASN</span><strong id="snapshot-asn">等待来源</strong></div><div class="signal-fact"><span>组织 / ISP</span><strong id="snapshot-organization">等待来源</strong></div><div class="signal-fact"><span>服务商类型</span><strong id="snapshot-network-type">等待来源</strong></div></div>
                 </div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.27.182</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
-                  <details class="signal-row" data-row-id="network-type"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络类型</strong><small>ISP / ASN 类型证据</small></span><span class="signal-row-value good">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>符合通用环境</strong></div><div class="row-detail-item"><span>证据说明</span><p>组织为 FiberState, LLC，现有来源更接近住宅或移动运营商网络。</p></div><div class="row-detail-item"><span>建议</span><p>以实际 ISP 和使用场景为准；网络类型标签需与地理位置、DNS 共同判断。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>HTTP 出口与 10 家来源</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待真实来源</strong></div><div class="row-detail-item"><span>证据说明</span><p>将如实展示网络类型、风险字段和每家来源状态。</p></div><div class="row-detail-item"><span>建议</span><p>不把字段缺失或来源失败解释成安全结论。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="network-type"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>网络类型</strong><small>ISP / ASN 类型证据</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待真实来源</strong></div><div class="row-detail-item"><span>证据说明</span><p>网络类型只采用各家接口本轮真实返回的标签。</p></div><div class="row-detail-item"><span>建议</span><p>网络类型标签需与地理位置、DNS 和实际使用场景共同判断。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="risk-proxy-labels"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>威胁与代理标签</strong><small>risk / proxy / hosting</small></span><span class="signal-row-value good">未发现明确标签</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用来源未发现明确标签</strong></div><div class="row-detail-item"><span>证据说明</span><p>本轮可用来源未返回 VPN、Tor、Hosting 或公开黑名单风险标签。</p></div><div class="row-detail-item"><span>建议</span><p>浏览器侧没有完整商业信誉库；网络或平台发生变化后建议重新检测。</p></div></div></div></details>
                 </div>
               </section>
@@ -563,15 +565,15 @@
               <section class="signal-subsection" aria-label="DNS">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">DNS</strong><span class="signal-subsection-note">解析器与地区</span></div><span class="signal-subsection-status good">正常</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="dns-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>DNS 泄漏</strong><small>标准 DNS 检测</small></span><span class="signal-row-value good">10 个解析器一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地区泄漏</strong></div><div class="row-detail-item"><span>证据说明</span><p>10 个可见解析器均指向美国地区，与当前公网出口国家一致。</p></div><div class="row-detail-item"><span>建议</span><p>保持远程解析或 DoH / TUN 设置，避免 DNS 绕过当前网络路径。</p></div></div></div></details>
-                  <details class="signal-row" data-row-id="dns-region-consistency"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>DNS 地区一致性</strong><small>解析器国家交叉</small></span><span class="signal-row-value good">一致 · US 10 / 10</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>10 / 10 指向美国</strong></div><div class="row-detail-item"><span>证据说明</span><p>主流地区为 United States，冲突解析器为 0，与当前出口国家一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；第三方 DNS 检测只反映本轮路径，网络切换后需重新检测。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="dns-leak"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>DNS 泄漏</strong><small>bash.ws 权威检测</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待解析器回传</strong></div><div class="row-detail-item"><span>证据说明</span><p>解析器数量完全按本轮权威 DNS 结果展示，不固定填充。</p></div><div class="row-detail-item"><span>建议</span><p>保持远程解析或 DoH / TUN 设置，避免 DNS 绕过当前网络路径。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="dns-region-consistency"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>DNS 地区一致性</strong><small>解析器国家交叉</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待解析器地区</strong></div><div class="row-detail-item"><span>证据说明</span><p>将把实际返回的解析器国家与出口国家逐项比较。</p></div><div class="row-detail-item"><span>建议</span><p>第三方 DNS 检测只反映本轮路径，网络切换后需重新检测。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="WebRTC">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">WebRTC</strong><span class="signal-subsection-note">公网与内网候选</span></div><span class="signal-subsection-status good">一致</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.27.182</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
-                  <details class="signal-row" data-row-id="stun-nodes"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>STUN 节点</strong><small>8 台服务器交叉探测</small></span><span class="signal-row-value good">正常 · 6 / 8 响应</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用节点候选一致</strong></div><div class="row-detail-item"><span>证据说明</span><p>国内节点约 42ms、Global 节点约 112ms；6 台返回相同公网候选，2 台超时。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若响应节点过少或候选分歧，再检查 UDP、TUN 与代理规则。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待公网候选</strong></div><div class="row-detail-item"><span>证据说明</span><p>将逐个比较 HTTP 出口与 10 个独立 STUN 节点返回的候选。</p></div><div class="row-detail-item"><span>建议</span><p>切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="stun-nodes"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>STUN 节点</strong><small>10 台服务器独立探测</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待节点响应</strong></div><div class="row-detail-item"><span>证据说明</span><p>每个节点使用独立连接；超时节点不会借用其他节点候选。</p></div><div class="row-detail-item"><span>建议</span><p>若响应节点过少或候选分歧，再检查 UDP、TUN 与代理规则。</p></div></div></div></details>
                 </div>
               </section>
             </div>
@@ -588,32 +590,32 @@
               <section class="signal-subsection" aria-label="地理交叉">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">地理交叉</strong><span class="signal-subsection-note">主流地区与冲突</span></div><span class="signal-subsection-status good">一致</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="majority-region"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>主流地区</strong><small>多源地理票数</small></span><span class="signal-row-value good">US · 6 票</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>United States · 6 票</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源国家结果一致，城市样本以 Los Angeles 为主，仅有正常粒度差异。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；如国家层级出现分歧，再优先核对出口路径和代理配置。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="majority-region"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>主流地区</strong><small>10 家多源地理票数</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待真实票数</strong></div><div class="row-detail-item"><span>证据说明</span><p>仅有真实返回国家字段的来源参与投票，其余来源仍保留在列表中。</p></div><div class="row-detail-item"><span>建议</span><p>如国家层级出现分歧，再优先核对出口路径和代理配置。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="conflict-check"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>冲突检查</strong><small>国家 / ASN / 组织</small></span><span class="signal-row-value good">0 项明确冲突</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>国家 / ASN / 组织均无冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>国家冲突 0、ASN 冲突 0、组织冲突 0；可用来源之间没有相互矛盾。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；后续若组织或 ASN 变化，重新完成多源交叉核对。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="网络标签">
-                <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络标签</strong><span class="signal-subsection-note">类型共识与来源</span></div><span class="signal-subsection-status good">6 / 8 来源可用</span></div>
+                <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络标签</strong><span class="signal-subsection-note">类型共识与来源</span></div><span class="signal-subsection-status" id="network-source-status">检测中</span></div>
                 <div class="signal-subsection-rows">
                   <details class="signal-row" data-row-id="network-label-consensus"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络标签共识</strong><small>住宅 / mobile / hosting</small></span><span class="signal-row-value">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>ISP · Mobile</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源共同返回住宅或移动网络特征，未发现 Hosting、Tor 等明确标签。</p></div><div class="row-detail-item"><span>建议</span><p>网络类型应与实际使用场景一致；数据库标签变化后可重新检测。</p></div></div></div></details>
-                  <details class="signal-row" data-row-id="ip-intel-sources"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>IP 情报来源</strong><small>地理与组织信息</small></span><span class="signal-row-value good">可用 · 4 / 4</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>4 / 4 来源可用</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 返回国家、城市、ASN、组织和网络类型。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；单一来源异常时以多源共识为准，不把缺失字段视为冲突。</p></div></div><div class="source-badges"><span class="source-badge">ipwho.is</span><span class="source-badge">ip.sb</span><span class="source-badge">country.is</span><span class="source-badge">db-ip</span></div></div></details>
-                  <details class="signal-row" data-row-id="route-registry-sources"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>路由与注册来源</strong><small>ASN / RIR / 路由信息</small></span><span class="signal-row-value good">可用 · 2 / 2</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现明显冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN 与 ASN lookup 均返回 AS26042、注册组织及一致的公开路由归属。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若路由归属改变，等待数据库同步后重新检测。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="ip-intel-sources"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>IP 情报来源</strong><small>10 家地理与组织信息</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待 10 家来源</strong></div><div class="row-detail-item"><span>证据说明</span><p>每家来源都保留一行，并分别标记可用、字段缺失、超时或错误。</p></div><div class="row-detail-item"><span>建议</span><p>单一来源异常时以多源共识为准，不把缺失字段视为冲突。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="route-registry-sources"><summary class="signal-row-summary"><span class="row-status-dot"></span><span class="signal-row-title"><strong>路由与注册来源</strong><small>10 路 ASN / RIR / 路由信息</small></span><span class="signal-row-value">检测中…</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>等待 10 路来源</strong></div><div class="row-detail-item"><span>证据说明</span><p>将逐项展示 IANA、RIR、RIS、WHOIS、Cymru、PeeringDB 等实时结果。</p></div><div class="row-detail-item"><span>建议</span><p>若路由归属改变，等待数据库同步后重新检测。</p></div></div></div></details>
                 </div>
               </section>
             </div>
           </details>
         </div>
-        <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>一级结果、文字分组和详情行都只使用当前浏览器内的模拟数据；页面默认显示原值，对外截图前可一键隐藏敏感信息。</div></div>
+        <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>检测在当前浏览器内执行；目标 IP 会发送给页面列出的公开情报与路由服务。页面默认显示原值，对外截图前可一键隐藏敏感信息。</div></div>
       </section>
 
       <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title" hidden>
         <div class="section-heading"><div><h2 id="webrtc-title">WebRTC 泄漏摘要</h2><p>把 HTTP 出口和浏览器候选地址放在一起比较</p></div><span class="mini-status good">无额外泄漏</span></div>
         <div class="detail-panel">
-          <p class="panel-note">本次共探测 8 台 STUN 服务器，其中 6 台返回可用结果。公网候选与 HTTP 出口一致，内网地址由 mDNS 隐藏。</p>
+          <p class="panel-note" id="webrtc-panel-note">正在通过 10 个独立 STUN 节点读取公网候选。</p>
           <div class="comparison">
-            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.182</strong><span class="mini-status good">已确认</span></div>
-            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.182</strong><span class="mini-status good">一致</span></div>
-            <div class="comparison-row"><span class="comparison-label">WebRTC 内网地址</span><strong class="comparison-value">a1b2c3d4.local</strong><span class="mini-status good">已隐藏</span></div>
+            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip" id="webrtc-http-ip">检测中…</strong><span class="mini-status" id="webrtc-http-status">等待</span></div>
+            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip" id="webrtc-public-ip">检测中…</strong><span class="mini-status" id="webrtc-public-status">等待</span></div>
+            <div class="comparison-row"><span class="comparison-label">节点一致性</span><strong class="comparison-value" id="webrtc-node-consensus">等待 10 个节点</strong><span class="mini-status" id="webrtc-node-status">检测中</span></div>
           </div>
           <div data-evidence-set="stunNodes" data-evidence-title="STUN 节点明细"></div>
         </div>
@@ -628,7 +630,7 @@
             <button class="fingerprint-tab" type="button" role="tab" aria-selected="false" data-fingerprint="tls">JA3 / JA4</button>
           </div>
           <p class="panel-note" id="fingerprint-description">只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。</p>
-          <div class="fingerprint-id"><div><span id="fingerprint-label">VISITOR ID</span><code id="fingerprint-value">8a4e1e964646b8cbce87b14cc21a7413</code></div><button class="copy-mini" id="fingerprint-copy" type="button" aria-label="复制指纹摘要">⧉</button></div>
+          <div class="fingerprint-id"><div><span id="fingerprint-label">LOCAL SIGNAL HASH</span><code id="fingerprint-value">计算中…</code></div><button class="copy-mini" id="fingerprint-copy" type="button" aria-label="复制指纹摘要">⧉</button></div>
           <ul class="evidence-list" id="fingerprint-evidence">
             <li><strong>平台</strong>MacIntel · Chrome</li>
             <li><strong>屏幕</strong>2560 × 1440 · DPR 2</li>
@@ -639,7 +641,7 @@
         </div>
       </section>
 
-      <footer class="site-footer"><span>本 Demo 只使用本地模拟数据 · 不会发起检测请求</span><a href="index.html">返回正式首页 →</a></footer>
+      <footer class="site-footer"><span>实时结果不写入服务器 · 第三方来源可能看到本轮目标 IP</span><a href="index.html">返回正式首页 →</a></footer>
     </main>
 
     <div class="floating-tool-dock" data-floating-tools role="toolbar" aria-label="快捷工具">
@@ -687,7 +689,7 @@
         <span class="floating-star-badge" id="star-count" aria-hidden="true">Star</span>
         <span class="floating-tool-label" id="github-label">GitHub · Star</span>
       </a>
-      <a class="floating-tool-button" id="floating-top" href="#main" aria-label="回到顶部" title="回到顶部">
+      <a class="floating-tool-button" id="floating-top" href="#main" data-visible="false" aria-hidden="true" tabindex="-1" aria-label="回到顶部" title="回到顶部">
         <svg class="floating-tool-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M12 19V5"></path>
           <path d="m6 11 6-6 6 6"></path>
@@ -732,633 +734,7 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="starPromptPolicy.js"></script>
-    <script>
-      (() => {
-        "use strict";
-
-        const state = { view: "overview", fingerprint: "v3", privacy: false, running: false, runCount: 0, pendingRecheck: false, loadingTimers: [] };
-        const GITHUB_REPO = "betaer/AiSignalGuard";
-        const STAR_CACHE_KEY = "aisg-github-stars";
-        const STAR_CACHE_TTL_MS = 30 * 60 * 1000;
-        const starPromptPolicy = globalThis.AISGStarPromptPolicy.create();
-        const loadingStages = Object.freeze([
-          Object.freeze({ title: "读取浏览器与时区信号", copy: "正在重新读取当前浏览器环境，旧结果会在本轮分析完成后更新。", progress: 18 }),
-          Object.freeze({ title: "交叉核对 DNS、WebRTC 与多源数据", copy: "正在比较出口地址、解析器、STUN 节点和公开网络情报来源。", progress: 62 }),
-          Object.freeze({ title: "生成检测结论", copy: "证据已经收齐，正在整理关键状态、参考分和建议优先级。", progress: 88 })
-        ]);
-        const observations = Object.freeze({
-          exitIp: "38.92.27.182",
-          country: "United States",
-          countryCode: "US",
-          city: "Los Angeles",
-          asn: "AS26042",
-          organization: "FiberState, LLC",
-          timezone: "Asia/Taipei",
-          languages: Object.freeze(["zh-CN", "zh"]),
-          mdnsCandidate: "a1b2c3d4.local"
-        });
-        const fullFingerprint = "8a4e1e964646b8cbce87b14cc21a7413";
-        const fingerprintInfo = {
-          v3: { label: "VISITOR ID", value: fullFingerprint, description: "只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。" },
-          v2: { label: "LEGACY ID", value: "4e01a2a9812bff1c7d85b13e0a89d004", description: "旧版采集面更宽，但现代浏览器里稳定性通常不如 v3+。" },
-          tls: { label: "JA3 / JA4", value: "ja4_t13d1516h2_8daaf6152771", description: "TLS 握手摘要用于判断客户端类型，不等同于设备指纹。" }
-        };
-
-        const freezeRecords = (records) => Object.freeze(records.map((record) => Object.freeze({ ...record })));
-        const sourceRecords = freezeRecords([
-          { name: "ipwho.is", category: "ip-intel", available: true, country: "US", city: "Los Angeles", asn: "AS26042", organization: "FiberState, LLC", networkType: "Mobile", proxy: false, hosting: false, threat: "未返回已知风险", coverage: "国家 / 城市 / ASN / 组织 / 类型", latency: "84ms" },
-          { name: "ip.sb", category: "ip-intel", available: true, country: "US", city: "Los Angeles", asn: "AS26042", organization: "FiberState, LLC", networkType: "ISP", proxy: false, hosting: false, threat: "未返回已知风险", coverage: "国家 / 城市 / ASN / 组织 / 类型", latency: "91ms" },
-          { name: "country.is", category: "ip-intel", available: true, country: "US", city: null, asn: null, organization: null, networkType: null, proxy: null, hosting: null, threat: "不提供信誉字段", coverage: "仅国家", latency: "76ms" },
-          { name: "db-ip", category: "ip-intel", available: true, country: "US", city: "Los Angeles", asn: "AS26042", organization: "FiberState, LLC", networkType: "ISP", proxy: false, hosting: false, threat: "未返回已知风险", coverage: "国家 / 城市 / ASN / 组织 / 类型", latency: "103ms" },
-          { name: "ARIN", category: "route", available: true, country: "US", city: "注册级", asn: "AS26042", organization: "FiberState, LLC", networkType: "RIR 注册", proxy: null, hosting: null, threat: "非信誉数据库", coverage: "国家 / ASN / 注册组织", latency: "118ms" },
-          { name: "ASN Lookup", category: "route", available: true, country: "US", city: "路由级", asn: "AS26042", organization: "FiberState, LLC", networkType: "Mobile route", proxy: null, hosting: null, threat: "非信誉数据库", coverage: "ASN / 组织 / 路由", latency: "109ms" },
-          { name: "IPinfo", category: "optional", available: false, failure: "浏览器请求超时", networkType: null, proxy: null, hosting: null, coverage: "未取得结果", latency: "3000ms" },
-          { name: "AbuseIPDB", category: "optional", available: false, failure: "演示环境未配置令牌", networkType: null, proxy: null, hosting: null, coverage: "未执行信誉查询", latency: "—" }
-        ]);
-        const dnsResolverRecords = freezeRecords([
-          { name: "Cloudflare Resolver A", address: "198.51.100.11", region: "US · Los Angeles", latency: "34ms" },
-          { name: "Cloudflare Resolver B", address: "198.51.100.12", region: "US · Los Angeles", latency: "37ms" },
-          { name: "Google Public DNS A", address: "198.51.100.13", region: "US · Los Angeles", latency: "39ms" },
-          { name: "Google Public DNS B", address: "198.51.100.14", region: "US · Los Angeles", latency: "42ms" },
-          { name: "OpenDNS A", address: "198.51.100.15", region: "US · Los Angeles", latency: "44ms" },
-          { name: "OpenDNS B", address: "198.51.100.16", region: "US · Los Angeles", latency: "47ms" },
-          { name: "Quad9 A", address: "198.51.100.17", region: "US · Los Angeles", latency: "51ms" },
-          { name: "Quad9 B", address: "198.51.100.18", region: "US · Los Angeles", latency: "54ms" },
-          { name: "Control D", address: "198.51.100.19", region: "US · Los Angeles", latency: "57ms" },
-          { name: "AdGuard DNS", address: "198.51.100.20", region: "US · Los Angeles", latency: "61ms" }
-        ]);
-        const stunNodeRecords = freezeRecords([
-          { name: "IP.cx CN", endpoint: "stun:cn.stun.im:3478", value: observations.exitIp, latency: "42ms", result: "一致", rawState: "success" },
-          { name: "Bilibili", endpoint: "stun:stun.chat.bilibili.com:3478", value: observations.exitIp, latency: "58ms", result: "一致", rawState: "success" },
-          { name: "Google", endpoint: "stun:stun.l.google.com:19302", value: observations.exitIp, latency: "86ms", result: "一致", rawState: "success" },
-          { name: "Cloudflare", endpoint: "stun:stun.cloudflare.com:3478", value: observations.exitIp, latency: "94ms", result: "一致", rawState: "success" },
-          { name: "Twilio", endpoint: "stun:global.stun.twilio.com:3478", value: observations.exitIp, latency: "112ms", result: "一致", rawState: "success" },
-          { name: "Metered", endpoint: "stun:stun.relay.metered.ca:80", value: observations.exitIp, latency: "128ms", result: "一致", rawState: "success" },
-          { name: "NextCloud", endpoint: "stun:stun.nextcloud.com:3478", value: "未返回", latency: "3000ms", result: "超时", rawState: "timeout" },
-          { name: "Mozilla", endpoint: "stun:stun.services.mozilla.com:3478", value: "未返回", latency: "3000ms", result: "超时", rawState: "timeout" }
-        ]);
-
-        const availableSourceRecords = Object.freeze(sourceRecords.filter((source) => source.available));
-        const ipIntelSourceRecords = Object.freeze(sourceRecords.filter((source) => source.category === "ip-intel"));
-        const routeSourceRecords = Object.freeze(sourceRecords.filter((source) => source.category === "route"));
-        const boolLabel = (value) => value === null ? "未提供" : value ? "是" : "否";
-        const sourceStatus = (source) => source.available ? (source.coverage === "仅国家" ? "部分可用" : "可用") : "不可用";
-        const sourceTone = (source) => !source.available || source.coverage === "仅国家" ? "warn" : "good";
-
-        const evidenceCatalog = Object.freeze({
-          positionConsistency: freezeRecords([
-            { name: "公网出口位置", meta: "IP 情报主流结果", value: `${observations.country} · ${observations.city} · ${observations.exitIp}`, status: "已读取", tone: "good", sensitive: "ip" },
-            { name: "系统时区", meta: "浏览器 Intl API", value: observations.timezone, status: "不一致", tone: "warn" },
-            { name: "浏览器语言", meta: "Navigator Languages API", value: observations.languages.join(" · "), status: "不一致", tone: "warn" }
-          ]),
-          asnOrganization: freezeRecords(availableSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.asn || "未提供 ASN"} · ${source.organization || "未提供组织"}`, status: source.asn && source.organization ? "匹配" : "字段缺失", tone: source.asn && source.organization ? "good" : "warn" }))),
-          geoVotes: freezeRecords(availableSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.country || "未提供国家"} · ${source.city || "未提供城市"}`, status: source.country === observations.countryCode ? "US 票" : "冲突", tone: source.country === observations.countryCode ? "good" : "bad" }))),
-          exitQualitySources: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : `${source.failure} · ${source.latency}`, value: source.available ? `类型：${source.networkType || "未提供"} · 风险：${source.threat}` : "本轮未取得可核对结果", status: sourceStatus(source), tone: sourceTone(source), rawState: source.available ? "available" : "unavailable" }))),
-          networkTypeSources: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : source.failure, value: source.available ? `网络类型：${source.networkType || "未提供"} · Hosting：${boolLabel(source.hosting)}` : "网络类型未返回", status: sourceStatus(source), tone: sourceTone(source), rawState: source.available ? "available" : "unavailable" }))),
-          riskSourceRecords: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : source.failure, value: source.available ? `Proxy：${boolLabel(source.proxy)} · Hosting：${boolLabel(source.hosting)} · ${source.threat}` : "风险结果不可用", status: source.available && source.proxy === false && source.hosting === false ? "未标记" : source.available ? "不提供" : "不可用", tone: source.available && source.proxy === false && source.hosting === false ? "good" : "warn", rawState: source.available ? "available" : "unavailable" }))),
-          languageSignals: freezeRecords([
-            { name: "navigator.language", meta: "首选语言", value: "zh-CN", status: "已读取", tone: "good" },
-            { name: "navigator.languages[0]", meta: "语言优先级 1", value: "zh-CN", status: "一致", tone: "good" },
-            { name: "navigator.languages[1]", meta: "语言优先级 2", value: "zh", status: "已读取", tone: "good" }
-          ]),
-          emojiSignals: freezeRecords([
-            { name: "笑脸 Emoji", meta: "Canvas 彩色像素采样", value: "😀 · 彩色字形", status: "正常", tone: "good" },
-            { name: "旗帜 Emoji", meta: "区域指示符组合", value: "🇺🇸 · 单一彩色旗帜", status: "正常", tone: "good" }
-          ]),
-          fontSignals: freezeRecords([
-            { name: "黑体类候选", meta: "字体宽度差异", value: "HeiTi / PingFang SC", status: "检测到", tone: "warn" },
-            { name: "宋体类候选", meta: "字体宽度差异", value: "SongTi / STSong", status: "检测到", tone: "warn" }
-          ]),
-          dnsResolvers: freezeRecords(dnsResolverRecords.map((resolver) => ({ name: resolver.name, meta: `${resolver.region} · ${resolver.latency}`, value: resolver.address, status: "一致", tone: "good", sensitive: "ip", rawState: "success" }))),
-          webrtcCandidates: freezeRecords([
-            { name: "HTTP 可见地址", meta: "页面出口观测", value: observations.exitIp, status: "基准", tone: "good", sensitive: "ip", rawState: "success" },
-            { name: "WebRTC 内网候选", meta: "mDNS 主机名", value: observations.mdnsCandidate, status: "已隐藏", tone: "good", rawState: "success" },
-            ...stunNodeRecords.map((node) => ({ name: `STUN · ${node.name}`, meta: `${node.endpoint} · ${node.latency}`, value: node.value, status: node.result, tone: node.rawState === "success" ? "good" : "warn", sensitive: node.rawState === "success" ? "ip" : null, rawState: node.rawState }))
-          ]),
-          stunNodes: freezeRecords(stunNodeRecords.map((node) => ({ name: node.name, meta: `${node.endpoint} · ${node.latency}`, value: node.value, status: node.result, tone: node.rawState === "success" ? "good" : "warn", sensitive: node.rawState === "success" ? "ip" : null, rawState: node.rawState }))),
-          conflictSources: freezeRecords(availableSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `国家：${source.country || "缺失"} · ASN：${source.asn || "缺失"} · 组织：${source.organization || "缺失"}`, status: source.country === "US" && (!source.asn || source.asn === observations.asn) && (!source.organization || source.organization === observations.organization) ? "无冲突" : "需核对", tone: source.country === "US" && (!source.asn || source.asn === observations.asn) && (!source.organization || source.organization === observations.organization) ? "good" : "warn" }))),
-          sourceCoverage: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : `${source.failure} · ${source.latency}`, value: source.available ? `类型：${source.networkType || "未提供"} · Proxy：${boolLabel(source.proxy)} · Hosting：${boolLabel(source.hosting)}` : "本轮来源不可用", status: sourceStatus(source), tone: sourceTone(source), rawState: source.available ? "available" : "unavailable" }))),
-          ipIntelSources: freezeRecords(ipIntelSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.country} · ${source.city || "未提供城市"} · ${source.asn || "未提供 ASN"} · ${source.organization || "未提供组织"}`, status: sourceStatus(source), tone: sourceTone(source), rawState: "available" }))),
-          routeSources: freezeRecords(routeSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.country} · ${source.asn} · ${source.organization} · ${source.networkType}`, status: "一致", tone: "good", rawState: "available" })))
-        });
-
-        const expectedEvidenceCounts = Object.freeze({
-          positionConsistency: 3,
-          asnOrganization: 6,
-          geoVotes: 6,
-          exitQualitySources: 8,
-          networkTypeSources: 8,
-          riskSourceRecords: 8,
-          languageSignals: 3,
-          emojiSignals: 2,
-          fontSignals: 2,
-          dnsResolvers: 10,
-          webrtcCandidates: 10,
-          stunNodes: 8,
-          conflictSources: 6,
-          sourceCoverage: 8,
-          ipIntelSources: 4,
-          routeSources: 2
-        });
-
-        const rowDefinitions = freezeRecords([
-          { id: "position-consistency", title: "位置一致性", evidenceSet: "positionConsistency", evidenceTitle: "一致性指标" },
-          { id: "asn-organization", title: "ASN 与组织", evidenceSet: "asnOrganization", evidenceTitle: "归属来源" },
-          { id: "geo-cross-check", title: "多源地区判断", evidenceSet: "geoVotes", evidenceTitle: "地理来源" },
-          { id: "exit-ip-quality", title: "出口 IP 质量", evidenceSet: "exitQualitySources", evidenceTitle: "质量来源" },
-          { id: "network-type", title: "网络类型", evidenceSet: "networkTypeSources", evidenceTitle: "类型来源" },
-          { id: "risk-proxy-labels", title: "威胁与代理标签", evidenceSet: "riskSourceRecords", evidenceTitle: "风险与代理来源" },
-          { id: "system-timezone", title: "系统时区", evidenceSet: null, evidenceTitle: null },
-          { id: "browser-language", title: "浏览器语言", evidenceSet: "languageSignals", evidenceTitle: "语言指标" },
-          { id: "emoji-rendering", title: "Emoji 渲染", evidenceSet: "emojiSignals", evidenceTitle: "渲染指标" },
-          { id: "chinese-fonts", title: "中文字体", evidenceSet: "fontSignals", evidenceTitle: "字体指标" },
-          { id: "dns-leak", title: "DNS 泄漏", evidenceSet: "dnsResolvers", evidenceTitle: "解析器明细" },
-          { id: "dns-region-consistency", title: "DNS 地区一致性", evidenceSet: "dnsResolvers", evidenceTitle: "解析器地区" },
-          { id: "webrtc-leak", title: "WebRTC 泄漏", evidenceSet: "webrtcCandidates", evidenceTitle: "HTTP、mDNS 与 STUN 候选" },
-          { id: "stun-nodes", title: "STUN 节点", evidenceSet: "stunNodes", evidenceTitle: "STUN 节点" },
-          { id: "majority-region", title: "主流地区", evidenceSet: "geoVotes", evidenceTitle: "地理投票" },
-          { id: "conflict-check", title: "冲突检查", evidenceSet: "conflictSources", evidenceTitle: "逐来源字段" },
-          { id: "network-label-consensus", title: "网络标签共识", evidenceSet: "sourceCoverage", evidenceTitle: "来源标签与可用性" },
-          { id: "ip-intel-sources", title: "IP 情报来源", evidenceSet: "ipIntelSources", evidenceTitle: "IP 情报来源" },
-          { id: "route-registry-sources", title: "路由与注册来源", evidenceSet: "routeSources", evidenceTitle: "路由与注册来源" }
-        ]);
-        const rowEvidenceMap = Object.freeze(Object.fromEntries(rowDefinitions.filter((row) => row.evidenceSet).map((row) => [row.id, Object.freeze({ set: row.evidenceSet, title: row.evidenceTitle })])));
-
-        const $ = (selector) => document.querySelector(selector);
-        const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-
-        function invariant(condition, message) {
-          if (!condition) throw new Error(`[证据模型] ${message}`);
-        }
-        function sameMembers(actual, expected) {
-          return actual.length === expected.length && [...actual].sort().every((value, index) => value === [...expected].sort()[index]);
-        }
-        function validateEvidenceCatalog() {
-          Object.entries(expectedEvidenceCounts).forEach(([setName, expectedCount]) => {
-            const items = evidenceCatalog[setName];
-            invariant(Array.isArray(items), `缺少证据集合 ${setName}`);
-            invariant(items.length === expectedCount, `${setName} 应为 ${expectedCount} 项，实际为 ${items.length} 项`);
-            invariant(new Set(items.map((item) => item.name)).size === items.length, `${setName} 存在重复来源名称`);
-          });
-
-          invariant(new Set(sourceRecords.map((source) => source.name)).size === sourceRecords.length, "来源名称必须唯一");
-          invariant(dnsResolverRecords.every((resolver) => resolver.region.startsWith("US ·")), "DNS 10 / 10 必须指向 US");
-          invariant(sameMembers(dnsResolverRecords.map((resolver) => resolver.name), ["Cloudflare Resolver A", "Cloudflare Resolver B", "Google Public DNS A", "Google Public DNS B", "OpenDNS A", "OpenDNS B", "Quad9 A", "Quad9 B", "Control D", "AdGuard DNS"]), "DNS 解析器成员不正确");
-          invariant(evidenceCatalog.dnsResolvers.every((item) => item.rawState === "success"), "DNS 10 个解析器必须全部成功");
-          invariant(sameMembers(evidenceCatalog.geoVotes.map((item) => item.name), ["ipwho.is", "ip.sb", "country.is", "db-ip", "ARIN", "ASN Lookup"]), "地理投票来源成员不正确");
-          invariant(evidenceCatalog.sourceCoverage.filter((item) => item.rawState === "available").length === 6, "来源覆盖应为 6 个可用");
-          invariant(evidenceCatalog.sourceCoverage.filter((item) => item.rawState === "unavailable").length === 2, "来源覆盖应为 2 个不可用");
-          invariant(evidenceCatalog.stunNodes.filter((item) => item.rawState === "success").length === 6, "STUN 应为 6 个成功节点");
-          invariant(evidenceCatalog.stunNodes.filter((item) => item.rawState === "timeout").length === 2, "STUN 应为 2 个超时节点");
-          invariant(sameMembers(evidenceCatalog.ipIntelSources.map((item) => item.name), ["ipwho.is", "ip.sb", "country.is", "db-ip"]), "IP 情报来源成员不正确");
-          invariant(sameMembers(evidenceCatalog.routeSources.map((item) => item.name), ["ARIN", "ASN Lookup"]), "路由来源成员不正确");
-          invariant(evidenceCatalog.webrtcCandidates.filter((item) => item.name.startsWith("STUN ·")).length === stunNodeRecords.length, "WebRTC 证据必须包含全部 STUN 节点");
-          invariant(rowDefinitions.length === 19, "详情行定义必须为 19 项");
-          invariant(Object.keys(rowEvidenceMap).length === 18, "复合详情映射必须为 18 项");
-          invariant(rowDefinitions.filter((row) => !row.evidenceSet).length === 1 && rowDefinitions.find((row) => !row.evidenceSet).id === "system-timezone", "只有系统时区可以是单项读取");
-        }
-        function bindStableRowIds() {
-          const rows = $$(".signal-row");
-          invariant(rows.length === rowDefinitions.length, `页面应有 ${rowDefinitions.length} 行详情，实际为 ${rows.length} 行`);
-          invariant(new Set(rows.map((row) => row.dataset.rowId)).size === rowDefinitions.length, "详情行 ID 必须唯一");
-          rowDefinitions.forEach((definition) => {
-            const row = document.querySelector(`.signal-row[data-row-id="${definition.id}"]`);
-            invariant(row, `找不到稳定详情行 ${definition.id}`);
-            const title = row.querySelector(".signal-row-title strong")?.textContent.trim();
-            invariant(title === definition.title, `${definition.id} 的标题应为“${definition.title}”，实际为“${title || "空"}”`);
-          });
-        }
-        function maskIpValue(value) {
-          return String(value).replace(/\b(\d{1,3}\.\d{1,3})\.\d{1,3}\.\d{1,3}\b/g, "$1.x.x");
-        }
-        function makeTextElement(tagName, className, text) {
-          const node = document.createElement(tagName);
-          node.className = className;
-          node.textContent = text;
-          return node;
-        }
-        function buildEvidenceSection(setName, title) {
-          const items = evidenceCatalog[setName];
-          invariant(items, `无法渲染未知证据集合 ${setName}`);
-          const section = document.createElement("section");
-          section.className = "metric-evidence";
-          section.dataset.evidenceSet = setName;
-          section.setAttribute("aria-label", `${title}，共 ${items.length} 项`);
-
-          const head = document.createElement("div");
-          head.className = "metric-evidence-head";
-          head.append(makeTextElement("strong", "metric-evidence-title", `${title} · ${items.length} 项`));
-          head.append(makeTextElement("span", "metric-evidence-caption", "本地演示数据 · 逐项证据"));
-          section.append(head);
-
-          const list = document.createElement("ol");
-          list.className = "metric-evidence-list";
-          items.forEach((item, index) => {
-            const listItem = document.createElement("li");
-            listItem.className = "metric-evidence-item";
-            listItem.dataset.evidenceName = item.name;
-            if (item.rawState) listItem.dataset.rawState = item.rawState;
-            listItem.append(makeTextElement("span", "metric-evidence-index", String(index + 1).padStart(2, "0")));
-
-            const source = document.createElement("span");
-            source.className = "metric-evidence-source";
-            source.append(makeTextElement("strong", "", item.name));
-            source.append(makeTextElement("small", "", item.meta || "—"));
-            listItem.append(source);
-
-            const value = makeTextElement("span", "metric-evidence-value", item.value);
-            if (item.sensitive === "ip") {
-              value.classList.add("sensitive-value");
-              value.dataset.sensitive = "ip";
-              value.dataset.sensitiveValue = item.value;
-            }
-            listItem.append(value);
-            listItem.append(makeTextElement("span", `metric-evidence-status ${item.tone || "neutral"}`, item.status || "已记录"));
-            list.append(listItem);
-          });
-          section.append(list);
-          return section;
-        }
-        function applyNarrativeCorrection(row, rowId) {
-          const corrections = {
-            "exit-ip-quality": "下方逐项列出 8 个来源的网络类型、风险字段、缺失或不可用原因；未把无信誉字段的来源当作安全证明。",
-            "risk-proxy-labels": "常规情报源未标记 Proxy 或 Hosting；路由库不提供信誉字段，未配置或超时的来源明确标为不可用。",
-            "ip-intel-sources": "4 个 IP 情报来源均已响应，但字段覆盖不同；country.is 仅提供国家级结果，其余来源返回更完整字段。",
-            "network-label-consensus": "下方逐来源展示网络类型、Proxy 与 Hosting 返回值；缺失字段和不可用来源不参与共识。"
-          };
-          const paragraph = row.querySelector(".row-detail-item:nth-child(2) p");
-          if (paragraph && corrections[rowId]) paragraph.textContent = corrections[rowId];
-        }
-        function renderEvidenceLists() {
-          bindStableRowIds();
-          Object.entries(rowEvidenceMap).forEach(([rowId, mapping]) => {
-            const row = document.querySelector(`.signal-row[data-row-id="${rowId}"]`);
-            invariant(row, `找不到详情行 ${rowId}`);
-            const body = row.querySelector(".signal-row-body");
-            invariant(body, `${rowId} 缺少详情容器`);
-            body.querySelector(".source-badges")?.remove();
-            body.querySelector(":scope > .metric-evidence")?.remove();
-            body.append(buildEvidenceSection(mapping.set, mapping.title));
-            applyNarrativeCorrection(row, rowId);
-          });
-
-          $$('[data-evidence-set]').filter((host) => !host.classList.contains("metric-evidence")).forEach((host) => {
-            const setName = host.dataset.evidenceSet;
-            host.replaceChildren(buildEvidenceSection(setName, host.dataset.evidenceTitle || "证据明细"));
-          });
-
-          Object.keys(rowEvidenceMap).forEach((rowId) => {
-            const count = document.querySelectorAll(`.signal-row[data-row-id="${rowId}"] > .signal-row-body > .metric-evidence`).length;
-            invariant(count === 1, `${rowId} 应且只能渲染 1 个证据区`);
-          });
-          invariant(document.querySelectorAll('.signal-row[data-row-id="system-timezone"] .metric-evidence').length === 0, "系统时区不应生成复合证据区");
-        }
-
-        function maskedIp() { return state.privacy ? maskIpValue(observations.exitIp) : observations.exitIp; }
-        function displayedFingerprint(type = state.fingerprint) {
-          const data = fingerprintInfo[type];
-          if (!state.privacy) return data.value;
-          return type === "tls" ? "已隐藏" : data.value.slice(0, 8) + "••••••••";
-        }
-        function maskedFingerprint() { return displayedFingerprint(state.fingerprint); }
-        function showToast(message) {
-          const toast = $("#toast");
-          toast.textContent = message;
-          toast.classList.add("is-visible");
-          window.clearTimeout(showToast.timer);
-          showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
-        }
-        function updateSensitiveValues() {
-          $$("[data-sensitive='ip']").forEach((node) => {
-            const rawValue = node.dataset.sensitiveValue || observations.exitIp;
-            node.textContent = state.privacy ? maskIpValue(rawValue) : rawValue;
-          });
-          $("#fingerprint-value").textContent = maskedFingerprint();
-          const privacyAction = state.privacy ? "显示原值" : "隐藏原值";
-          $("#privacy-label").textContent = privacyAction;
-          $("#privacy-toggle").dataset.privacyActive = String(state.privacy);
-          $("#privacy-toggle").setAttribute("aria-pressed", String(state.privacy));
-          $("#privacy-toggle").setAttribute("aria-label", privacyAction);
-          $("#privacy-toggle").title = privacyAction;
-        }
-        function setView(view) {
-          state.view = view;
-          $$(".module-tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.view === view)));
-          $$("[data-panel]").forEach((panel) => { panel.hidden = panel.dataset.panel !== view; });
-          const activePanel = $(`[data-panel='${view}']`);
-          if (activePanel) activePanel.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        function fallbackCopy(text) {
-          const textarea = document.createElement("textarea");
-          textarea.value = text;
-          textarea.setAttribute("readonly", "");
-          textarea.style.position = "fixed";
-          textarea.style.top = "-9999px";
-          textarea.style.opacity = "0";
-          document.body.appendChild(textarea);
-          textarea.focus();
-          textarea.select();
-          textarea.setSelectionRange(0, text.length);
-          let copied = false;
-          try { copied = document.execCommand("copy"); } catch (error) {}
-          textarea.remove();
-          return copied;
-        }
-        function copyText(text, success = "已复制到剪贴板") {
-          const complete = (copied) => {
-            showToast(copied ? success : "复制失败，请手动选择内容");
-            return copied;
-          };
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            return navigator.clipboard.writeText(text)
-              .then(() => complete(true))
-              .catch(() => complete(fallbackCopy(text)));
-          }
-          return Promise.resolve(complete(fallbackCopy(text)));
-        }
-        function summaryText() {
-          return `AI Signal Guard · 通用数字环境检测\nhttps://betaer.github.io/AiSignalGuard/\n网络参考分：87/100 · 需要核对\n关键状态：时区不一致、语言不一致、WebRTC 正常\n出口 IP：${maskedIp()} · 位置：美国 · 洛杉矶\n结果只存在于当前浏览器，不上传检测数据。`;
-        }
-        function aiDiagnosticReportText() {
-          return [
-            "请作为网络环境与浏览器一致性诊断助手，分析以下 AI Signal Guard 检测结果。不要仅复述数据，请指出最值得核对的信号、可能原因和建议顺序。",
-            "",
-            "【检测概览】",
-            "环境画像：通用数字环境",
-            "网络参考分：87 / 100",
-            "综合状态：需要核对",
-            `隐私显示：${state.privacy ? "已隐藏敏感原值" : "显示原值"}`,
-            "",
-            "【网络出口】",
-            `IPv4：${maskedIp()}`,
-            `位置：${observations.country} · ${observations.city}`,
-            `ASN / 组织：${observations.asn} · ${observations.organization}`,
-            "网络类型：住宅 / 移动网络",
-            "代理与托管标签：未发现明确标签",
-            "",
-            "【环境一致性】",
-            `系统时区：${observations.timezone}`,
-            `浏览器语言：${observations.languages.join(" · ")}`,
-            "位置结论：出口位于美国洛杉矶，系统时区与浏览器语言均与当前出口地区不一致",
-            "",
-            "【泄漏与多源互证】",
-            "DNS：10 / 10 解析器指向美国",
-            "WebRTC：公网候选与 HTTP 出口一致",
-            "STUN：6 / 8 节点响应，成功节点候选一致",
-            "多源地理：6 票均为 United States，0 项明确冲突",
-            "情报来源：6 / 8 可用，其中 IP 情报 4 / 4、路由与注册 2 / 2",
-            "",
-            "【浏览器指纹】",
-            `FingerprintJS v3+：${displayedFingerprint("v3")}`,
-            `FingerprintJS2：${displayedFingerprint("v2")}`,
-            `JA3 / JA4：${displayedFingerprint("tls")}`,
-            "",
-            "请按以下结构回答：",
-            "1. 一句话结论",
-            "2. 需要优先核对的信号及原因",
-            "3. 已确认正常的信号",
-            "4. 按优先级排列的调整建议",
-            "5. 哪些结论仍受浏览器静态演示数据限制"
-          ].join("\n");
-        }
-        function normalizeStarCount(value) {
-          return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
-        }
-        function renderStarCount(count, starState) {
-          const shortcut = $("#github-shortcut");
-          const badge = $("#star-count");
-          const hoverLabel = $("#github-label");
-          const normalized = normalizeStarCount(count);
-          const hasCount = normalized !== null;
-          const visibleText = hasCount ? String(normalized) : "Star";
-          const accessibleLabel = hasCount ? `打开 GitHub 仓库，${normalized} 个 Star` : "打开 GitHub 仓库";
-          badge.textContent = visibleText;
-          hoverLabel.textContent = `GitHub · ${visibleText}`;
-          shortcut.dataset.starState = starState || (hasCount ? "loaded" : "fallback");
-          shortcut.setAttribute("aria-label", accessibleLabel);
-          shortcut.title = accessibleLabel;
-        }
-        function readCachedStars() {
-          try {
-            const cached = JSON.parse(window.localStorage.getItem(STAR_CACHE_KEY) || "null");
-            const count = normalizeStarCount(cached && cached.count);
-            const savedAt = Number(cached && cached.savedAt);
-            const age = Date.now() - savedAt;
-            if (count === null || !Number.isFinite(savedAt) || savedAt <= 0 || age < 0 || age > STAR_CACHE_TTL_MS) {
-              window.localStorage.removeItem(STAR_CACHE_KEY);
-              return null;
-            }
-            return count;
-          } catch (error) {
-            return null;
-          }
-        }
-        function writeCachedStars(count) {
-          try {
-            window.localStorage.setItem(STAR_CACHE_KEY, JSON.stringify({ count, savedAt: Date.now() }));
-          } catch (error) {}
-        }
-        function loadStars() {
-          const cached = readCachedStars();
-          if (cached !== null) {
-            renderStarCount(cached, "cached");
-            return;
-          }
-          if (typeof window.fetch !== "function") {
-            renderStarCount(null, "fallback");
-            return;
-          }
-          const controller = typeof window.AbortController === "function" ? new window.AbortController() : null;
-          const timeout = controller ? window.setTimeout(() => controller.abort(), 8000) : 0;
-          const options = { headers: { Accept: "application/vnd.github+json" } };
-          if (controller) options.signal = controller.signal;
-          window.fetch(`https://api.github.com/repos/${GITHUB_REPO}`, options)
-            .then((response) => {
-              if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-              return response.json();
-            })
-            .then((repository) => {
-              const count = normalizeStarCount(repository && repository.stargazers_count);
-              if (count === null) throw new Error("Invalid GitHub repository metadata");
-              writeCachedStars(count);
-              renderStarCount(count, "loaded");
-            })
-            .catch(() => renderStarCount(null, "fallback"))
-            .finally(() => { if (timeout) window.clearTimeout(timeout); });
-        }
-        function updateFingerprintView() {
-          const data = fingerprintInfo[state.fingerprint];
-          $("#fingerprint-label").textContent = data.label;
-          $("#fingerprint-description").textContent = data.description;
-          $("#fingerprint-value").textContent = maskedFingerprint();
-          $$(".fingerprint-tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.fingerprint === state.fingerprint)));
-        }
-        function setRecheckControls(running) {
-          const button = $("#floating-recheck");
-          const label = running ? "检测中…" : "重新检测";
-          button.disabled = running;
-          button.dataset.running = String(running);
-          button.setAttribute("aria-label", label);
-          button.title = label;
-          $("#floating-recheck-label").textContent = label;
-        }
-        function clearLoadingTimers() {
-          state.loadingTimers.forEach((timer) => window.clearTimeout(timer));
-          state.loadingTimers = [];
-        }
-        function scheduleLoading(callback, delay) {
-          const timer = window.setTimeout(callback, delay);
-          state.loadingTimers.push(timer);
-          return timer;
-        }
-        function formatRunTime(date) {
-          const pad = (value) => String(value).padStart(2, "0");
-          return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-        }
-        function renderLoadingStage(index, progressOverride) {
-          const boundedIndex = Math.max(0, Math.min(index, loadingStages.length - 1));
-          const stage = loadingStages[boundedIndex];
-          const progress = typeof progressOverride === "number" ? progressOverride : stage.progress;
-          $("#recheck-loading-title").textContent = progress >= 100 ? "检测结论已生成" : stage.title;
-          $("#recheck-loading-copy").textContent = progress >= 100 ? "本轮证据核对完成，正在为你揭晓更新后的检测结果。" : stage.copy;
-          $("#recheck-progress-fill").style.width = `${progress}%`;
-          $("#recheck-progress-value").textContent = `${progress}%`;
-          $("#recheck-progress-track").setAttribute("aria-valuenow", String(progress));
-          $$("[data-loading-step]").forEach((item, itemIndex) => {
-            item.classList.toggle("is-active", itemIndex <= boundedIndex);
-            if (itemIndex === boundedIndex && progress < 100) item.setAttribute("aria-current", "step");
-            else item.removeAttribute("aria-current");
-          });
-          $("#floating-action-status").textContent = progress >= 100 ? "检测结论已生成，正在揭晓结果。" : `${stage.title}，进度 ${progress}%`;
-        }
-        function revealRecheckResults(reducedMotion) {
-          const overlay = $("#recheck-loading");
-          overlay.classList.remove("is-visible");
-          scheduleLoading(() => {
-            overlay.hidden = true;
-            document.body.removeAttribute("data-recheck-loading");
-            state.running = false;
-            setRecheckControls(false);
-            $(".status-badge").textContent = "需要核对";
-            $(".status-badge").style.color = "var(--amber)";
-            $(".status-badge").style.background = "var(--amber-soft)";
-            $("#run-time").textContent = formatRunTime(new Date());
-            $("#floating-action-status").textContent = `检测完成，第 ${state.runCount} 次本地模拟结果已更新。`;
-            window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
-            showToast("检测完成，结果已揭晓 🤩");
-            clearLoadingTimers();
-          }, reducedMotion ? 0 : 260);
-        }
-        function runRecheck() {
-          if (state.running) return;
-          clearLoadingTimers();
-          state.running = true;
-          state.runCount += 1;
-          setRecheckControls(true);
-          $(".status-badge").textContent = "正在检测";
-          $(".status-badge").style.color = "var(--blue)";
-          $(".status-badge").style.background = "var(--blue-soft)";
-          const overlay = $("#recheck-loading");
-          const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-          document.body.dataset.recheckLoading = "true";
-          overlay.hidden = false;
-          renderLoadingStage(0);
-          window.requestAnimationFrame(() => overlay.classList.add("is-visible"));
-          window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
-          const delays = reducedMotion ? [80, 160, 240, 320] : [720, 1480, 2240, 2540];
-          scheduleLoading(() => renderLoadingStage(1), delays[0]);
-          scheduleLoading(() => renderLoadingStage(2), delays[1]);
-          scheduleLoading(() => renderLoadingStage(2, 100), delays[2]);
-          scheduleLoading(() => revealRecheckResults(reducedMotion), delays[3]);
-        }
-        function closeStarSupportDialog() {
-          state.pendingRecheck = false;
-          const dialog = $("#star-support-dialog");
-          if (dialog.open) dialog.close();
-        }
-        function continueStarSupport() {
-          const shouldContinue = state.pendingRecheck;
-          state.pendingRecheck = false;
-          const dialog = $("#star-support-dialog");
-          if (dialog.open) dialog.close();
-          if (shouldContinue) runRecheck();
-        }
-        function requestRecheck() {
-          if (state.running) return;
-          if (!starPromptPolicy.shouldPrompt()) {
-            runRecheck();
-            return;
-          }
-          const dialog = $("#star-support-dialog");
-          if (!dialog || typeof dialog.showModal !== "function") {
-            runRecheck();
-            return;
-          }
-          if (dialog.open) return;
-          state.pendingRecheck = true;
-          starPromptPolicy.remember();
-          dialog.showModal();
-        }
-        function markCopyComplete({ buttonId, labelId, idleLabel, idleAria, completeLabel, completeAria }) {
-          const button = $(`#${buttonId}`);
-          const label = $(`#${labelId}`);
-          button.dataset.copyComplete = "true";
-          button.setAttribute("aria-label", completeAria);
-          button.title = completeAria;
-          label.textContent = completeLabel;
-          window.clearTimeout(button.copyResetTimer);
-          button.copyResetTimer = window.setTimeout(() => {
-            button.dataset.copyComplete = "false";
-            button.setAttribute("aria-label", idleAria);
-            button.title = idleAria;
-            label.textContent = idleLabel;
-          }, 1600);
-        }
-        async function copySummary() {
-          const copied = await copyText(summaryText(), "摘要已复制 🤩");
-          if (copied) {
-            markCopyComplete({
-              buttonId: "floating-copy",
-              labelId: "floating-copy-label",
-              idleLabel: "复制摘要",
-              idleAria: "复制摘要",
-              completeLabel: "摘要已复制",
-              completeAria: "摘要已复制"
-            });
-          }
-        }
-        async function copyAiReport() {
-          const copied = await copyText(aiDiagnosticReportText(), "已复制，请发给AI协助排查解决问题 👨‍🔧");
-          if (copied) {
-            markCopyComplete({
-              buttonId: "floating-ai-report",
-              labelId: "floating-ai-label",
-              idleLabel: "复制给 ChatGPT / Claude",
-              idleAria: "复制给 ChatGPT 或 Claude 诊断",
-              completeLabel: "AI 诊断已复制",
-              completeAria: "AI 诊断内容已复制"
-            });
-          }
-        }
-
-        validateEvidenceCatalog();
-        renderEvidenceLists();
-        $$(".signal-row-chevron, .row-status-dot").forEach((node) => node.setAttribute("aria-hidden", "true"));
-        $$(".module-tab").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
-        $$(".fingerprint-tab").forEach((button) => button.addEventListener("click", () => { state.fingerprint = button.dataset.fingerprint; updateFingerprintView(); }));
-        $("#privacy-toggle").addEventListener("click", () => { state.privacy = !state.privacy; updateSensitiveValues(); showToast(state.privacy ? "已开启隐私遮罩" : "已显示原始值"); });
-        $("#floating-ai-report").addEventListener("click", copyAiReport);
-        $("#floating-copy").addEventListener("click", copySummary);
-        $("#floating-recheck").addEventListener("click", requestRecheck);
-        $("#star-support-close").addEventListener("click", closeStarSupportDialog);
-        $("#star-support-continue").addEventListener("click", continueStarSupport);
-        $("#star-support-github").addEventListener("click", continueStarSupport);
-        $("#star-support-dialog").addEventListener("cancel", (event) => event.preventDefault());
-        $("#fingerprint-copy").addEventListener("click", () => copyText(maskedFingerprint(), "指纹摘要已复制"));
-        updateSensitiveValues();
-        updateFingerprintView();
-        loadStars();
-      })();
-    </script>
+    <script src="ipcxEvidence.js"></script>
+    <script src="ipcxApp.js"></script>
   </body>
 </html>

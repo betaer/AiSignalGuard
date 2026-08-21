@@ -85,7 +85,7 @@
       id: "freeipapi",
       name: "FreeIPAPI",
       endpoint: function (ip) {
-        return "https://freeipapi.com/api/json/" + encodeURIComponent(ip);
+        return "https://free.freeipapi.com/api/json/" + encodeURIComponent(ip);
       },
     },
     {
@@ -164,11 +164,13 @@
       },
     },
     {
-      id: "ipinfo-asn",
-      name: "IPinfo ASN",
+      id: "ripe-announced",
+      name: "RIPEstat Announced Prefixes",
+      needsAsn: true,
       endpoint: function (context) {
         return (
-          "https://api.ipinfo.io/lite/" + encodeURIComponent(context.targetIp)
+          "https://stat.ripe.net/data/announced-prefixes/data.json?resource=" +
+          encodeURIComponent(context.asn)
         );
       },
     },
@@ -951,12 +953,20 @@
         networkType: readPath(payload, ["network", "autonomous_system", "type"]),
       });
     }
-    if (source.id === "ipinfo-asn") {
+    if (source.id === "ripe-announced") {
+      var prefixes = readPath(payload, ["data", "prefixes"]);
+      var prefixValues = Array.isArray(prefixes)
+        ? prefixes.map(function (entry) {
+            return stringValue(entry && (entry.prefix || entry));
+          }).filter(Boolean)
+        : [];
       return routeRecord(source, {
-        asn: normalizeAsn(payload && (payload.asn || payload.asn_id)),
-        organization: payload && (payload.as_name || payload.asn_name),
-        countryCode: normalizeCountryCode(payload && payload.country_code),
-        prefix: payload && payload.network,
+        prefix: prefixValues.length
+          ? prefixValues[0] + (prefixValues.length > 1 ? " 等 " + prefixValues.length + " 条" : "")
+          : null,
+        detail: prefixValues.length
+          ? "RIPEstat 返回该 ASN 当前公告的 " + prefixValues.length + " 条前缀"
+          : "RIPEstat 未返回公告前缀",
       });
     }
     if (source.id === "hackertarget") {
