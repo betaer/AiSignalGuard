@@ -3051,7 +3051,7 @@ const scenarios = [
     },
   },
   {
-    name: "重新测试 Star 引导：正向提示可关闭并继续完整检测",
+    name: "Star 引导：首次显示、12 小时内抑制、到期恢复并支持明确取消",
     async run({ browser, base, ok }) {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
       await routeFixtures(page, base.origin, { autoStart: false, autoContinueStarPrompt: false });
@@ -3070,6 +3070,24 @@ const scenarios = [
       await page.waitForFunction(() => !document.querySelector("#star-support-dialog")?.open);
       await waitForScore(page);
       await page.locator("#run-all").click();
+      await page.waitForFunction(() => document.body.dataset.appStage === "running");
+      ok(
+        "12 小时内重新测试不重复显示 Star 引导并直接进入完整检测",
+        !(await dialog.evaluate((node) => node.open)) &&
+          (await page.locator("body").getAttribute("data-app-stage")) === "running" &&
+          (await page.locator("#run-all").evaluate((node) => node.classList.contains("is-running"))),
+        JSON.stringify({
+          open: await dialog.evaluate((node) => node.open),
+          stage: await page.locator("body").getAttribute("data-app-stage"),
+        }),
+      );
+      await waitForScore(page);
+
+      await page.evaluate(() => {
+        document.cookie = "aisg-star-prompt-until=; Max-Age=0; Path=/; SameSite=Lax";
+        localStorage.setItem("aisg-star-prompt-until", String(Date.now() - 1));
+      });
+      await page.locator("#run-all").click();
       await dialog.waitFor({ state: "visible" });
       const prompt = await dialog.evaluate((node) => ({
         open: node.open,
@@ -3079,21 +3097,36 @@ const scenarios = [
         secondary: node.querySelector(".star-support-secondary")?.textContent.trim(),
       }));
       ok(
-        "重新测试会显示正向 Star 引导而不是负面表情",
+        "12 小时截止时间到达后，重新测试恢复正向 Star 引导而不是负面表情",
         prompt.open && prompt.emoji === "🤩" && prompt.title.includes("测试当然可以") && prompt.primary.includes("Star"),
         JSON.stringify(prompt),
       );
-      await page.locator("#star-support-continue").click();
-      await page.waitForFunction(() => !document.querySelector("#star-support-dialog")?.open);
+      await page.locator("#star-support-close").click();
       ok(
-        "继续测试会关闭提示并重新启动检测",
-        !(await dialog.evaluate((node) => node.open)) && (await page.locator("#run-all").evaluate((node) => node.classList.contains("is-running"))),
+        "关闭按钮只关闭引导，不会额外启动一次检测",
+        !(await dialog.evaluate((node) => node.open)) &&
+          (await page.locator("body").getAttribute("data-app-stage")) === "result",
         JSON.stringify({ open: await dialog.evaluate((node) => node.open), stage: await page.locator("body").getAttribute("data-app-stage") }),
       );
+
+      await page.evaluate(() => {
+        document.cookie = "aisg-star-prompt-until=; Max-Age=0; Path=/; SameSite=Lax";
+        localStorage.setItem("aisg-star-prompt-until", String(Date.now() - 1));
+        document.querySelector("#star-support-github")?.addEventListener("click", (event) => event.preventDefault(), {
+          capture: true,
+          once: true,
+        });
+      });
       await page.locator("#run-all").click();
       await dialog.waitFor({ state: "visible" });
-      await page.locator("#star-support-close").click();
-      ok("关闭按钮只关闭引导，不会额外启动一次检测", !(await dialog.evaluate((node) => node.open)), "dialog closed");
+      await page.locator("#star-support-github").click();
+      await page.waitForFunction(() => document.body.dataset.appStage === "running");
+      ok(
+        "点击 Star 主按钮会关闭引导并启动待处理检测",
+        !(await dialog.evaluate((node) => node.open)) &&
+          (await page.locator("#run-all").evaluate((node) => node.classList.contains("is-running"))),
+        JSON.stringify({ open: await dialog.evaluate((node) => node.open), stage: await page.locator("body").getAttribute("data-app-stage") }),
+      );
       await page.close();
     },
   },
@@ -4241,8 +4274,26 @@ const scenarios = [
       });
       const requestStart = requests.length;
       await page.locator("#run-all").click();
-      const pending = await page.locator("#score-number").textContent();
-      ok("all-retest immediately returns the score to pending", pending.trim() === "··", pending);
+      await page.waitForFunction(
+        () => document.body.dataset.appStage === "running" && document.activeElement?.id === "analysis-progress-title",
+      );
+      const loadingContext = await page.evaluate(() => ({
+        stage: document.body.dataset.appStage,
+        progressVisible: !document.querySelector("#analysis-progress")?.hidden,
+        workspaceHidden: document.querySelector("#analysis-workspace")?.hidden,
+        focus: document.activeElement?.id || "",
+        scrollY: window.scrollY,
+      }));
+      ok(
+        "all-retest 返回页面顶部并完整展示 Loading 揭晓流程",
+        loadingContext.stage === "running" &&
+          loadingContext.progressVisible &&
+          loadingContext.workspaceHidden &&
+          loadingContext.focus === "analysis-progress-title" &&
+          loadingContext.scrollY < 100,
+        JSON.stringify(loadingContext),
+      );
+      await page.waitForFunction(() => document.body.dataset.appStage === "result", null, { timeout: 30000 });
       await waitForScore(page);
       const afterRerun = await page.evaluate(() => ({
         sentinel: window.__retestPageSentinel,
@@ -4251,11 +4302,10 @@ const scenarios = [
         href: location.href,
       }));
       ok(
-        "all-retest keeps the same document, URL and page-position context",
+        "all-retest keeps the same document and URL context after the Loading flow",
         afterRerun.sentinel === beforeRerun.sentinel &&
           afterRerun.timeOrigin === beforeRerun.timeOrigin &&
-          afterRerun.href === beforeRerun.href &&
-          afterRerun.scrollY > 100,
+          afterRerun.href === beforeRerun.href,
         `${JSON.stringify(beforeRerun)} -> ${JSON.stringify(afterRerun)}`,
       );
       const rerunUrls = requests.slice(requestStart);
@@ -5488,7 +5538,8 @@ const scenarios = [
       const identity = page.locator('[data-score-segment="identity"]');
       const ip = page.locator('[data-score-segment="ip"]');
       await identity.waitFor({ state: "visible" });
-      await page.locator("#run-all").click();
+      await page.locator('[data-row="ip"]').click();
+      await page.locator('[data-action="run-ip"]').click();
       await identity.hover();
       await page.waitForTimeout(220);
       await page.evaluate(() => {

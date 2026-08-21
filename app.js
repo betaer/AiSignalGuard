@@ -7942,6 +7942,10 @@ import "./starPromptPolicy.js";
     setPendingRows();
     state.multi = [];
     state.multiIp = "";
+    var multiInput = $("#multi-ip");
+    if (multiInput) {
+      multiInput.value = "";
+    }
     state.multiIsSelf = true;
     state.multiSelf = {
       started: false,
