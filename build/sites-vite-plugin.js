@@ -4,7 +4,11 @@ import { dirname, resolve } from "node:path";
 const STATIC_FILES = [
   "404.html",
   "index-20260719.html",
+  "index-ipcx.html",
   "app.min.js",
+  "starPromptPolicy.js",
+  "ipcxEvidence.js",
+  "ipcxApp.js",
   "styles.min.css",
   "favicon.svg",
   "assets",

@@ -131,6 +131,39 @@ test("serves the dated wide-diagnostics page with its raw shared stylesheet", as
   assert.ok((await stylesheetResponse.text()).length > 50_000);
 });
 
+test("serves the live IPCX page and all of its browser controllers", async () => {
+  const worker = await loadWorker();
+  const env = { ASSETS: mockAssets() };
+  const htmlResponse = await worker.fetch(
+    new Request("https://ai-signal-guard.example/index-ipcx.html", {
+      headers: { accept: "text/html" },
+    }),
+    env,
+    context(),
+  );
+
+  assert.equal(htmlResponse.status, 200);
+  const html = await htmlResponse.text();
+  assert.match(html, /src="starPromptPolicy\.js"/);
+  assert.match(html, /src="ipcxEvidence\.js"/);
+  assert.match(html, /src="ipcxApp\.js"/);
+
+  for (const [pathname, marker] of [
+    ["/starPromptPolicy.js", /AISGStarPromptPolicy/],
+    ["/ipcxEvidence.js", /AISGIpEvidence/],
+    ["/ipcxApp.js", /runLiveDetection/],
+  ]) {
+    const response = await worker.fetch(
+      new Request(`https://ai-signal-guard.example${pathname}`),
+      env,
+      context(),
+    );
+    assert.equal(response.status, 200, pathname);
+    assert.match(response.headers.get("content-type") || "", /^text\/javascript/);
+    assert.match(await response.text(), marker, pathname);
+  }
+});
+
 test("serves the isolated identity demo and its browser assets", async () => {
   const worker = await loadWorker();
   const env = { ASSETS: mockAssets() };
