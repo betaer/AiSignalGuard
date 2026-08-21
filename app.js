@@ -1,5 +1,6 @@
 import { getIdentityProfile } from "./identityProfiles.js";
 import { analyzeIdentity } from "./identityAnalysis.js";
+import "./starPromptPolicy.js";
 
 (function () {
   "use strict";
@@ -7,6 +8,7 @@ import { analyzeIdentity } from "./identityAnalysis.js";
   var REPO = "betaer/AiSignalGuard";
   var STAR_CACHE_KEY = "aisg-github-stars";
   var STAR_CACHE_TTL_MS = 30 * 60 * 1000;
+  var starPromptPolicy = globalThis.AISGStarPromptPolicy.create();
   var RING_CIRCUMFERENCE = 326.726;
   var NAV = [
     ["identity-result-root", "网络风险"],
@@ -75,8 +77,7 @@ import { analyzeIdentity } from "./identityAnalysis.js";
     selectedIdentityId: "",
     identityProfileId: "",
     starPrompt: {
-      pending: null,
-      initialAcknowledged: false
+      pending: null
     },
     identityAnalysis: null,
     identitySignalOpen: {},
@@ -7468,17 +7469,21 @@ import { analyzeIdentity } from "./identityAnalysis.js";
           requestIdentityAnalysis("generic");
           return;
         }
-        openStarSupportDialog({ type: "retest" });
+        requestRetest();
       });
     }
     var starSupportDialog = $("#star-support-dialog");
     var starSupportClose = $("#star-support-close");
     var starSupportContinue = $("#star-support-continue");
+    var starSupportGithub = $("#star-support-github");
     if (starSupportClose) {
       starSupportClose.addEventListener("click", closeStarSupportDialog);
     }
     if (starSupportContinue) {
       starSupportContinue.addEventListener("click", continueStarSupport);
+    }
+    if (starSupportGithub) {
+      starSupportGithub.addEventListener("click", continueStarSupport);
     }
     if (starSupportDialog) {
       starSupportDialog.addEventListener("cancel", function (event) {
@@ -7915,12 +7920,21 @@ import { analyzeIdentity } from "./identityAnalysis.js";
   }
 
   function runAll() {
+    var isResultRetest = state.appStage === "result";
     if (!state.identityProfileId) {
       state.identityProfileId = "generic";
     }
-    if (state.appStage !== "result") {
-      state.identityAnalysis = null;
-      setAppStage("running");
+    state.identityAnalysis = null;
+    state.resultFocusRunId = -1;
+    setAppStage("running");
+    if (isResultRetest) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.requestAnimationFrame(function () {
+        var progressTitle = $("#analysis-progress-title");
+        if (progressTitle && progressTitle.focus) {
+          progressTitle.focus({ preventScroll: true });
+        }
+      });
     }
     state.runId += 1;
     var runId = state.runId;
@@ -8009,7 +8023,6 @@ import { analyzeIdentity } from "./identityAnalysis.js";
       return;
     }
     if (action.type === "identity") {
-      state.starPrompt.initialAcknowledged = true;
       startIdentityAnalysis(action.profileId || "generic");
       return;
     }
@@ -8038,6 +8051,10 @@ import { analyzeIdentity } from "./identityAnalysis.js";
     if (!action) {
       return;
     }
+    if (!starPromptPolicy.shouldPrompt()) {
+      executeStarSupportAction(action);
+      return;
+    }
     if (!dialog || typeof dialog.showModal !== "function") {
       executeStarSupportAction(action);
       return;
@@ -8046,20 +8063,22 @@ import { analyzeIdentity } from "./identityAnalysis.js";
       return;
     }
     state.starPrompt.pending = action;
+    starPromptPolicy.remember();
     dialog.showModal();
   }
 
   function requestIdentityAnalysis(profileId) {
     var normalizedProfileId = profileId || "generic";
     cancelIdentityAutoCountdown();
-    if (state.starPrompt.initialAcknowledged) {
-      return startIdentityAnalysis(normalizedProfileId);
-    }
     openStarSupportDialog({
       type: "identity",
       profileId: normalizedProfileId
     });
     return true;
+  }
+
+  function requestRetest() {
+    openStarSupportDialog({ type: "retest" });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
