@@ -303,27 +303,27 @@
 
       .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; color: var(--muted); font-size: 11px; }
       .site-footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; }
-      .mobile-actions { position: fixed; right: max(14px, calc((100vw - 860px) / 2)); bottom: max(14px, env(safe-area-inset-bottom)); left: max(14px, calc((100vw - 860px) / 2)); z-index: 8; display: none; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; border: 1px solid rgba(197, 209, 201, 0.9); border-radius: 17px; background: rgba(247, 250, 248, 0.91); box-shadow: 0 14px 32px rgba(41, 70, 57, 0.16); backdrop-filter: blur(16px); }
-      .mobile-action { min-height: 43px; border: 0; border-radius: 11px; color: var(--ink-2); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
-      .mobile-action.primary { color: white; background: var(--green); }
-      .mobile-action:disabled { cursor: wait; opacity: 0.68; }
-
-      .floating-tool-dock { position: fixed; right: calc(18px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 12; display: grid; gap: 10px; }
-      .floating-tool-button { position: relative; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(92, 133, 101, 0.42); border-radius: 50%; color: var(--green-deep); background: rgba(247, 251, 244, 0.96); box-shadow: 0 12px 28px rgba(41, 70, 57, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.82); cursor: pointer; backdrop-filter: blur(14px); transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease; }
+      .floating-tool-dock { position: fixed; right: calc(18px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 12; display: flex; flex-direction: column; gap: 9px; }
+      .floating-tool-button { position: relative; display: grid; flex: 0 0 48px; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(92, 133, 101, 0.42); border-radius: 50%; color: var(--green-deep); background: rgba(247, 251, 244, 0.96); box-shadow: 0 12px 28px rgba(41, 70, 57, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.82); cursor: pointer; text-decoration: none; backdrop-filter: blur(14px); transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease; }
       .floating-tool-button:hover { border-color: rgba(72, 123, 84, 0.66); background: #edf6ec; box-shadow: 0 15px 32px rgba(41, 70, 57, 0.21), inset 0 1px 0 rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
       .floating-tool-button:active { transform: translateY(0) scale(0.97); }
       .floating-tool-button:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.26); outline-offset: 4px; }
       .floating-tool-button:disabled { cursor: wait; opacity: 0.66; }
       .floating-tool-button[data-copy-complete="true"] { border-color: rgba(21, 152, 104, 0.64); background: var(--green-soft); }
-      .floating-privacy-button[data-privacy-active="false"] { border-color: rgba(180, 132, 45, 0.48); color: var(--amber); background: #fff8e8; }
+      .floating-ai-button { border-color: rgba(92, 133, 101, 0.5); background: #f1f7eb; }
+      .floating-ai-logo { display: block; object-fit: contain; }
+      .floating-privacy-button[data-privacy-active="true"] { border-color: rgba(180, 132, 45, 0.48); color: var(--amber); background: #fff8e8; }
       .floating-tool-icon { grid-area: 1 / 1; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
       .floating-copy-icon-check { display: none; }
       .floating-copy-button[data-copy-complete="true"] .floating-copy-icon-default { display: none; }
       .floating-copy-button[data-copy-complete="true"] .floating-copy-icon-check { display: block; }
       .floating-recheck-button[data-running="true"] .floating-recheck-icon { animation: floating-spin 850ms linear infinite; }
       .floating-privacy-icon-off { display: none; }
-      .floating-privacy-button[data-privacy-active="false"] .floating-privacy-icon-eye { display: none; }
-      .floating-privacy-button[data-privacy-active="false"] .floating-privacy-icon-off { display: block; }
+      .floating-privacy-button[data-privacy-active="true"] .floating-privacy-icon-eye { display: none; }
+      .floating-privacy-button[data-privacy-active="true"] .floating-privacy-icon-off { display: block; }
+      .floating-github-button { font-variant-numeric: tabular-nums; }
+      .floating-star-badge { position: absolute; top: -6px; right: -5px; display: inline-grid; min-width: 22px; height: 22px; place-items: center; padding: 0 4px; border: 2px solid var(--bg); border-radius: 999px; color: white; background: #405535; box-shadow: 0 3px 8px rgba(31, 48, 25, 0.22); font-family: var(--mono); font-size: 9px; font-weight: 800; line-height: 1; }
+      .floating-github-button[data-star-state="loading"] .floating-star-badge, .floating-github-button[data-star-state="fallback"] .floating-star-badge { background: #697064; }
       .floating-tool-label { position: absolute; right: calc(100% + 10px); top: 50%; min-width: max-content; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink-2); background: rgba(255, 255, 255, 0.96); box-shadow: var(--shadow-small); font-size: 10px; font-weight: 800; line-height: 1; transform: translate(5px, -50%); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 160ms ease; }
       .floating-tool-button:hover .floating-tool-label, .floating-tool-button:focus-visible .floating-tool-label { transform: translate(0, -50%); opacity: 1; }
       .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
@@ -334,8 +334,12 @@
       @media (max-width: 680px) {
         .demo-header { min-height: 61px; padding: 8px 15px; }
         .brand-note { display: none; }
-        .floating-tool-dock { display: none; }
-        .page-shell { width: min(100% - 28px, 560px); padding-top: 32px; }
+        .floating-tool-dock { right: calc(10px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); left: calc(10px + env(safe-area-inset-left)); flex-direction: row; justify-content: center; gap: 6px; }
+        .floating-tool-button { flex-basis: 44px; width: 44px; height: 44px; }
+        .floating-tool-icon { width: 19px; height: 19px; }
+        .floating-tool-label { display: none; }
+        .floating-star-badge { top: -5px; right: -4px; min-width: 20px; height: 20px; font-size: 8px; }
+        .page-shell { width: min(100% - 28px, 560px); padding-top: 32px; padding-bottom: 118px; }
         .intro { margin-bottom: 20px; }
         .eyebrow { margin-bottom: 9px; font-size: 9px; }
         h1 { font-size: 34px; }
@@ -387,7 +391,12 @@
         .evidence-list { grid-template-columns: 1fr; }
         .site-footer { display: block; padding-bottom: 32px; }
         .site-footer span { display: block; margin-bottom: 6px; }
-        .mobile-actions { display: grid; }
+      }
+
+      @media (max-width: 360px) {
+        .floating-tool-dock { gap: 4px; }
+        .floating-tool-button { flex-basis: 40px; width: 40px; height: 40px; }
+        .floating-tool-icon { width: 18px; height: 18px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -429,7 +438,7 @@
           </div>
         </div>
         <div class="result-data-grid">
-          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip">38.92.x.x</span></div>
+          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip">38.92.27.182</span></div>
           <div class="data-item"><span class="data-label">位置</span><span class="data-value">美国 · 洛杉矶</span></div>
           <div class="data-item"><span class="data-label">浏览器</span><span class="data-value">Chrome · macOS</span></div>
           <div class="data-item"><span class="data-label">覆盖率</span><span class="data-value">84%</span></div>
@@ -459,11 +468,11 @@
               <section class="signal-subsection" aria-label="网络类型">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络类型</strong><span class="signal-subsection-note">IP 质量与运营商</span></div><span class="signal-subsection-status good">匹配</span></div>
                 <div class="signal-snapshot">
-                  <div class="signal-snapshot-head"><div><span class="signal-snapshot-label">当前公网出口</span><strong class="signal-snapshot-value sensitive-value" data-sensitive="ip">38.92.x.x</strong></div><span class="signal-snapshot-status">可信 · 移动运营商</span></div>
+                  <div class="signal-snapshot-head"><div><span class="signal-snapshot-label">当前公网出口</span><strong class="signal-snapshot-value sensitive-value" data-sensitive="ip">38.92.27.182</strong></div><span class="signal-snapshot-status">可信 · 移动运营商</span></div>
                   <div class="signal-fact-grid"><div class="signal-fact"><span>位置</span><strong>美国 · 洛杉矶</strong></div><div class="signal-fact"><span>ASN</span><strong>AS26042</strong></div><div class="signal-fact"><span>组织 / ISP</span><strong>FiberState, LLC</strong></div><div class="signal-fact"><span>服务商类型</span><strong>住宅 / 移动网络</strong></div></div>
                 </div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.x.x</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.27.182</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="network-type"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络类型</strong><small>ISP / ASN 类型证据</small></span><span class="signal-row-value good">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>符合通用环境</strong></div><div class="row-detail-item"><span>证据说明</span><p>组织为 FiberState, LLC，现有来源更接近住宅或移动运营商网络。</p></div><div class="row-detail-item"><span>建议</span><p>以实际 ISP 和使用场景为准；网络类型标签需与地理位置、DNS 共同判断。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="risk-proxy-labels"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>威胁与代理标签</strong><small>risk / proxy / hosting</small></span><span class="signal-row-value good">未发现明确标签</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用来源未发现明确标签</strong></div><div class="row-detail-item"><span>证据说明</span><p>本轮可用来源未返回 VPN、Tor、Hosting 或公开黑名单风险标签。</p></div><div class="row-detail-item"><span>建议</span><p>浏览器侧没有完整商业信誉库；网络或平台发生变化后建议重新检测。</p></div></div></div></details>
                 </div>
@@ -514,7 +523,7 @@
               <section class="signal-subsection" aria-label="WebRTC">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">WebRTC</strong><span class="signal-subsection-note">公网与内网候选</span></div><span class="signal-subsection-status good">一致</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.x.x</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.27.182</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="stun-nodes"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>STUN 节点</strong><small>8 台服务器交叉探测</small></span><span class="signal-row-value good">正常 · 6 / 8 响应</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用节点候选一致</strong></div><div class="row-detail-item"><span>证据说明</span><p>国内节点约 42ms、Global 节点约 112ms；6 台返回相同公网候选，2 台超时。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若响应节点过少或候选分歧，再检查 UDP、TUN 与代理规则。</p></div></div></div></details>
                 </div>
               </section>
@@ -547,7 +556,7 @@
             </div>
           </details>
         </div>
-        <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>一级结果、文字分组和详情行都只使用当前浏览器内的模拟数据；页面默认隐藏 IP 后两段，复制摘要会沿用当前隐私状态。</div></div>
+        <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>一级结果、文字分组和详情行都只使用当前浏览器内的模拟数据；页面默认显示原值，对外截图前可一键隐藏敏感信息。</div></div>
       </section>
 
       <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title" hidden>
@@ -555,8 +564,8 @@
         <div class="detail-panel">
           <p class="panel-note">本次共探测 8 台 STUN 服务器，其中 6 台返回可用结果。公网候选与 HTTP 出口一致，内网地址由 mDNS 隐藏。</p>
           <div class="comparison">
-            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.x.x</strong><span class="mini-status good">已确认</span></div>
-            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.x.x</strong><span class="mini-status good">一致</span></div>
+            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.182</strong><span class="mini-status good">已确认</span></div>
+            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.182</strong><span class="mini-status good">一致</span></div>
             <div class="comparison-row"><span class="comparison-label">WebRTC 内网地址</span><strong class="comparison-value">a1b2c3d4.local</strong><span class="mini-status good">已隐藏</span></div>
           </div>
           <div data-evidence-set="stunNodes" data-evidence-title="STUN 节点明细"></div>
@@ -572,14 +581,14 @@
             <button class="fingerprint-tab" type="button" role="tab" aria-selected="false" data-fingerprint="tls">JA3 / JA4</button>
           </div>
           <p class="panel-note" id="fingerprint-description">只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。</p>
-          <div class="fingerprint-id"><div><span id="fingerprint-label">VISITOR ID</span><code id="fingerprint-value">8a4e1e96••••••••</code></div><button class="copy-mini" id="fingerprint-copy" type="button" aria-label="复制指纹摘要">⧉</button></div>
+          <div class="fingerprint-id"><div><span id="fingerprint-label">VISITOR ID</span><code id="fingerprint-value">8a4e1e964646b8cbce87b14cc21a7413</code></div><button class="copy-mini" id="fingerprint-copy" type="button" aria-label="复制指纹摘要">⧉</button></div>
           <ul class="evidence-list" id="fingerprint-evidence">
             <li><strong>平台</strong>MacIntel · Chrome</li>
             <li><strong>屏幕</strong>2560 × 1440 · DPR 2</li>
             <li><strong>字体度量</strong>检测到 5 组稳定差异</li>
             <li><strong>Canvas / WebGL</strong>信号可读取</li>
           </ul>
-          <div class="privacy-callout"><span aria-hidden="true">i</span><div><b>截图时默认隐藏完整 ID</b>原始 Canvas、音频和字体数据不会进入复制摘要；详情只在当前浏览器展示。</div></div>
+          <div class="privacy-callout"><span aria-hidden="true">i</span><div><b>截图前可一键隐藏完整 ID</b>原始 Canvas、音频和字体数据不会进入复制摘要；详情只在当前浏览器展示。</div></div>
         </div>
       </section>
 
@@ -594,6 +603,13 @@
         </svg>
         <span class="floating-tool-label" id="floating-recheck-label">重新检测</span>
       </button>
+      <button class="floating-tool-button floating-copy-button floating-ai-button" id="floating-ai-report" type="button" data-copy-complete="false" aria-label="复制给 ChatGPT 或 Claude 诊断" title="复制给 ChatGPT 或 Claude 诊断">
+        <img class="floating-tool-icon floating-ai-logo floating-copy-icon-default" src="assets/merged_ai_logo.svg?v=20260720-1" alt="" aria-hidden="true">
+        <svg class="floating-tool-icon floating-copy-icon-check" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="m5 12.5 4.4 4.4L19 7.3"></path>
+        </svg>
+        <span class="floating-tool-label" id="floating-ai-label">复制给 ChatGPT / Claude</span>
+      </button>
       <button class="floating-tool-button floating-copy-button" id="floating-copy" type="button" data-copy-complete="false" aria-label="复制摘要" title="复制摘要">
         <svg class="floating-tool-icon floating-copy-icon-default" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <rect x="8" y="8" width="11" height="11" rx="2"></rect>
@@ -604,7 +620,7 @@
         </svg>
         <span class="floating-tool-label" id="floating-copy-label">复制摘要</span>
       </button>
-      <button class="floating-tool-button floating-privacy-button" id="privacy-toggle" type="button" data-privacy-active="true" aria-label="显示原值" title="显示原值">
+      <button class="floating-tool-button floating-privacy-button" id="privacy-toggle" type="button" data-privacy-active="false" aria-pressed="false" aria-label="隐藏原值" title="隐藏原值">
         <svg class="floating-tool-icon floating-privacy-icon-eye" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path>
           <circle cx="12" cy="12" r="2.5"></circle>
@@ -614,16 +630,25 @@
           <path d="M10.7 6.2A9.4 9.4 0 0 1 12 6c6 0 9.5 6 9.5 6a17.8 17.8 0 0 1-2.1 2.8"></path>
           <path d="M6.6 6.6C4 8.3 2.5 12 2.5 12s3.5 6 9.5 6a9 9 0 0 0 3.1-.5"></path>
         </svg>
-        <span class="floating-tool-label" id="privacy-label">显示原值</span>
+        <span class="floating-tool-label" id="privacy-label">隐藏原值</span>
       </button>
+      <a class="floating-tool-button floating-github-button" id="github-shortcut" href="https://github.com/betaer/AiSignalGuard" target="_blank" rel="noopener noreferrer" data-star-state="loading" aria-label="打开 GitHub 仓库" title="打开 GitHub 仓库">
+        <svg class="floating-tool-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+          <path d="M9 18c-4.51 2-5-2-7-2"></path>
+        </svg>
+        <span class="floating-star-badge" id="star-count" aria-hidden="true">Star</span>
+        <span class="floating-tool-label" id="github-label">GitHub · Star</span>
+      </a>
+      <a class="floating-tool-button" id="floating-top" href="#main" aria-label="回到顶部" title="回到顶部">
+        <svg class="floating-tool-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M12 19V5"></path>
+          <path d="m6 11 6-6 6 6"></path>
+        </svg>
+        <span class="floating-tool-label">回到顶部</span>
+      </a>
     </div>
     <span class="visually-hidden" id="floating-action-status" aria-live="polite"></span>
-
-    <div class="mobile-actions" aria-label="快捷操作">
-      <button class="mobile-action primary" id="mobile-recheck" type="button">重新检测</button>
-      <button class="mobile-action" id="mobile-copy" type="button">复制摘要</button>
-      <button class="mobile-action" id="mobile-privacy" type="button">显示原值</button>
-    </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -631,7 +656,10 @@
       (() => {
         "use strict";
 
-        const state = { view: "overview", fingerprint: "v3", privacy: true, running: false, runCount: 0 };
+        const state = { view: "overview", fingerprint: "v3", privacy: false, running: false, runCount: 0 };
+        const GITHUB_REPO = "betaer/AiSignalGuard";
+        const STAR_CACHE_KEY = "aisg-github-stars";
+        const STAR_CACHE_TTL_MS = 30 * 60 * 1000;
         const observations = Object.freeze({
           exitIp: "38.92.27.182",
           country: "United States",
@@ -901,11 +929,12 @@
         }
 
         function maskedIp() { return state.privacy ? maskIpValue(observations.exitIp) : observations.exitIp; }
-        function maskedFingerprint() {
-          const data = fingerprintInfo[state.fingerprint];
+        function displayedFingerprint(type = state.fingerprint) {
+          const data = fingerprintInfo[type];
           if (!state.privacy) return data.value;
-          return state.fingerprint === "tls" ? "已隐藏" : data.value.slice(0, 8) + "••••••••";
+          return type === "tls" ? "已隐藏" : data.value.slice(0, 8) + "••••••••";
         }
+        function maskedFingerprint() { return displayedFingerprint(state.fingerprint); }
         function showToast(message) {
           const toast = $("#toast");
           toast.textContent = message;
@@ -921,8 +950,8 @@
           $("#fingerprint-value").textContent = maskedFingerprint();
           const privacyAction = state.privacy ? "显示原值" : "隐藏原值";
           $("#privacy-label").textContent = privacyAction;
-          $("#mobile-privacy").textContent = privacyAction;
           $("#privacy-toggle").dataset.privacyActive = String(state.privacy);
+          $("#privacy-toggle").setAttribute("aria-pressed", String(state.privacy));
           $("#privacy-toggle").setAttribute("aria-label", privacyAction);
           $("#privacy-toggle").title = privacyAction;
         }
@@ -933,22 +962,143 @@
           const activePanel = $(`[data-panel='${view}']`);
           if (activePanel) activePanel.scrollIntoView({ behavior: "smooth", block: "start" });
         }
+        function fallbackCopy(text) {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.top = "-9999px";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          textarea.setSelectionRange(0, text.length);
+          let copied = false;
+          try { copied = document.execCommand("copy"); } catch (error) {}
+          textarea.remove();
+          return copied;
+        }
         function copyText(text, success = "已复制到剪贴板") {
-          const fallback = () => {
-            const textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed";
-            textarea.style.opacity = "0";
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand("copy");
-            textarea.remove();
+          const complete = (copied) => {
+            showToast(copied ? success : "复制失败，请手动选择内容");
+            return copied;
           };
-          if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).catch(fallback); else fallback();
-          showToast(success);
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text)
+              .then(() => complete(true))
+              .catch(() => complete(fallbackCopy(text)));
+          }
+          return Promise.resolve(complete(fallbackCopy(text)));
         }
         function summaryText() {
           return `AI Signal Guard · 通用数字环境\n网络参考分：87/100 · 需要核对\n关键状态：时区待核对、语言待核对、WebRTC 正常\n出口 IP：${maskedIp()} · 位置：美国 · 洛杉矶\n结果只存在于当前浏览器，不上传检测数据。`;
+        }
+        function aiDiagnosticReportText() {
+          return [
+            "请作为网络环境与浏览器一致性诊断助手，分析以下 AI Signal Guard 检测结果。不要仅复述数据，请指出最值得核对的信号、可能原因和建议顺序。",
+            "",
+            "【检测概览】",
+            "环境画像：通用数字环境",
+            "网络参考分：87 / 100",
+            "综合状态：需要核对",
+            `隐私显示：${state.privacy ? "已隐藏敏感原值" : "显示原值"}`,
+            "",
+            "【网络出口】",
+            `IPv4：${maskedIp()}`,
+            `位置：${observations.country} · ${observations.city}`,
+            `ASN / 组织：${observations.asn} · ${observations.organization}`,
+            "网络类型：住宅 / 移动网络",
+            "代理与托管标签：未发现明确标签",
+            "",
+            "【环境一致性】",
+            `系统时区：${observations.timezone}`,
+            `浏览器语言：${observations.languages.join(" · ")}`,
+            "位置结论：出口位于美国洛杉矶，时区与语言需要结合真实使用地区核对",
+            "",
+            "【泄漏与多源互证】",
+            "DNS：10 / 10 解析器指向美国",
+            "WebRTC：公网候选与 HTTP 出口一致",
+            "STUN：6 / 8 节点响应，成功节点候选一致",
+            "多源地理：6 票均为 United States，0 项明确冲突",
+            "情报来源：6 / 8 可用，其中 IP 情报 4 / 4、路由与注册 2 / 2",
+            "",
+            "【浏览器指纹】",
+            `FingerprintJS v3+：${displayedFingerprint("v3")}`,
+            `FingerprintJS2：${displayedFingerprint("v2")}`,
+            `JA3 / JA4：${displayedFingerprint("tls")}`,
+            "",
+            "请按以下结构回答：",
+            "1. 一句话结论",
+            "2. 需要优先核对的信号及原因",
+            "3. 已确认正常的信号",
+            "4. 按优先级排列的调整建议",
+            "5. 哪些结论仍受浏览器静态演示数据限制"
+          ].join("\n");
+        }
+        function normalizeStarCount(value) {
+          return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
+        }
+        function renderStarCount(count, starState) {
+          const shortcut = $("#github-shortcut");
+          const badge = $("#star-count");
+          const hoverLabel = $("#github-label");
+          const normalized = normalizeStarCount(count);
+          const hasCount = normalized !== null;
+          const visibleText = hasCount ? String(normalized) : "Star";
+          const accessibleLabel = hasCount ? `打开 GitHub 仓库，${normalized} 个 Star` : "打开 GitHub 仓库";
+          badge.textContent = visibleText;
+          hoverLabel.textContent = `GitHub · ${visibleText}`;
+          shortcut.dataset.starState = starState || (hasCount ? "loaded" : "fallback");
+          shortcut.setAttribute("aria-label", accessibleLabel);
+          shortcut.title = accessibleLabel;
+        }
+        function readCachedStars() {
+          try {
+            const cached = JSON.parse(window.localStorage.getItem(STAR_CACHE_KEY) || "null");
+            const count = normalizeStarCount(cached && cached.count);
+            const savedAt = Number(cached && cached.savedAt);
+            const age = Date.now() - savedAt;
+            if (count === null || !Number.isFinite(savedAt) || savedAt <= 0 || age < 0 || age > STAR_CACHE_TTL_MS) {
+              window.localStorage.removeItem(STAR_CACHE_KEY);
+              return null;
+            }
+            return count;
+          } catch (error) {
+            return null;
+          }
+        }
+        function writeCachedStars(count) {
+          try {
+            window.localStorage.setItem(STAR_CACHE_KEY, JSON.stringify({ count, savedAt: Date.now() }));
+          } catch (error) {}
+        }
+        function loadStars() {
+          const cached = readCachedStars();
+          if (cached !== null) {
+            renderStarCount(cached, "cached");
+            return;
+          }
+          if (typeof window.fetch !== "function") {
+            renderStarCount(null, "fallback");
+            return;
+          }
+          const controller = typeof window.AbortController === "function" ? new window.AbortController() : null;
+          const timeout = controller ? window.setTimeout(() => controller.abort(), 8000) : 0;
+          const options = { headers: { Accept: "application/vnd.github+json" } };
+          if (controller) options.signal = controller.signal;
+          window.fetch(`https://api.github.com/repos/${GITHUB_REPO}`, options)
+            .then((response) => {
+              if (!response.ok) throw new Error(`GitHub API ${response.status}`);
+              return response.json();
+            })
+            .then((repository) => {
+              const count = normalizeStarCount(repository && repository.stargazers_count);
+              if (count === null) throw new Error("Invalid GitHub repository metadata");
+              writeCachedStars(count);
+              renderStarCount(count, "loaded");
+            })
+            .catch(() => renderStarCount(null, "fallback"))
+            .finally(() => { if (timeout) window.clearTimeout(timeout); });
         }
         function updateFingerprintView() {
           const data = fingerprintInfo[state.fingerprint];
@@ -958,16 +1108,13 @@
           $$(".fingerprint-tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.fingerprint === state.fingerprint)));
         }
         function setRecheckControls(running) {
-          const desktopButton = $("#floating-recheck");
-          const mobileButton = $("#mobile-recheck");
+          const button = $("#floating-recheck");
           const label = running ? "检测中…" : "重新检测";
-          desktopButton.disabled = running;
-          desktopButton.dataset.running = String(running);
-          desktopButton.setAttribute("aria-label", label);
-          desktopButton.title = label;
+          button.disabled = running;
+          button.dataset.running = String(running);
+          button.setAttribute("aria-label", label);
+          button.title = label;
           $("#floating-recheck-label").textContent = label;
-          mobileButton.disabled = running;
-          mobileButton.textContent = label;
         }
         function runRecheck() {
           if (state.running) return;
@@ -988,25 +1135,46 @@
             showToast("检测完成 🤩");
           }, 1400);
         }
-        function markCopyComplete() {
-          const button = $("#floating-copy");
+        function markCopyComplete({ buttonId, labelId, idleLabel, idleAria, completeLabel, completeAria }) {
+          const button = $(`#${buttonId}`);
+          const label = $(`#${labelId}`);
           button.dataset.copyComplete = "true";
-          button.setAttribute("aria-label", "摘要已复制");
-          button.title = "摘要已复制";
-          $("#floating-copy-label").textContent = "摘要已复制";
-          $("#mobile-copy").textContent = "已复制";
-          window.clearTimeout(markCopyComplete.timer);
-          markCopyComplete.timer = window.setTimeout(() => {
+          button.setAttribute("aria-label", completeAria);
+          button.title = completeAria;
+          label.textContent = completeLabel;
+          window.clearTimeout(button.copyResetTimer);
+          button.copyResetTimer = window.setTimeout(() => {
             button.dataset.copyComplete = "false";
-            button.setAttribute("aria-label", "复制摘要");
-            button.title = "复制摘要";
-            $("#floating-copy-label").textContent = "复制摘要";
-            $("#mobile-copy").textContent = "复制摘要";
+            button.setAttribute("aria-label", idleAria);
+            button.title = idleAria;
+            label.textContent = idleLabel;
           }, 1600);
         }
-        function copySummary() {
-          copyText(summaryText(), "摘要已复制 🤩");
-          markCopyComplete();
+        async function copySummary() {
+          const copied = await copyText(summaryText(), "摘要已复制 🤩");
+          if (copied) {
+            markCopyComplete({
+              buttonId: "floating-copy",
+              labelId: "floating-copy-label",
+              idleLabel: "复制摘要",
+              idleAria: "复制摘要",
+              completeLabel: "摘要已复制",
+              completeAria: "摘要已复制"
+            });
+          }
+        }
+        async function copyAiReport() {
+          const copied = await copyText(aiDiagnosticReportText(), "已复制，可粘贴给 ChatGPT / Claude 🤩");
+          if (copied) {
+            markCopyComplete({
+              buttonId: "floating-ai-report",
+              labelId: "floating-ai-label",
+              idleLabel: "复制给 ChatGPT / Claude",
+              idleAria: "复制给 ChatGPT 或 Claude 诊断",
+              completeLabel: "AI 诊断已复制",
+              completeAria: "AI 诊断内容已复制"
+            });
+          }
         }
 
         validateEvidenceCatalog();
@@ -1015,14 +1183,13 @@
         $$(".module-tab").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
         $$(".fingerprint-tab").forEach((button) => button.addEventListener("click", () => { state.fingerprint = button.dataset.fingerprint; updateFingerprintView(); }));
         $("#privacy-toggle").addEventListener("click", () => { state.privacy = !state.privacy; updateSensitiveValues(); showToast(state.privacy ? "已开启隐私遮罩" : "已显示原始值"); });
-        $("#mobile-privacy").addEventListener("click", () => $("#privacy-toggle").click());
+        $("#floating-ai-report").addEventListener("click", copyAiReport);
         $("#floating-copy").addEventListener("click", copySummary);
-        $("#mobile-copy").addEventListener("click", copySummary);
         $("#floating-recheck").addEventListener("click", runRecheck);
-        $("#mobile-recheck").addEventListener("click", runRecheck);
         $("#fingerprint-copy").addEventListener("click", () => copyText(maskedFingerprint(), "指纹摘要已复制"));
         updateSensitiveValues();
         updateFingerprintView();
+        loadStars();
       })();
     </script>
   </body>
