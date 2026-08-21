@@ -239,7 +239,7 @@
       .signal-group-chevron, .signal-row-chevron { color: var(--muted); font-size: 20px; font-weight: 800; line-height: 1; transition: transform 180ms ease, color 180ms ease; }
       .signal-group[open] > .signal-group-summary .signal-group-chevron { color: var(--green-deep); transform: rotate(90deg); }
       .signal-group-body { padding: 16px; border-top: 1px solid var(--line); background: linear-gradient(180deg, rgba(247, 250, 248, 0.78), rgba(255, 255, 255, 0.76)); }
-      .signal-subsection + .signal-subsection { margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--line-strong); }
+      .signal-subsection + .signal-subsection { margin-top: 17px; padding-top: 15px; border-top: 1px dashed rgba(116, 129, 123, 0.28); }
       .signal-subsection-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 2px 8px; }
       .signal-subsection-copy { min-width: 0; }
       .signal-subsection-name { color: var(--ink); font-size: 12px; font-weight: 900; letter-spacing: 0.01em; }
@@ -482,7 +482,7 @@
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">▣</span>
               <span class="signal-group-heading"><span class="signal-group-title">身份信号</span><span class="signal-group-note">浏览器语言、时区与设备渲染</span></span>
-              <span class="signal-group-evaluation"><strong class="signal-group-result warn">2 项待核对</strong><span class="signal-group-count">4 项详情</span></span>
+              <span class="signal-group-evaluation"><strong class="signal-group-result warn">存在待核对项</strong><span class="signal-group-count">4 项详情</span></span>
               <span class="signal-group-chevron" aria-hidden="true">›</span>
             </summary>
             <div class="signal-group-body">
@@ -532,7 +532,7 @@
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">⊙</span>
               <span class="signal-group-heading"><span class="signal-group-title">多源互证</span><span class="signal-group-note">地理情报、网络标签与最终判断</span></span>
-              <span class="signal-group-evaluation"><strong class="signal-group-result good">6 / 8 可用</strong><span class="signal-group-count">5 项详情</span></span>
+              <span class="signal-group-evaluation"><strong class="signal-group-result good">多源结果一致</strong><span class="signal-group-count">5 项详情</span></span>
               <span class="signal-group-chevron" aria-hidden="true">›</span>
             </summary>
             <div class="signal-group-body">
@@ -544,7 +544,7 @@
                 </div>
               </section>
               <section class="signal-subsection" aria-label="网络标签">
-                <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络标签</strong><span class="signal-subsection-note">类型共识与来源</span></div><span class="signal-subsection-status good">6 可用</span></div>
+                <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络标签</strong><span class="signal-subsection-note">类型共识与来源</span></div><span class="signal-subsection-status good">6 / 8 来源可用</span></div>
                 <div class="signal-subsection-rows">
                   <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络标签共识</strong><small>住宅 / mobile / hosting</small></span><span class="signal-row-value">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>ISP · Mobile</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源共同返回住宅或移动网络特征，未发现 Hosting、Tor 等明确标签。</p></div><div class="row-detail-item"><span>建议</span><p>网络类型应与实际使用场景一致；数据库标签变化后可重新检测。</p></div></div></div></details>
                   <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>IP 情报来源</strong><small>地理与组织信息</small></span><span class="signal-row-value good">可用 · 4 / 4</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>4 / 4 来源可用</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 返回国家、城市、ASN、组织和网络类型。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；单一来源异常时以多源共识为准，不把缺失字段视为冲突。</p></div></div><div class="source-badges"><span class="source-badge">ipwho.is</span><span class="source-badge">ip.sb</span><span class="source-badge">country.is</span><span class="source-badge">db-ip</span></div></div></details>
