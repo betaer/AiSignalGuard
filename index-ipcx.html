@@ -280,6 +280,23 @@
       .row-detail-item strong { color: var(--ink); font-family: var(--mono); font-size: 11px; }
       .source-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
       .source-badge { padding: 4px 7px; border-radius: 7px; color: var(--muted); background: #edf4ef; font-family: var(--mono); font-size: 9px; }
+      .metric-evidence { margin-top: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.9); }
+      .metric-evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border-bottom: 1px solid var(--line); background: #f4f8f5; }
+      .metric-evidence-title { min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 10px; font-weight: 900; }
+      .metric-evidence-caption { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
+      .metric-evidence-list { margin: 0; padding: 0; list-style: none; }
+      .metric-evidence-item { display: grid; grid-template-columns: 28px minmax(170px, 1.2fr) minmax(150px, 1fr) auto; gap: 10px; align-items: center; min-height: 52px; padding: 8px 11px; border-top: 1px solid var(--line); }
+      .metric-evidence-item:first-child { border-top: 0; }
+      .metric-evidence-index { color: var(--muted); font-family: var(--mono); font-size: 9px; }
+      .metric-evidence-source { min-width: 0; }
+      .metric-evidence-source strong { display: block; overflow-wrap: anywhere; color: var(--ink); font-size: 10px; }
+      .metric-evidence-source small { display: block; margin-top: 2px; overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: 9px; }
+      .metric-evidence-value { min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); font-family: var(--mono); font-size: 10px; font-weight: 800; }
+      .metric-evidence-status { font-size: 9px; font-weight: 900; text-align: right; white-space: normal; }
+      .metric-evidence-status.good { color: var(--green-deep); }
+      .metric-evidence-status.warn { color: var(--amber); }
+      .metric-evidence-status.bad { color: var(--red); }
+      .metric-evidence-status.neutral { color: var(--muted); }
 
       .detail-panel { padding: 21px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 255, 255, 0.78); box-shadow: var(--shadow-small); }
       .detail-panel + .detail-panel { margin-top: 15px; }
@@ -292,11 +309,6 @@
       .mini-status.good { color: var(--green-deep); background: var(--green-soft); }
       .mini-status.warn { color: var(--amber); background: var(--amber-soft); }
       .mini-status.bad { color: var(--red); background: var(--red-soft); }
-      .server-list { display: grid; gap: 6px; margin-top: 16px; }
-      .server-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
-      .server-name { font-size: 13px; font-weight: 800; }
-      .server-region { display: block; margin-top: 2px; color: var(--muted); font-family: var(--mono); font-size: 10px; }
-      .latency { color: var(--muted); font-family: var(--mono); font-size: 11px; }
       .fingerprint-tabs { display: flex; gap: 5px; margin-bottom: 16px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
       .fingerprint-tab { flex: 1; min-height: 37px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
       .fingerprint-tab[aria-selected="true"] { color: white; background: var(--green); }
@@ -377,6 +389,10 @@
         .signal-row-chevron { grid-column: 3; grid-row: 1 / span 2; }
         .signal-row-body { padding: 10px 11px 12px; }
         .row-detail-grid { grid-template-columns: 1fr; }
+        .metric-evidence-head { align-items: flex-start; }
+        .metric-evidence-item { grid-template-columns: 23px minmax(0, 1fr) auto; gap: 7px; padding: 9px; }
+        .metric-evidence-value { grid-column: 2 / 4; grid-row: 2; margin-top: -4px; }
+        .metric-evidence-status { grid-column: 3; grid-row: 1; max-width: 92px; overflow-wrap: anywhere; }
         .detail-panel { padding: 16px; border-radius: 18px; }
         .section-heading h2 { font-size: 20px; }
         .comparison-row { grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px; }
@@ -458,9 +474,9 @@
               <section class="signal-subsection" aria-label="位置一致性">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">位置一致性</strong><span class="signal-subsection-note">出口、时区与语言</span></div><span class="signal-subsection-status warn">部分匹配</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>位置一致性</strong><small>出口位置 / 时区 / 语言</small></span><span class="signal-row-value warn">部分匹配</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>存在地区提示差异</strong></div><div class="row-detail-item"><span>证据说明</span><p>出口显示美国 · 洛杉矶，系统时区为 Asia/Taipei，浏览器语言为 zh-CN。</p></div><div class="row-detail-item"><span>建议</span><p>核对设备时区、首选语言与实际使用地区，避免长期画像出现不必要矛盾。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>ASN 与组织</strong><small>ARIN · AS26042</small></span><span class="signal-row-value">FiberState, LLC</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>归属信息可核对</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN、ipwho.is 与 ASN lookup 返回的 ASN、组织名称保持一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若后续 ASN 或组织发生变化，再与实际运营商线路核对。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>多源地区判断</strong><small>地理来源交叉验证</small></span><span class="signal-row-value good">主流判定 US</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地理冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 等 6 个可用来源均指向美国。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；城市粒度轻微变化属于数据库差异，国家冲突才需优先核对。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="position-consistency"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>位置一致性</strong><small>出口位置 / 时区 / 语言</small></span><span class="signal-row-value warn">部分匹配</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>存在地区提示差异</strong></div><div class="row-detail-item"><span>证据说明</span><p>出口显示美国 · 洛杉矶，系统时区为 Asia/Taipei，浏览器语言为 zh-CN。</p></div><div class="row-detail-item"><span>建议</span><p>核对设备时区、首选语言与实际使用地区，避免长期画像出现不必要矛盾。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="asn-organization"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>ASN 与组织</strong><small>ARIN · AS26042</small></span><span class="signal-row-value">FiberState, LLC</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>归属信息可核对</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN、ipwho.is 与 ASN lookup 返回的 ASN、组织名称保持一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若后续 ASN 或组织发生变化，再与实际运营商线路核对。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="geo-cross-check"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>多源地区判断</strong><small>地理来源交叉验证</small></span><span class="signal-row-value good">主流判定 US</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地理冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 等 6 个可用来源均指向美国。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；城市粒度轻微变化属于数据库差异，国家冲突才需优先核对。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="网络类型">
@@ -470,9 +486,9 @@
                   <div class="signal-fact-grid"><div class="signal-fact"><span>位置</span><strong>美国 · 洛杉矶</strong></div><div class="signal-fact"><span>ASN</span><strong>AS26042</strong></div><div class="signal-fact"><span>组织 / ISP</span><strong>FiberState, LLC</strong></div><div class="signal-fact"><span>服务商类型</span><strong>住宅 / 移动网络</strong></div></div>
                 </div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.27.x</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络类型</strong><small>ISP / ASN 类型证据</small></span><span class="signal-row-value good">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>符合通用环境</strong></div><div class="row-detail-item"><span>证据说明</span><p>组织为 FiberState, LLC，现有来源更接近住宅或移动运营商网络。</p></div><div class="row-detail-item"><span>建议</span><p>以实际 ISP 和使用场景为准；网络类型标签需与地理位置、DNS 共同判断。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>威胁与代理标签</strong><small>risk / proxy / hosting</small></span><span class="signal-row-value good">未发现明确标签</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>无已知威胁记录</strong></div><div class="row-detail-item"><span>证据说明</span><p>本轮可用来源未返回 VPN、Tor、Hosting 或公开黑名单风险标签。</p></div><div class="row-detail-item"><span>建议</span><p>浏览器侧没有完整商业信誉库；网络或平台发生变化后建议重新检测。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.27.x</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="network-type"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络类型</strong><small>ISP / ASN 类型证据</small></span><span class="signal-row-value good">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>符合通用环境</strong></div><div class="row-detail-item"><span>证据说明</span><p>组织为 FiberState, LLC，现有来源更接近住宅或移动运营商网络。</p></div><div class="row-detail-item"><span>建议</span><p>以实际 ISP 和使用场景为准；网络类型标签需与地理位置、DNS 共同判断。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="risk-proxy-labels"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>威胁与代理标签</strong><small>risk / proxy / hosting</small></span><span class="signal-row-value good">未发现明确标签</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用来源未发现明确标签</strong></div><div class="row-detail-item"><span>证据说明</span><p>本轮可用来源未返回 VPN、Tor、Hosting 或公开黑名单风险标签。</p></div><div class="row-detail-item"><span>建议</span><p>浏览器侧没有完整商业信誉库；网络或平台发生变化后建议重新检测。</p></div></div></div></details>
                 </div>
               </section>
             </div>
@@ -489,15 +505,15 @@
               <section class="signal-subsection" aria-label="时区">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">时区</strong><span class="signal-subsection-note">系统与出口城市</span></div><span class="signal-subsection-status warn">部分匹配</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>系统时区</strong><small>浏览器 Intl API</small></span><span class="signal-row-value warn">Asia/Taipei</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>与出口城市不同</strong></div><div class="row-detail-item"><span>证据说明</span><p>网页可直接读取系统时区；本机时区与洛杉矶出口相差明显。</p></div><div class="row-detail-item"><span>建议</span><p>按实际使用地区核对系统时区、浏览器设置和网络出口是否长期一致。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="system-timezone"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>系统时区</strong><small>浏览器 Intl API</small></span><span class="signal-row-value warn">Asia/Taipei</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>与出口城市不同</strong></div><div class="row-detail-item"><span>证据说明</span><p>网页可直接读取系统时区；本机时区与洛杉矶出口相差明显。</p></div><div class="row-detail-item"><span>建议</span><p>按实际使用地区核对系统时区、浏览器设置和网络出口是否长期一致。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="语言">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">语言</strong><span class="signal-subsection-note">浏览器与设备渲染</span></div><span class="signal-subsection-status warn">待核对</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>浏览器语言</strong><small>Navigator Languages API</small></span><span class="signal-row-value warn">zh-CN · zh</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>与出口地区部分匹配</strong></div><div class="row-detail-item"><span>证据说明</span><p>首选语言为 zh-CN，与美国出口并不直接冲突，但会形成不同地区提示。</p></div><div class="row-detail-item"><span>建议</span><p>语言应符合真实日常使用习惯，不建议只为某个网站临时频繁修改。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>Emoji 渲染</strong><small>Canvas 本地检测</small></span><span class="signal-row-value good">正常 · 旗帜彩色</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>渲染能力正常</strong></div><div class="row-detail-item"><span>证据说明</span><p>😀 与旗帜 Emoji 可正常彩色渲染，没有出现黑白字母替代。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；Emoji 是弱设备信号，应与浏览器、字体和网络环境共同理解。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>中文字体</strong><small>字体宽度差异探测</small></span><span class="signal-row-value warn">待核对 · HeiTi / SongTi</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>检测到 2 组字体</strong></div><div class="row-detail-item"><span>证据说明</span><p>检测到黑体类与宋体类候选字体，属于 macOS 中文环境常见弱来源信号。</p></div><div class="row-detail-item"><span>建议</span><p>字体存在本身不是风险，不应脱离 IP、语言、时区单独下结论。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="browser-language"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>浏览器语言</strong><small>Navigator Languages API</small></span><span class="signal-row-value warn">zh-CN · zh</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>与出口地区部分匹配</strong></div><div class="row-detail-item"><span>证据说明</span><p>首选语言为 zh-CN，与美国出口并不直接冲突，但会形成不同地区提示。</p></div><div class="row-detail-item"><span>建议</span><p>语言应符合真实日常使用习惯，不建议只为某个网站临时频繁修改。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="emoji-rendering"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>Emoji 渲染</strong><small>Canvas 本地检测</small></span><span class="signal-row-value good">正常 · 旗帜彩色</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>渲染能力正常</strong></div><div class="row-detail-item"><span>证据说明</span><p>😀 与旗帜 Emoji 可正常彩色渲染，没有出现黑白字母替代。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；Emoji 是弱设备信号，应与浏览器、字体和网络环境共同理解。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="chinese-fonts"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>中文字体</strong><small>字体宽度差异探测</small></span><span class="signal-row-value warn">待核对 · HeiTi / SongTi</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>检测到 2 组字体</strong></div><div class="row-detail-item"><span>证据说明</span><p>检测到黑体类与宋体类候选字体，属于 macOS 中文环境常见弱来源信号。</p></div><div class="row-detail-item"><span>建议</span><p>字体存在本身不是风险，不应脱离 IP、语言、时区单独下结论。</p></div></div></div></details>
                 </div>
               </section>
             </div>
@@ -514,15 +530,15 @@
               <section class="signal-subsection" aria-label="DNS">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">DNS</strong><span class="signal-subsection-note">解析器与地区</span></div><span class="signal-subsection-status good">正常</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>DNS 泄漏</strong><small>标准 DNS 检测</small></span><span class="signal-row-value good">10 个解析器一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地区泄漏</strong></div><div class="row-detail-item"><span>证据说明</span><p>10 个可见解析器均指向美国地区，与当前公网出口国家一致。</p></div><div class="row-detail-item"><span>建议</span><p>保持远程解析或 DoH / TUN 设置，避免 DNS 绕过当前网络路径。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>DNS 地区一致性</strong><small>解析器国家交叉</small></span><span class="signal-row-value good">一致 · US 10 / 10</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>10 / 10 指向美国</strong></div><div class="row-detail-item"><span>证据说明</span><p>主流地区为 United States，冲突解析器为 0，与当前出口国家一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；第三方 DNS 检测只反映本轮路径，网络切换后需重新检测。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="dns-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>DNS 泄漏</strong><small>标准 DNS 检测</small></span><span class="signal-row-value good">10 个解析器一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地区泄漏</strong></div><div class="row-detail-item"><span>证据说明</span><p>10 个可见解析器均指向美国地区，与当前公网出口国家一致。</p></div><div class="row-detail-item"><span>建议</span><p>保持远程解析或 DoH / TUN 设置，避免 DNS 绕过当前网络路径。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="dns-region-consistency"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>DNS 地区一致性</strong><small>解析器国家交叉</small></span><span class="signal-row-value good">一致 · US 10 / 10</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>10 / 10 指向美国</strong></div><div class="row-detail-item"><span>证据说明</span><p>主流地区为 United States，冲突解析器为 0，与当前出口国家一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；第三方 DNS 检测只反映本轮路径，网络切换后需重新检测。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="WebRTC">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">WebRTC</strong><span class="signal-subsection-note">公网与内网候选</span></div><span class="signal-subsection-status good">一致</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.27.x</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>STUN 节点</strong><small>8 台服务器交叉探测</small></span><span class="signal-row-value good">正常 · 6 / 8 响应</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用节点候选一致</strong></div><div class="row-detail-item"><span>证据说明</span><p>国内节点约 42ms、Global 节点约 112ms；6 台返回相同公网候选，2 台超时。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若响应节点过少或候选分歧，再检查 UDP、TUN 与代理规则。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.27.x</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="stun-nodes"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>STUN 节点</strong><small>8 台服务器交叉探测</small></span><span class="signal-row-value good">正常 · 6 / 8 响应</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用节点候选一致</strong></div><div class="row-detail-item"><span>证据说明</span><p>国内节点约 42ms、Global 节点约 112ms；6 台返回相同公网候选，2 台超时。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若响应节点过少或候选分歧，再检查 UDP、TUN 与代理规则。</p></div></div></div></details>
                 </div>
               </section>
             </div>
@@ -539,16 +555,16 @@
               <section class="signal-subsection" aria-label="地理交叉">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">地理交叉</strong><span class="signal-subsection-note">主流地区与冲突</span></div><span class="signal-subsection-status good">一致</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>主流地区</strong><small>多源地理票数</small></span><span class="signal-row-value good">US · 6 票</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>United States · 6 票</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源国家结果一致，城市样本以 Los Angeles 为主，仅有正常粒度差异。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；如国家层级出现分歧，再优先核对出口路径和代理配置。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>冲突检查</strong><small>国家 / ASN / 组织</small></span><span class="signal-row-value good">0 项明确冲突</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>国家 / ASN / 组织均无冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>国家冲突 0、ASN 冲突 0、组织冲突 0；可用来源之间没有相互矛盾。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；后续若组织或 ASN 变化，重新完成多源交叉核对。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="majority-region"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>主流地区</strong><small>多源地理票数</small></span><span class="signal-row-value good">US · 6 票</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>United States · 6 票</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源国家结果一致，城市样本以 Los Angeles 为主，仅有正常粒度差异。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；如国家层级出现分歧，再优先核对出口路径和代理配置。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="conflict-check"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>冲突检查</strong><small>国家 / ASN / 组织</small></span><span class="signal-row-value good">0 项明确冲突</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>国家 / ASN / 组织均无冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>国家冲突 0、ASN 冲突 0、组织冲突 0；可用来源之间没有相互矛盾。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；后续若组织或 ASN 变化，重新完成多源交叉核对。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="网络标签">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络标签</strong><span class="signal-subsection-note">类型共识与来源</span></div><span class="signal-subsection-status good">6 / 8 来源可用</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络标签共识</strong><small>住宅 / mobile / hosting</small></span><span class="signal-row-value">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>ISP · Mobile</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源共同返回住宅或移动网络特征，未发现 Hosting、Tor 等明确标签。</p></div><div class="row-detail-item"><span>建议</span><p>网络类型应与实际使用场景一致；数据库标签变化后可重新检测。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>IP 情报来源</strong><small>地理与组织信息</small></span><span class="signal-row-value good">可用 · 4 / 4</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>4 / 4 来源可用</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 返回国家、城市、ASN、组织和网络类型。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；单一来源异常时以多源共识为准，不把缺失字段视为冲突。</p></div></div><div class="source-badges"><span class="source-badge">ipwho.is</span><span class="source-badge">ip.sb</span><span class="source-badge">country.is</span><span class="source-badge">db-ip</span></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>路由与注册来源</strong><small>ASN / RIR / 路由信息</small></span><span class="signal-row-value good">可用 · 2 / 2</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现明显冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN 与 ASN lookup 均返回 AS26042、注册组织及一致的公开路由归属。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若路由归属改变，等待数据库同步后重新检测。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="network-label-consensus"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络标签共识</strong><small>住宅 / mobile / hosting</small></span><span class="signal-row-value">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>ISP · Mobile</strong></div><div class="row-detail-item"><span>证据说明</span><p>可用来源共同返回住宅或移动网络特征，未发现 Hosting、Tor 等明确标签。</p></div><div class="row-detail-item"><span>建议</span><p>网络类型应与实际使用场景一致；数据库标签变化后可重新检测。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="ip-intel-sources"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>IP 情报来源</strong><small>地理与组织信息</small></span><span class="signal-row-value good">可用 · 4 / 4</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>4 / 4 来源可用</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 返回国家、城市、ASN、组织和网络类型。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；单一来源异常时以多源共识为准，不把缺失字段视为冲突。</p></div></div><div class="source-badges"><span class="source-badge">ipwho.is</span><span class="source-badge">ip.sb</span><span class="source-badge">country.is</span><span class="source-badge">db-ip</span></div></div></details>
+                  <details class="signal-row" data-row-id="route-registry-sources"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>路由与注册来源</strong><small>ASN / RIR / 路由信息</small></span><span class="signal-row-value good">可用 · 2 / 2</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现明显冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN 与 ASN lookup 均返回 AS26042、注册组织及一致的公开路由归属。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若路由归属改变，等待数据库同步后重新检测。</p></div></div></div></details>
                 </div>
               </section>
             </div>
@@ -566,12 +582,7 @@
             <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.x</strong><span class="mini-status good">一致</span></div>
             <div class="comparison-row"><span class="comparison-label">WebRTC 内网地址</span><strong class="comparison-value">a1b2c3d4.local</strong><span class="mini-status good">已隐藏</span></div>
           </div>
-          <div class="server-list" aria-label="STUN 节点结果">
-            <div class="server-row"><div><span class="server-name">IP.cx · 国内节点</span><span class="server-region">stun:cn.stun.im:3478</span></div><span class="mini-status good">一致</span><span class="latency">42ms</span></div>
-            <div class="server-row"><div><span class="server-name">Bilibili</span><span class="server-region">stun:stun.chat.bilibili.com:3478</span></div><span class="mini-status good">一致</span><span class="latency">58ms</span></div>
-            <div class="server-row"><div><span class="server-name">Twilio · Global</span><span class="server-region">stun:global.stun.twilio.com:3478</span></div><span class="mini-status good">一致</span><span class="latency">112ms</span></div>
-            <div class="server-row"><div><span class="server-name">NextCloud · Global</span><span class="server-region">stun:stun.nextcloud.com:3478</span></div><span class="mini-status warn">超时</span><span class="latency">—</span></div>
-          </div>
+          <div data-evidence-set="stunNodes" data-evidence-title="STUN 节点明细"></div>
         </div>
       </section>
 
@@ -624,7 +635,17 @@
         "use strict";
 
         const state = { view: "overview", fingerprint: "v3", privacy: true, running: false, runCount: 0 };
-        const fullIp = "38.92.27.182";
+        const observations = Object.freeze({
+          exitIp: "38.92.27.182",
+          country: "United States",
+          countryCode: "US",
+          city: "Los Angeles",
+          asn: "AS26042",
+          organization: "FiberState, LLC",
+          timezone: "Asia/Taipei",
+          languages: Object.freeze(["zh-CN", "zh"]),
+          mdnsCandidate: "a1b2c3d4.local"
+        });
         const fullFingerprint = "8a4e1e964646b8cbce87b14cc21a7413";
         const fingerprintInfo = {
           v3: { label: "VISITOR ID", value: fullFingerprint, description: "只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。" },
@@ -632,10 +653,257 @@
           tls: { label: "JA3 / JA4", value: "ja4_t13d1516h2_••••", description: "TLS 握手摘要用于判断客户端类型，不等同于设备指纹。" }
         };
 
+        const freezeRecords = (records) => Object.freeze(records.map((record) => Object.freeze({ ...record })));
+        const sourceRecords = freezeRecords([
+          { name: "ipwho.is", category: "ip-intel", available: true, country: "US", city: "Los Angeles", asn: "AS26042", organization: "FiberState, LLC", networkType: "Mobile", proxy: false, hosting: false, threat: "未返回已知风险", coverage: "国家 / 城市 / ASN / 组织 / 类型", latency: "84ms" },
+          { name: "ip.sb", category: "ip-intel", available: true, country: "US", city: "Los Angeles", asn: "AS26042", organization: "FiberState, LLC", networkType: "ISP", proxy: false, hosting: false, threat: "未返回已知风险", coverage: "国家 / 城市 / ASN / 组织 / 类型", latency: "91ms" },
+          { name: "country.is", category: "ip-intel", available: true, country: "US", city: null, asn: null, organization: null, networkType: null, proxy: null, hosting: null, threat: "不提供信誉字段", coverage: "仅国家", latency: "76ms" },
+          { name: "db-ip", category: "ip-intel", available: true, country: "US", city: "Los Angeles", asn: "AS26042", organization: "FiberState, LLC", networkType: "ISP", proxy: false, hosting: false, threat: "未返回已知风险", coverage: "国家 / 城市 / ASN / 组织 / 类型", latency: "103ms" },
+          { name: "ARIN", category: "route", available: true, country: "US", city: "注册级", asn: "AS26042", organization: "FiberState, LLC", networkType: "RIR 注册", proxy: null, hosting: null, threat: "非信誉数据库", coverage: "国家 / ASN / 注册组织", latency: "118ms" },
+          { name: "ASN Lookup", category: "route", available: true, country: "US", city: "路由级", asn: "AS26042", organization: "FiberState, LLC", networkType: "Mobile route", proxy: null, hosting: null, threat: "非信誉数据库", coverage: "ASN / 组织 / 路由", latency: "109ms" },
+          { name: "IPinfo", category: "optional", available: false, failure: "浏览器请求超时", networkType: null, proxy: null, hosting: null, coverage: "未取得结果", latency: "3000ms" },
+          { name: "AbuseIPDB", category: "optional", available: false, failure: "演示环境未配置令牌", networkType: null, proxy: null, hosting: null, coverage: "未执行信誉查询", latency: "—" }
+        ]);
+        const dnsResolverRecords = freezeRecords([
+          { name: "Cloudflare Resolver A", address: "198.51.100.11", region: "US · Los Angeles", latency: "34ms" },
+          { name: "Cloudflare Resolver B", address: "198.51.100.12", region: "US · Los Angeles", latency: "37ms" },
+          { name: "Google Public DNS A", address: "198.51.100.13", region: "US · Los Angeles", latency: "39ms" },
+          { name: "Google Public DNS B", address: "198.51.100.14", region: "US · Los Angeles", latency: "42ms" },
+          { name: "OpenDNS A", address: "198.51.100.15", region: "US · Los Angeles", latency: "44ms" },
+          { name: "OpenDNS B", address: "198.51.100.16", region: "US · Los Angeles", latency: "47ms" },
+          { name: "Quad9 A", address: "198.51.100.17", region: "US · Los Angeles", latency: "51ms" },
+          { name: "Quad9 B", address: "198.51.100.18", region: "US · Los Angeles", latency: "54ms" },
+          { name: "Control D", address: "198.51.100.19", region: "US · Los Angeles", latency: "57ms" },
+          { name: "AdGuard DNS", address: "198.51.100.20", region: "US · Los Angeles", latency: "61ms" }
+        ]);
+        const stunNodeRecords = freezeRecords([
+          { name: "IP.cx CN", endpoint: "stun:cn.stun.im:3478", value: observations.exitIp, latency: "42ms", result: "一致", rawState: "success" },
+          { name: "Bilibili", endpoint: "stun:stun.chat.bilibili.com:3478", value: observations.exitIp, latency: "58ms", result: "一致", rawState: "success" },
+          { name: "Google", endpoint: "stun:stun.l.google.com:19302", value: observations.exitIp, latency: "86ms", result: "一致", rawState: "success" },
+          { name: "Cloudflare", endpoint: "stun:stun.cloudflare.com:3478", value: observations.exitIp, latency: "94ms", result: "一致", rawState: "success" },
+          { name: "Twilio", endpoint: "stun:global.stun.twilio.com:3478", value: observations.exitIp, latency: "112ms", result: "一致", rawState: "success" },
+          { name: "Metered", endpoint: "stun:stun.relay.metered.ca:80", value: observations.exitIp, latency: "128ms", result: "一致", rawState: "success" },
+          { name: "NextCloud", endpoint: "stun:stun.nextcloud.com:3478", value: "未返回", latency: "3000ms", result: "超时", rawState: "timeout" },
+          { name: "Mozilla", endpoint: "stun:stun.services.mozilla.com:3478", value: "未返回", latency: "3000ms", result: "超时", rawState: "timeout" }
+        ]);
+
+        const availableSourceRecords = Object.freeze(sourceRecords.filter((source) => source.available));
+        const ipIntelSourceRecords = Object.freeze(sourceRecords.filter((source) => source.category === "ip-intel"));
+        const routeSourceRecords = Object.freeze(sourceRecords.filter((source) => source.category === "route"));
+        const boolLabel = (value) => value === null ? "未提供" : value ? "是" : "否";
+        const sourceStatus = (source) => source.available ? (source.coverage === "仅国家" ? "部分可用" : "可用") : "不可用";
+        const sourceTone = (source) => !source.available || source.coverage === "仅国家" ? "warn" : "good";
+
+        const evidenceCatalog = Object.freeze({
+          positionConsistency: freezeRecords([
+            { name: "公网出口位置", meta: "IP 情报主流结果", value: `${observations.country} · ${observations.city} · ${observations.exitIp}`, status: "已读取", tone: "good", sensitive: "ip" },
+            { name: "系统时区", meta: "浏览器 Intl API", value: observations.timezone, status: "待核对", tone: "warn" },
+            { name: "浏览器语言", meta: "Navigator Languages API", value: observations.languages.join(" · "), status: "待核对", tone: "warn" }
+          ]),
+          asnOrganization: freezeRecords(availableSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.asn || "未提供 ASN"} · ${source.organization || "未提供组织"}`, status: source.asn && source.organization ? "匹配" : "字段缺失", tone: source.asn && source.organization ? "good" : "warn" }))),
+          geoVotes: freezeRecords(availableSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.country || "未提供国家"} · ${source.city || "未提供城市"}`, status: source.country === observations.countryCode ? "US 票" : "冲突", tone: source.country === observations.countryCode ? "good" : "bad" }))),
+          exitQualitySources: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : `${source.failure} · ${source.latency}`, value: source.available ? `类型：${source.networkType || "未提供"} · 风险：${source.threat}` : "本轮未取得可核对结果", status: sourceStatus(source), tone: sourceTone(source), rawState: source.available ? "available" : "unavailable" }))),
+          networkTypeSources: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : source.failure, value: source.available ? `网络类型：${source.networkType || "未提供"} · Hosting：${boolLabel(source.hosting)}` : "网络类型未返回", status: sourceStatus(source), tone: sourceTone(source), rawState: source.available ? "available" : "unavailable" }))),
+          riskSourceRecords: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : source.failure, value: source.available ? `Proxy：${boolLabel(source.proxy)} · Hosting：${boolLabel(source.hosting)} · ${source.threat}` : "风险结果不可用", status: source.available && source.proxy === false && source.hosting === false ? "未标记" : source.available ? "不提供" : "不可用", tone: source.available && source.proxy === false && source.hosting === false ? "good" : "warn", rawState: source.available ? "available" : "unavailable" }))),
+          languageSignals: freezeRecords([
+            { name: "navigator.language", meta: "首选语言", value: "zh-CN", status: "已读取", tone: "good" },
+            { name: "navigator.languages[0]", meta: "语言优先级 1", value: "zh-CN", status: "一致", tone: "good" },
+            { name: "navigator.languages[1]", meta: "语言优先级 2", value: "zh", status: "已读取", tone: "good" }
+          ]),
+          emojiSignals: freezeRecords([
+            { name: "笑脸 Emoji", meta: "Canvas 彩色像素采样", value: "😀 · 彩色字形", status: "正常", tone: "good" },
+            { name: "旗帜 Emoji", meta: "区域指示符组合", value: "🇺🇸 · 单一彩色旗帜", status: "正常", tone: "good" }
+          ]),
+          fontSignals: freezeRecords([
+            { name: "黑体类候选", meta: "字体宽度差异", value: "HeiTi / PingFang SC", status: "检测到", tone: "warn" },
+            { name: "宋体类候选", meta: "字体宽度差异", value: "SongTi / STSong", status: "检测到", tone: "warn" }
+          ]),
+          dnsResolvers: freezeRecords(dnsResolverRecords.map((resolver) => ({ name: resolver.name, meta: `${resolver.region} · ${resolver.latency}`, value: resolver.address, status: "一致", tone: "good", sensitive: "ip", rawState: "success" }))),
+          webrtcCandidates: freezeRecords([
+            { name: "HTTP 可见地址", meta: "页面出口观测", value: observations.exitIp, status: "基准", tone: "good", sensitive: "ip", rawState: "success" },
+            { name: "WebRTC 内网候选", meta: "mDNS 主机名", value: observations.mdnsCandidate, status: "已隐藏", tone: "good", rawState: "success" },
+            ...stunNodeRecords.map((node) => ({ name: `STUN · ${node.name}`, meta: `${node.endpoint} · ${node.latency}`, value: node.value, status: node.result, tone: node.rawState === "success" ? "good" : "warn", sensitive: node.rawState === "success" ? "ip" : null, rawState: node.rawState }))
+          ]),
+          stunNodes: freezeRecords(stunNodeRecords.map((node) => ({ name: node.name, meta: `${node.endpoint} · ${node.latency}`, value: node.value, status: node.result, tone: node.rawState === "success" ? "good" : "warn", sensitive: node.rawState === "success" ? "ip" : null, rawState: node.rawState }))),
+          conflictSources: freezeRecords(availableSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `国家：${source.country || "缺失"} · ASN：${source.asn || "缺失"} · 组织：${source.organization || "缺失"}`, status: source.country === "US" && (!source.asn || source.asn === observations.asn) && (!source.organization || source.organization === observations.organization) ? "无冲突" : "需核对", tone: source.country === "US" && (!source.asn || source.asn === observations.asn) && (!source.organization || source.organization === observations.organization) ? "good" : "warn" }))),
+          sourceCoverage: freezeRecords(sourceRecords.map((source) => ({ name: source.name, meta: source.available ? `${source.coverage} · ${source.latency}` : `${source.failure} · ${source.latency}`, value: source.available ? `类型：${source.networkType || "未提供"} · Proxy：${boolLabel(source.proxy)} · Hosting：${boolLabel(source.hosting)}` : "本轮来源不可用", status: sourceStatus(source), tone: sourceTone(source), rawState: source.available ? "available" : "unavailable" }))),
+          ipIntelSources: freezeRecords(ipIntelSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.country} · ${source.city || "未提供城市"} · ${source.asn || "未提供 ASN"} · ${source.organization || "未提供组织"}`, status: sourceStatus(source), tone: sourceTone(source), rawState: "available" }))),
+          routeSources: freezeRecords(routeSourceRecords.map((source) => ({ name: source.name, meta: `${source.coverage} · ${source.latency}`, value: `${source.country} · ${source.asn} · ${source.organization} · ${source.networkType}`, status: "一致", tone: "good", rawState: "available" })))
+        });
+
+        const expectedEvidenceCounts = Object.freeze({
+          positionConsistency: 3,
+          asnOrganization: 6,
+          geoVotes: 6,
+          exitQualitySources: 8,
+          networkTypeSources: 8,
+          riskSourceRecords: 8,
+          languageSignals: 3,
+          emojiSignals: 2,
+          fontSignals: 2,
+          dnsResolvers: 10,
+          webrtcCandidates: 10,
+          stunNodes: 8,
+          conflictSources: 6,
+          sourceCoverage: 8,
+          ipIntelSources: 4,
+          routeSources: 2
+        });
+
+        const rowDefinitions = freezeRecords([
+          { id: "position-consistency", title: "位置一致性", evidenceSet: "positionConsistency", evidenceTitle: "一致性指标" },
+          { id: "asn-organization", title: "ASN 与组织", evidenceSet: "asnOrganization", evidenceTitle: "归属来源" },
+          { id: "geo-cross-check", title: "多源地区判断", evidenceSet: "geoVotes", evidenceTitle: "地理来源" },
+          { id: "exit-ip-quality", title: "出口 IP 质量", evidenceSet: "exitQualitySources", evidenceTitle: "质量来源" },
+          { id: "network-type", title: "网络类型", evidenceSet: "networkTypeSources", evidenceTitle: "类型来源" },
+          { id: "risk-proxy-labels", title: "威胁与代理标签", evidenceSet: "riskSourceRecords", evidenceTitle: "风险与代理来源" },
+          { id: "system-timezone", title: "系统时区", evidenceSet: null, evidenceTitle: null },
+          { id: "browser-language", title: "浏览器语言", evidenceSet: "languageSignals", evidenceTitle: "语言指标" },
+          { id: "emoji-rendering", title: "Emoji 渲染", evidenceSet: "emojiSignals", evidenceTitle: "渲染指标" },
+          { id: "chinese-fonts", title: "中文字体", evidenceSet: "fontSignals", evidenceTitle: "字体指标" },
+          { id: "dns-leak", title: "DNS 泄漏", evidenceSet: "dnsResolvers", evidenceTitle: "解析器明细" },
+          { id: "dns-region-consistency", title: "DNS 地区一致性", evidenceSet: "dnsResolvers", evidenceTitle: "解析器地区" },
+          { id: "webrtc-leak", title: "WebRTC 泄漏", evidenceSet: "webrtcCandidates", evidenceTitle: "HTTP、mDNS 与 STUN 候选" },
+          { id: "stun-nodes", title: "STUN 节点", evidenceSet: "stunNodes", evidenceTitle: "STUN 节点" },
+          { id: "majority-region", title: "主流地区", evidenceSet: "geoVotes", evidenceTitle: "地理投票" },
+          { id: "conflict-check", title: "冲突检查", evidenceSet: "conflictSources", evidenceTitle: "逐来源字段" },
+          { id: "network-label-consensus", title: "网络标签共识", evidenceSet: "sourceCoverage", evidenceTitle: "来源标签与可用性" },
+          { id: "ip-intel-sources", title: "IP 情报来源", evidenceSet: "ipIntelSources", evidenceTitle: "IP 情报来源" },
+          { id: "route-registry-sources", title: "路由与注册来源", evidenceSet: "routeSources", evidenceTitle: "路由与注册来源" }
+        ]);
+        const rowEvidenceMap = Object.freeze(Object.fromEntries(rowDefinitions.filter((row) => row.evidenceSet).map((row) => [row.id, Object.freeze({ set: row.evidenceSet, title: row.evidenceTitle })])));
+
         const $ = (selector) => document.querySelector(selector);
         const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
-        function maskedIp() { return state.privacy ? "38.92.27.x" : fullIp; }
+        function invariant(condition, message) {
+          if (!condition) throw new Error(`[证据模型] ${message}`);
+        }
+        function sameMembers(actual, expected) {
+          return actual.length === expected.length && [...actual].sort().every((value, index) => value === [...expected].sort()[index]);
+        }
+        function validateEvidenceCatalog() {
+          Object.entries(expectedEvidenceCounts).forEach(([setName, expectedCount]) => {
+            const items = evidenceCatalog[setName];
+            invariant(Array.isArray(items), `缺少证据集合 ${setName}`);
+            invariant(items.length === expectedCount, `${setName} 应为 ${expectedCount} 项，实际为 ${items.length} 项`);
+            invariant(new Set(items.map((item) => item.name)).size === items.length, `${setName} 存在重复来源名称`);
+          });
+
+          invariant(new Set(sourceRecords.map((source) => source.name)).size === sourceRecords.length, "来源名称必须唯一");
+          invariant(dnsResolverRecords.every((resolver) => resolver.region.startsWith("US ·")), "DNS 10 / 10 必须指向 US");
+          invariant(sameMembers(dnsResolverRecords.map((resolver) => resolver.name), ["Cloudflare Resolver A", "Cloudflare Resolver B", "Google Public DNS A", "Google Public DNS B", "OpenDNS A", "OpenDNS B", "Quad9 A", "Quad9 B", "Control D", "AdGuard DNS"]), "DNS 解析器成员不正确");
+          invariant(evidenceCatalog.dnsResolvers.every((item) => item.rawState === "success"), "DNS 10 个解析器必须全部成功");
+          invariant(sameMembers(evidenceCatalog.geoVotes.map((item) => item.name), ["ipwho.is", "ip.sb", "country.is", "db-ip", "ARIN", "ASN Lookup"]), "地理投票来源成员不正确");
+          invariant(evidenceCatalog.sourceCoverage.filter((item) => item.rawState === "available").length === 6, "来源覆盖应为 6 个可用");
+          invariant(evidenceCatalog.sourceCoverage.filter((item) => item.rawState === "unavailable").length === 2, "来源覆盖应为 2 个不可用");
+          invariant(evidenceCatalog.stunNodes.filter((item) => item.rawState === "success").length === 6, "STUN 应为 6 个成功节点");
+          invariant(evidenceCatalog.stunNodes.filter((item) => item.rawState === "timeout").length === 2, "STUN 应为 2 个超时节点");
+          invariant(sameMembers(evidenceCatalog.ipIntelSources.map((item) => item.name), ["ipwho.is", "ip.sb", "country.is", "db-ip"]), "IP 情报来源成员不正确");
+          invariant(sameMembers(evidenceCatalog.routeSources.map((item) => item.name), ["ARIN", "ASN Lookup"]), "路由来源成员不正确");
+          invariant(evidenceCatalog.webrtcCandidates.filter((item) => item.name.startsWith("STUN ·")).length === stunNodeRecords.length, "WebRTC 证据必须包含全部 STUN 节点");
+          invariant(rowDefinitions.length === 19, "详情行定义必须为 19 项");
+          invariant(Object.keys(rowEvidenceMap).length === 18, "复合详情映射必须为 18 项");
+          invariant(rowDefinitions.filter((row) => !row.evidenceSet).length === 1 && rowDefinitions.find((row) => !row.evidenceSet).id === "system-timezone", "只有系统时区可以是单项读取");
+        }
+        function bindStableRowIds() {
+          const rows = $$(".signal-row");
+          invariant(rows.length === rowDefinitions.length, `页面应有 ${rowDefinitions.length} 行详情，实际为 ${rows.length} 行`);
+          invariant(new Set(rows.map((row) => row.dataset.rowId)).size === rowDefinitions.length, "详情行 ID 必须唯一");
+          rowDefinitions.forEach((definition) => {
+            const row = document.querySelector(`.signal-row[data-row-id="${definition.id}"]`);
+            invariant(row, `找不到稳定详情行 ${definition.id}`);
+            const title = row.querySelector(".signal-row-title strong")?.textContent.trim();
+            invariant(title === definition.title, `${definition.id} 的标题应为“${definition.title}”，实际为“${title || "空"}”`);
+          });
+        }
+        function maskIpValue(value) {
+          return String(value).replace(/\b((?:\d{1,3}\.){3})\d{1,3}\b/g, "$1x");
+        }
+        function makeTextElement(tagName, className, text) {
+          const node = document.createElement(tagName);
+          node.className = className;
+          node.textContent = text;
+          return node;
+        }
+        function buildEvidenceSection(setName, title) {
+          const items = evidenceCatalog[setName];
+          invariant(items, `无法渲染未知证据集合 ${setName}`);
+          const section = document.createElement("section");
+          section.className = "metric-evidence";
+          section.dataset.evidenceSet = setName;
+          section.setAttribute("aria-label", `${title}，共 ${items.length} 项`);
+
+          const head = document.createElement("div");
+          head.className = "metric-evidence-head";
+          head.append(makeTextElement("strong", "metric-evidence-title", `${title} · ${items.length} 项`));
+          head.append(makeTextElement("span", "metric-evidence-caption", "本地演示数据 · 逐项证据"));
+          section.append(head);
+
+          const list = document.createElement("ol");
+          list.className = "metric-evidence-list";
+          items.forEach((item, index) => {
+            const listItem = document.createElement("li");
+            listItem.className = "metric-evidence-item";
+            listItem.dataset.evidenceName = item.name;
+            if (item.rawState) listItem.dataset.rawState = item.rawState;
+            listItem.append(makeTextElement("span", "metric-evidence-index", String(index + 1).padStart(2, "0")));
+
+            const source = document.createElement("span");
+            source.className = "metric-evidence-source";
+            source.append(makeTextElement("strong", "", item.name));
+            source.append(makeTextElement("small", "", item.meta || "—"));
+            listItem.append(source);
+
+            const value = makeTextElement("span", "metric-evidence-value", item.value);
+            if (item.sensitive === "ip") {
+              value.classList.add("sensitive-value");
+              value.dataset.sensitive = "ip";
+              value.dataset.sensitiveValue = item.value;
+            }
+            listItem.append(value);
+            listItem.append(makeTextElement("span", `metric-evidence-status ${item.tone || "neutral"}`, item.status || "已记录"));
+            list.append(listItem);
+          });
+          section.append(list);
+          return section;
+        }
+        function applyNarrativeCorrection(row, rowId) {
+          const corrections = {
+            "exit-ip-quality": "下方逐项列出 8 个来源的网络类型、风险字段、缺失或不可用原因；未把无信誉字段的来源当作安全证明。",
+            "risk-proxy-labels": "常规情报源未标记 Proxy 或 Hosting；路由库不提供信誉字段，未配置或超时的来源明确标为不可用。",
+            "ip-intel-sources": "4 个 IP 情报来源均已响应，但字段覆盖不同；country.is 仅提供国家级结果，其余来源返回更完整字段。",
+            "network-label-consensus": "下方逐来源展示网络类型、Proxy 与 Hosting 返回值；缺失字段和不可用来源不参与共识。"
+          };
+          const paragraph = row.querySelector(".row-detail-item:nth-child(2) p");
+          if (paragraph && corrections[rowId]) paragraph.textContent = corrections[rowId];
+        }
+        function renderEvidenceLists() {
+          bindStableRowIds();
+          Object.entries(rowEvidenceMap).forEach(([rowId, mapping]) => {
+            const row = document.querySelector(`.signal-row[data-row-id="${rowId}"]`);
+            invariant(row, `找不到详情行 ${rowId}`);
+            const body = row.querySelector(".signal-row-body");
+            invariant(body, `${rowId} 缺少详情容器`);
+            body.querySelector(".source-badges")?.remove();
+            body.querySelector(":scope > .metric-evidence")?.remove();
+            body.append(buildEvidenceSection(mapping.set, mapping.title));
+            applyNarrativeCorrection(row, rowId);
+          });
+
+          $$('[data-evidence-set]').filter((host) => !host.classList.contains("metric-evidence")).forEach((host) => {
+            const setName = host.dataset.evidenceSet;
+            host.replaceChildren(buildEvidenceSection(setName, host.dataset.evidenceTitle || "证据明细"));
+          });
+
+          Object.keys(rowEvidenceMap).forEach((rowId) => {
+            const count = document.querySelectorAll(`.signal-row[data-row-id="${rowId}"] > .signal-row-body > .metric-evidence`).length;
+            invariant(count === 1, `${rowId} 应且只能渲染 1 个证据区`);
+          });
+          invariant(document.querySelectorAll('.signal-row[data-row-id="system-timezone"] .metric-evidence').length === 0, "系统时区不应生成复合证据区");
+        }
+
+        function maskedIp() { return state.privacy ? maskIpValue(observations.exitIp) : observations.exitIp; }
         function maskedFingerprint() {
           const data = fingerprintInfo[state.fingerprint];
           return state.privacy ? data.value.slice(0, 8) + "••••••••" : data.value;
@@ -648,7 +916,10 @@
           showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 2200);
         }
         function updateSensitiveValues() {
-          $$("[data-sensitive='ip']").forEach((node) => { node.textContent = maskedIp(); });
+          $$("[data-sensitive='ip']").forEach((node) => {
+            const rawValue = node.dataset.sensitiveValue || observations.exitIp;
+            node.textContent = state.privacy ? maskIpValue(rawValue) : rawValue;
+          });
           $("#fingerprint-value").textContent = maskedFingerprint();
           $("#privacy-label").textContent = state.privacy ? "隐私开启" : "显示原值";
           $("#mobile-privacy").textContent = state.privacy ? "隐私开启" : "显示原值";
@@ -784,6 +1055,8 @@
           showToast("分享 PNG 已生成");
         }
 
+        validateEvidenceCatalog();
+        renderEvidenceLists();
         $$(".signal-row-chevron, .row-status-dot").forEach((node) => node.setAttribute("aria-hidden", "true"));
         $$(".module-tab").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
         $$(".fingerprint-tab").forEach((button) => button.addEventListener("click", () => { state.fingerprint = button.dataset.fingerprint; updateFingerprintView(); }));
