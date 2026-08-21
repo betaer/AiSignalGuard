@@ -112,22 +112,6 @@
       .brand-copy { display: grid; gap: 1px; }
       .brand-name { font-size: 14px; font-weight: 800; letter-spacing: 0.02em; }
       .brand-note { color: var(--muted); font-size: 11px; }
-      .header-actions { display: flex; align-items: center; gap: 8px; }
-      .quiet-control {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        min-height: 38px;
-        padding: 0 12px;
-        border: 1px solid var(--line-strong);
-        border-radius: 999px;
-        color: var(--ink-2);
-        background: rgba(255, 255, 255, 0.7);
-        cursor: pointer;
-      }
-      .quiet-control[data-active="true"] { color: var(--green-deep); border-color: #a8d8bb; background: var(--green-soft); }
-      .tiny-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(21, 152, 104, 0.12); }
-
       .page-shell { width: min(100% - 32px, 860px); margin: 0 auto; padding: 54px 0 110px; }
       .intro { max-width: 640px; margin-bottom: 27px; }
       .eyebrow { margin: 0 0 11px; color: var(--green-deep); font-family: var(--mono); font-size: 11px; font-weight: 800; letter-spacing: 0.16em; }
@@ -193,8 +177,9 @@
       .score-layout { position: relative; z-index: 1; display: grid; grid-template-columns: 152px minmax(0, 1fr); gap: 25px; align-items: center; padding: 26px 0 23px; }
       .score-ring { display: grid; place-items: center; width: 142px; height: 142px; padding: 10px; border-radius: 50%; background: conic-gradient(var(--green) 0 87%, #dcebe1 87% 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7); }
       .score-ring-inner { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: #f7fcf8; }
-      .score-number { display: block; color: var(--green-deep); font-family: var(--mono); font-size: 38px; font-weight: 900; line-height: 1; letter-spacing: -0.09em; }
-      .score-label { margin-top: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+      .score-ring-content { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; text-align: center; transform: translateY(-1px); }
+      .score-number { display: block; width: 100%; color: var(--green-deep); font-family: var(--mono); font-size: 38px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; letter-spacing: -0.04em; text-align: center; text-indent: 0.04em; }
+      .score-label { display: block; width: 100%; margin-top: 7px; color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.2; text-align: center; }
       .result-title { margin: 0 0 6px; font-size: clamp(23px, 4vw, 31px); line-height: 1.1; letter-spacing: -0.045em; }
       .result-copy { margin: 0 0 13px; color: var(--ink-2); font-size: 14px; }
       .tag-row { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -212,16 +197,10 @@
       .local-note { display: inline-flex; align-items: center; gap: 6px; }
       .local-note::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: var(--green); }
 
-      .action-row { display: flex; flex-wrap: wrap; gap: 9px; margin: 16px 0 31px; }
-      .action-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 15px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); color: var(--ink-2); background: rgba(255, 255, 255, 0.76); font-size: 13px; font-weight: 800; cursor: pointer; }
-      .action-button.primary { border-color: var(--green); color: white; background: var(--green); box-shadow: 0 8px 16px rgba(21, 152, 104, 0.16); }
-      .action-button.ghost { color: var(--green-deep); border-color: #a9d5ba; background: var(--green-soft); }
-      .action-button:disabled { cursor: wait; opacity: 0.62; }
-
       .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
       .section-heading h2 { margin: 0; font-size: 22px; line-height: 1.1; letter-spacing: -0.04em; }
       .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
-      .view-panel { scroll-margin-top: 86px; }
+      .view-panel { margin-top: 31px; scroll-margin-top: 86px; }
       .signal-stack { display: grid; gap: 10px; }
       .signal-group { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 255, 255, 0.84); box-shadow: var(--shadow-small); transition: border-color 180ms ease, box-shadow 180ms ease; }
       .signal-group[open] { border-color: #a9cfb6; box-shadow: 0 12px 30px rgba(41, 70, 57, 0.11); }
@@ -324,29 +303,38 @@
 
       .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; color: var(--muted); font-size: 11px; }
       .site-footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; }
-      .mobile-actions { position: fixed; right: max(14px, calc((100vw - 860px) / 2)); bottom: max(14px, env(safe-area-inset-bottom)); left: max(14px, calc((100vw - 860px) / 2)); z-index: 8; display: none; grid-template-columns: 1.35fr 1fr 1fr; gap: 6px; padding: 6px; border: 1px solid rgba(197, 209, 201, 0.9); border-radius: 17px; background: rgba(247, 250, 248, 0.91); box-shadow: 0 14px 32px rgba(41, 70, 57, 0.16); backdrop-filter: blur(16px); }
+      .mobile-actions { position: fixed; right: max(14px, calc((100vw - 860px) / 2)); bottom: max(14px, env(safe-area-inset-bottom)); left: max(14px, calc((100vw - 860px) / 2)); z-index: 8; display: none; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; border: 1px solid rgba(197, 209, 201, 0.9); border-radius: 17px; background: rgba(247, 250, 248, 0.91); box-shadow: 0 14px 32px rgba(41, 70, 57, 0.16); backdrop-filter: blur(16px); }
       .mobile-action { min-height: 43px; border: 0; border-radius: 11px; color: var(--ink-2); background: transparent; font-size: 12px; font-weight: 800; cursor: pointer; }
       .mobile-action.primary { color: white; background: var(--green); }
+      .mobile-action:disabled { cursor: wait; opacity: 0.68; }
 
-      dialog { width: min(100% - 28px, 430px); padding: 0; border: 0; border-radius: 24px; background: transparent; color: var(--ink); box-shadow: 0 26px 80px rgba(0, 0, 0, 0.22); }
-      dialog::backdrop { background: rgba(21, 31, 26, 0.55); backdrop-filter: blur(8px); }
-      .dialog-card { padding: 20px; border: 1px solid #cfddd3; border-radius: 24px; background: var(--bg); }
-      .dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-      .dialog-head h2 { margin: 0; font-size: 19px; letter-spacing: -0.04em; }
-      .dialog-close { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--ink-2); background: white; cursor: pointer; }
-      .preview-card { padding: 20px; border: 1px solid #bdd7c7; border-radius: 19px; background: linear-gradient(140deg, #ffffff 0%, #f4fbf6 100%); }
-      .preview-card .preview-title { margin: 18px 0 5px; font-size: 26px; letter-spacing: -0.06em; }
-      .preview-score { display: flex; align-items: center; gap: 14px; }
-      .preview-number { color: var(--green-deep); font-family: var(--mono); font-size: 42px; font-weight: 900; line-height: 1; }
-      .preview-copy { color: var(--ink-2); font-size: 12px; }
-      .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+      .floating-tool-dock { position: fixed; right: calc(18px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 12; display: grid; gap: 10px; }
+      .floating-tool-button { position: relative; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(92, 133, 101, 0.42); border-radius: 50%; color: var(--green-deep); background: rgba(247, 251, 244, 0.96); box-shadow: 0 12px 28px rgba(41, 70, 57, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.82); cursor: pointer; backdrop-filter: blur(14px); transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease; }
+      .floating-tool-button:hover { border-color: rgba(72, 123, 84, 0.66); background: #edf6ec; box-shadow: 0 15px 32px rgba(41, 70, 57, 0.21), inset 0 1px 0 rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
+      .floating-tool-button:active { transform: translateY(0) scale(0.97); }
+      .floating-tool-button:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.26); outline-offset: 4px; }
+      .floating-tool-button:disabled { cursor: wait; opacity: 0.66; }
+      .floating-tool-button[data-copy-complete="true"] { border-color: rgba(21, 152, 104, 0.64); background: var(--green-soft); }
+      .floating-privacy-button[data-privacy-active="false"] { border-color: rgba(180, 132, 45, 0.48); color: var(--amber); background: #fff8e8; }
+      .floating-tool-icon { grid-area: 1 / 1; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+      .floating-copy-icon-check { display: none; }
+      .floating-copy-button[data-copy-complete="true"] .floating-copy-icon-default { display: none; }
+      .floating-copy-button[data-copy-complete="true"] .floating-copy-icon-check { display: block; }
+      .floating-recheck-button[data-running="true"] .floating-recheck-icon { animation: floating-spin 850ms linear infinite; }
+      .floating-privacy-icon-off { display: none; }
+      .floating-privacy-button[data-privacy-active="false"] .floating-privacy-icon-eye { display: none; }
+      .floating-privacy-button[data-privacy-active="false"] .floating-privacy-icon-off { display: block; }
+      .floating-tool-label { position: absolute; right: calc(100% + 10px); top: 50%; min-width: max-content; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink-2); background: rgba(255, 255, 255, 0.96); box-shadow: var(--shadow-small); font-size: 10px; font-weight: 800; line-height: 1; transform: translate(5px, -50%); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 160ms ease; }
+      .floating-tool-button:hover .floating-tool-label, .floating-tool-button:focus-visible .floating-tool-label { transform: translate(0, -50%); opacity: 1; }
+      .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+      @keyframes floating-spin { to { transform: rotate(360deg); } }
       .toast { position: fixed; top: 82px; left: 50%; z-index: 30; min-width: 180px; padding: 10px 14px; border: 1px solid #b7ddc5; border-radius: 999px; color: var(--green-deep); background: #f1fbf4; box-shadow: var(--shadow-small); font-size: 12px; font-weight: 800; text-align: center; transform: translate(-50%, -12px); opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
       .toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
 
       @media (max-width: 680px) {
         .demo-header { min-height: 61px; padding: 8px 15px; }
         .brand-note { display: none; }
-        .quiet-control { min-height: 35px; padding: 0 10px; font-size: 11px; }
+        .floating-tool-dock { display: none; }
         .page-shell { width: min(100% - 28px, 560px); padding-top: 32px; }
         .intro { margin-bottom: 20px; }
         .eyebrow { margin-bottom: 9px; font-size: 9px; }
@@ -365,8 +353,6 @@
         .data-value { font-size: 12px; }
         .card-foot { display: block; font-size: 10px; }
         .card-foot span + span { display: block; margin-top: 3px; }
-        .action-row { margin-bottom: 26px; }
-        .action-row .action-button { flex: 1 1 150px; }
         .signal-group-summary { grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; min-height: 72px; padding: 12px; }
         .signal-group-icon { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; }
         .signal-group-title { font-size: 15px; }
@@ -417,9 +403,6 @@
         <span class="brand-mark" aria-hidden="true"><img src="favicon.svg" alt=""></span>
         <span class="brand-copy"><span class="brand-name">AI Signal Guard</span><span class="brand-note">移动检测卡 Demo</span></span>
       </a>
-      <div class="header-actions">
-        <button class="quiet-control" id="privacy-toggle" type="button" aria-pressed="true" data-active="true"><span class="tiny-dot" aria-hidden="true"></span><span id="privacy-label">隐私开启</span></button>
-      </div>
     </header>
 
     <main class="page-shell" id="main">
@@ -435,10 +418,10 @@
         <button class="module-tab" type="button" data-view="fingerprint" aria-selected="false">浏览器指纹<small>设备信号</small></button>
       </nav>
 
-      <section class="result-card" id="share-card" aria-labelledby="result-title">
+      <section class="result-card" id="result-summary-card" aria-labelledby="result-title">
         <div class="result-head"><span class="result-kicker"><strong>本次检测完成</strong> · <span id="run-time">2026.08.21 20:16</span></span><span class="status-badge">需要核对</span></div>
         <div class="score-layout">
-          <div class="score-ring" aria-label="网络信号参考分 87 分，满分 100 分"><div class="score-ring-inner"><div><span class="score-number">87</span><span class="score-label">网络参考分</span></div></div></div>
+          <div class="score-ring" aria-label="网络信号参考分 87 分，满分 100 分"><div class="score-ring-inner"><div class="score-ring-content"><span class="score-number">87</span><span class="score-label">网络参考分</span></div></div></div>
           <div>
             <h2 class="result-title" id="result-title">通用数字环境</h2>
             <p class="result-copy">环境基本可用，但位置、时区和语言仍有一处需要核对。没有发现明确的 WebRTC 泄漏。</p>
@@ -446,7 +429,7 @@
           </div>
         </div>
         <div class="result-data-grid">
-          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip">38.92.27.x</span></div>
+          <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip">38.92.x.x</span></div>
           <div class="data-item"><span class="data-label">位置</span><span class="data-value">美国 · 洛杉矶</span></div>
           <div class="data-item"><span class="data-label">浏览器</span><span class="data-value">Chrome · macOS</span></div>
           <div class="data-item"><span class="data-label">覆盖率</span><span class="data-value">84%</span></div>
@@ -454,16 +437,10 @@
         <div class="card-foot"><span class="local-note">结果只存在于当前浏览器</span><span>适合手机截图分享</span></div>
       </section>
 
-      <div class="action-row" aria-label="结果操作">
-        <button class="action-button primary" id="share-button" type="button">生成分享图 ↗</button>
-        <button class="action-button ghost" id="copy-button" type="button">复制摘要</button>
-        <button class="action-button" id="recheck-button" type="button">重新检测</button>
-      </div>
-
       <section class="view-panel" id="overview-view" data-panel="overview" aria-labelledby="overview-title">
-        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>一级结果默认收起，展开后同时查看全部子级详情</p></div></div>
+        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>一级分组默认展开，二级详情按需展开</p></div></div>
         <div class="signal-stack">
-          <details class="signal-group">
+          <details class="signal-group" open>
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">◎</span>
               <span class="signal-group-heading"><span class="signal-group-title">出口 IP</span><span class="signal-group-note">风控第一顺位 · 网络归属与环境一致性</span></span>
@@ -482,11 +459,11 @@
               <section class="signal-subsection" aria-label="网络类型">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">网络类型</strong><span class="signal-subsection-note">IP 质量与运营商</span></div><span class="signal-subsection-status good">匹配</span></div>
                 <div class="signal-snapshot">
-                  <div class="signal-snapshot-head"><div><span class="signal-snapshot-label">当前公网出口</span><strong class="signal-snapshot-value sensitive-value" data-sensitive="ip">38.92.27.x</strong></div><span class="signal-snapshot-status">可信 · 移动运营商</span></div>
+                  <div class="signal-snapshot-head"><div><span class="signal-snapshot-label">当前公网出口</span><strong class="signal-snapshot-value sensitive-value" data-sensitive="ip">38.92.x.x</strong></div><span class="signal-snapshot-status">可信 · 移动运营商</span></div>
                   <div class="signal-fact-grid"><div class="signal-fact"><span>位置</span><strong>美国 · 洛杉矶</strong></div><div class="signal-fact"><span>ASN</span><strong>AS26042</strong></div><div class="signal-fact"><span>组织 / ISP</span><strong>FiberState, LLC</strong></div><div class="signal-fact"><span>服务商类型</span><strong>住宅 / 移动网络</strong></div></div>
                 </div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.27.x</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="exit-ip-quality"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>出口 IP 质量</strong><small>ident.me · IPv4</small></span><span class="signal-row-value sensitive-value" data-sensitive="ip">38.92.x.x</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可信 · 移动运营商</strong></div><div class="row-detail-item"><span>证据说明</span><p>公网出口可稳定读取，IP 情报没有返回数据中心、共享主机或廉价代理池标签。</p></div><div class="row-detail-item"><span>建议</span><p>继续保持出口稳定，避免短时间频繁切换国家、ASN 或共享代理线路。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="network-type"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>网络类型</strong><small>ISP / ASN 类型证据</small></span><span class="signal-row-value good">住宅 / 移动网络</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>符合通用环境</strong></div><div class="row-detail-item"><span>证据说明</span><p>组织为 FiberState, LLC，现有来源更接近住宅或移动运营商网络。</p></div><div class="row-detail-item"><span>建议</span><p>以实际 ISP 和使用场景为准；网络类型标签需与地理位置、DNS 共同判断。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="risk-proxy-labels"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>威胁与代理标签</strong><small>risk / proxy / hosting</small></span><span class="signal-row-value good">未发现明确标签</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用来源未发现明确标签</strong></div><div class="row-detail-item"><span>证据说明</span><p>本轮可用来源未返回 VPN、Tor、Hosting 或公开黑名单风险标签。</p></div><div class="row-detail-item"><span>建议</span><p>浏览器侧没有完整商业信誉库；网络或平台发生变化后建议重新检测。</p></div></div></div></details>
                 </div>
@@ -494,7 +471,7 @@
             </div>
           </details>
 
-          <details class="signal-group">
+          <details class="signal-group" open>
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">▣</span>
               <span class="signal-group-heading"><span class="signal-group-title">身份信号</span><span class="signal-group-note">浏览器语言、时区与设备渲染</span></span>
@@ -519,7 +496,7 @@
             </div>
           </details>
 
-          <details class="signal-group">
+          <details class="signal-group" open>
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">✓</span>
               <span class="signal-group-heading"><span class="signal-group-title">网络泄漏</span><span class="signal-group-note">WebRTC 与 DNS 是否暴露另一条路径</span></span>
@@ -537,14 +514,14 @@
               <section class="signal-subsection" aria-label="WebRTC">
                 <div class="signal-subsection-label"><div class="signal-subsection-copy"><strong class="signal-subsection-name">WebRTC</strong><span class="signal-subsection-note">公网与内网候选</span></div><span class="signal-subsection-status good">一致</span></div>
                 <div class="signal-subsection-rows">
-                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.27.x</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
+                  <details class="signal-row" data-row-id="webrtc-leak"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>WebRTC 泄漏</strong><small>HTTP / STUN 公网候选</small></span><span class="signal-row-value good">候选与出口一致</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现出口外公网地址</strong></div><div class="row-detail-item"><span>证据说明</span><p>HTTP 出口与 WebRTC 公网候选均为 <span class="sensitive-value" data-sensitive="ip">38.92.x.x</span>；内网候选由 mDNS 隐藏。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；切换代理、网络或浏览器设置后应重新检测公网候选。</p></div></div></div></details>
                   <details class="signal-row" data-row-id="stun-nodes"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>STUN 节点</strong><small>8 台服务器交叉探测</small></span><span class="signal-row-value good">正常 · 6 / 8 响应</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>可用节点候选一致</strong></div><div class="row-detail-item"><span>证据说明</span><p>国内节点约 42ms、Global 节点约 112ms；6 台返回相同公网候选，2 台超时。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若响应节点过少或候选分歧，再检查 UDP、TUN 与代理规则。</p></div></div></div></details>
                 </div>
               </section>
             </div>
           </details>
 
-          <details class="signal-group">
+          <details class="signal-group" open>
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">⊙</span>
               <span class="signal-group-heading"><span class="signal-group-title">多源互证</span><span class="signal-group-note">地理情报、网络标签与最终判断</span></span>
@@ -570,7 +547,7 @@
             </div>
           </details>
         </div>
-        <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>一级结果、文字分组和详情行都只使用当前浏览器内的模拟数据；分享图默认隐藏 IP 最后一段。</div></div>
+        <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>一级结果、文字分组和详情行都只使用当前浏览器内的模拟数据；页面默认隐藏 IP 后两段，复制摘要会沿用当前隐私状态。</div></div>
       </section>
 
       <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title" hidden>
@@ -578,8 +555,8 @@
         <div class="detail-panel">
           <p class="panel-note">本次共探测 8 台 STUN 服务器，其中 6 台返回可用结果。公网候选与 HTTP 出口一致，内网地址由 mDNS 隐藏。</p>
           <div class="comparison">
-            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.x</strong><span class="mini-status good">已确认</span></div>
-            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.27.x</strong><span class="mini-status good">一致</span></div>
+            <div class="comparison-row"><span class="comparison-label">HTTP 可见地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.x.x</strong><span class="mini-status good">已确认</span></div>
+            <div class="comparison-row"><span class="comparison-label">WebRTC 公网地址</span><strong class="comparison-value sensitive-value" data-sensitive="ip">38.92.x.x</strong><span class="mini-status good">一致</span></div>
             <div class="comparison-row"><span class="comparison-label">WebRTC 内网地址</span><strong class="comparison-value">a1b2c3d4.local</strong><span class="mini-status good">已隐藏</span></div>
           </div>
           <div data-evidence-set="stunNodes" data-evidence-title="STUN 节点明细"></div>
@@ -602,32 +579,52 @@
             <li><strong>字体度量</strong>检测到 5 组稳定差异</li>
             <li><strong>Canvas / WebGL</strong>信号可读取</li>
           </ul>
-          <div class="privacy-callout"><span aria-hidden="true">i</span><div><b>分享时默认隐藏完整 ID</b>原始 Canvas、音频和字体数据不进入分享图；详情只在当前浏览器展示。</div></div>
+          <div class="privacy-callout"><span aria-hidden="true">i</span><div><b>截图时默认隐藏完整 ID</b>原始 Canvas、音频和字体数据不会进入复制摘要；详情只在当前浏览器展示。</div></div>
         </div>
       </section>
 
       <footer class="site-footer"><span>本 Demo 只使用本地模拟数据 · 不会发起检测请求</span><a href="index.html">返回正式首页 →</a></footer>
     </main>
 
+    <div class="floating-tool-dock" data-floating-tools role="toolbar" aria-label="快捷工具">
+      <button class="floating-tool-button floating-recheck-button" id="floating-recheck" type="button" data-running="false" aria-label="重新检测" title="重新检测">
+        <svg class="floating-tool-icon floating-recheck-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+          <path d="M3 4v6h6"></path>
+        </svg>
+        <span class="floating-tool-label" id="floating-recheck-label">重新检测</span>
+      </button>
+      <button class="floating-tool-button floating-copy-button" id="floating-copy" type="button" data-copy-complete="false" aria-label="复制摘要" title="复制摘要">
+        <svg class="floating-tool-icon floating-copy-icon-default" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <rect x="8" y="8" width="11" height="11" rx="2"></rect>
+          <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        <svg class="floating-tool-icon floating-copy-icon-check" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="m5 12.5 4.4 4.4L19 7.3"></path>
+        </svg>
+        <span class="floating-tool-label" id="floating-copy-label">复制摘要</span>
+      </button>
+      <button class="floating-tool-button floating-privacy-button" id="privacy-toggle" type="button" data-privacy-active="true" aria-label="显示原值" title="显示原值">
+        <svg class="floating-tool-icon floating-privacy-icon-eye" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path>
+          <circle cx="12" cy="12" r="2.5"></circle>
+        </svg>
+        <svg class="floating-tool-icon floating-privacy-icon-off" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+          <path d="M3 3l18 18"></path>
+          <path d="M10.7 6.2A9.4 9.4 0 0 1 12 6c6 0 9.5 6 9.5 6a17.8 17.8 0 0 1-2.1 2.8"></path>
+          <path d="M6.6 6.6C4 8.3 2.5 12 2.5 12s3.5 6 9.5 6a9 9 0 0 0 3.1-.5"></path>
+        </svg>
+        <span class="floating-tool-label" id="privacy-label">显示原值</span>
+      </button>
+    </div>
+    <span class="visually-hidden" id="floating-action-status" aria-live="polite"></span>
+
     <div class="mobile-actions" aria-label="快捷操作">
-      <button class="mobile-action primary" id="mobile-share" type="button">分享结果图</button>
+      <button class="mobile-action primary" id="mobile-recheck" type="button">重新检测</button>
       <button class="mobile-action" id="mobile-copy" type="button">复制摘要</button>
-      <button class="mobile-action" id="mobile-privacy" type="button">隐私开启</button>
+      <button class="mobile-action" id="mobile-privacy" type="button">显示原值</button>
     </div>
 
-    <dialog id="share-dialog" aria-labelledby="share-title">
-      <div class="dialog-card">
-        <div class="dialog-head"><h2 id="share-title">分享结果图</h2><button class="dialog-close" id="dialog-close" type="button" aria-label="关闭分享预览">×</button></div>
-        <div class="preview-card" id="share-preview-card">
-          <div class="result-head"><span class="result-kicker"><strong>AI SIGNAL GUARD</strong> · 本地检测</span><span class="status-badge">需要核对</span></div>
-          <h3 class="preview-title">通用数字环境</h3>
-          <div class="preview-score"><span class="preview-number">87</span><span class="preview-copy">网络参考分<br>2 项信号需要核对</span></div>
-          <div class="tag-row" style="margin-top:17px"><span class="chip warn">时区待核对</span><span class="chip good">WebRTC 正常</span></div>
-          <div class="card-foot" style="margin-top:22px"><span class="local-note">IP 已脱敏</span><span>2026.08.21</span></div>
-        </div>
-        <div class="dialog-actions"><button class="action-button primary" id="download-image" type="button">下载 PNG</button><button class="action-button" id="dialog-copy" type="button">复制文字</button></div>
-      </div>
-    </dialog>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
@@ -650,7 +647,7 @@
         const fingerprintInfo = {
           v3: { label: "VISITOR ID", value: fullFingerprint, description: "只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。" },
           v2: { label: "LEGACY ID", value: "4e01a2a9812bff1c7d85b13e0a89d004", description: "旧版采集面更宽，但现代浏览器里稳定性通常不如 v3+。" },
-          tls: { label: "JA3 / JA4", value: "ja4_t13d1516h2_••••", description: "TLS 握手摘要用于判断客户端类型，不等同于设备指纹。" }
+          tls: { label: "JA3 / JA4", value: "ja4_t13d1516h2_8daaf6152771", description: "TLS 握手摘要用于判断客户端类型，不等同于设备指纹。" }
         };
 
         const freezeRecords = (records) => Object.freeze(records.map((record) => Object.freeze({ ...record })));
@@ -818,7 +815,7 @@
           });
         }
         function maskIpValue(value) {
-          return String(value).replace(/\b((?:\d{1,3}\.){3})\d{1,3}\b/g, "$1x");
+          return String(value).replace(/\b(\d{1,3}\.\d{1,3})\.\d{1,3}\.\d{1,3}\b/g, "$1.x.x");
         }
         function makeTextElement(tagName, className, text) {
           const node = document.createElement(tagName);
@@ -906,7 +903,8 @@
         function maskedIp() { return state.privacy ? maskIpValue(observations.exitIp) : observations.exitIp; }
         function maskedFingerprint() {
           const data = fingerprintInfo[state.fingerprint];
-          return state.privacy ? data.value.slice(0, 8) + "••••••••" : data.value;
+          if (!state.privacy) return data.value;
+          return state.fingerprint === "tls" ? "已隐藏" : data.value.slice(0, 8) + "••••••••";
         }
         function showToast(message) {
           const toast = $("#toast");
@@ -921,10 +919,12 @@
             node.textContent = state.privacy ? maskIpValue(rawValue) : rawValue;
           });
           $("#fingerprint-value").textContent = maskedFingerprint();
-          $("#privacy-label").textContent = state.privacy ? "隐私开启" : "显示原值";
-          $("#mobile-privacy").textContent = state.privacy ? "隐私开启" : "显示原值";
-          $("#privacy-toggle").dataset.active = String(state.privacy);
-          $("#privacy-toggle").setAttribute("aria-pressed", String(state.privacy));
+          const privacyAction = state.privacy ? "显示原值" : "隐藏原值";
+          $("#privacy-label").textContent = privacyAction;
+          $("#mobile-privacy").textContent = privacyAction;
+          $("#privacy-toggle").dataset.privacyActive = String(state.privacy);
+          $("#privacy-toggle").setAttribute("aria-label", privacyAction);
+          $("#privacy-toggle").title = privacyAction;
         }
         function setView(view) {
           state.view = view;
@@ -957,102 +957,56 @@
           $("#fingerprint-value").textContent = maskedFingerprint();
           $$(".fingerprint-tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.fingerprint === state.fingerprint)));
         }
-        function openShareDialog() {
-          updateSensitiveValues();
-          $("#share-dialog").showModal();
+        function setRecheckControls(running) {
+          const desktopButton = $("#floating-recheck");
+          const mobileButton = $("#mobile-recheck");
+          const label = running ? "检测中…" : "重新检测";
+          desktopButton.disabled = running;
+          desktopButton.dataset.running = String(running);
+          desktopButton.setAttribute("aria-label", label);
+          desktopButton.title = label;
+          $("#floating-recheck-label").textContent = label;
+          mobileButton.disabled = running;
+          mobileButton.textContent = label;
         }
-        function roundedRect(ctx, x, y, width, height, radius) {
-          ctx.beginPath();
-          ctx.roundRect(x, y, width, height, radius);
+        function runRecheck() {
+          if (state.running) return;
+          state.running = true;
+          state.runCount += 1;
+          setRecheckControls(true);
+          $(".status-badge").textContent = "正在检测";
+          $(".status-badge").style.color = "var(--blue)";
+          $(".status-badge").style.background = "var(--blue-soft)";
+          $("#floating-action-status").textContent = "正在重新核对网络、浏览器与服务路径…";
+          window.setTimeout(() => {
+            state.running = false;
+            setRecheckControls(false);
+            $(".status-badge").textContent = "需要核对";
+            $(".status-badge").style.color = "var(--amber)";
+            $(".status-badge").style.background = "var(--amber-soft)";
+            $("#floating-action-status").textContent = `检测完成，第 ${state.runCount} 次本地模拟结果已更新。`;
+            showToast("检测完成 🤩");
+          }, 1400);
         }
-        function drawShareImage() {
-          const canvas = document.createElement("canvas");
-          canvas.width = 1080;
-          canvas.height = 1350;
-          const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#eef2f0";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          const gradient = ctx.createRadialGradient(160, 90, 0, 160, 90, 560);
-          gradient.addColorStop(0, "rgba(119, 194, 145, .28)");
-          gradient.addColorStop(1, "rgba(238, 242, 240, 0)");
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, canvas.width, 700);
-          ctx.fillStyle = "#17221e";
-          ctx.font = '800 31px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("AI Signal Guard", 72, 98);
-          ctx.fillStyle = "#74817b";
-          ctx.font = '500 21px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("移动检测结果 · 浏览器本地完成", 72, 135);
-          roundedRect(ctx, 54, 190, 972, 850, 34);
-          ctx.fillStyle = "#ffffff";
-          ctx.fill();
-          ctx.strokeStyle = "#bdd7c7";
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          ctx.fillStyle = "#74817b";
-          ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("本次检测完成", 92, 258);
-          ctx.fillStyle = "#a46a18";
-          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("● 需要核对", 815, 258);
-          ctx.fillStyle = "#159868";
-          ctx.beginPath();
-          ctx.arc(235, 475, 132, 0, Math.PI * 2);
-          ctx.strokeStyle = "#dcebe1";
-          ctx.lineWidth = 22;
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(235, 475, 132, -Math.PI / 2, Math.PI * 0.74 - Math.PI / 2);
-          ctx.strokeStyle = "#159868";
-          ctx.stroke();
-          ctx.fillStyle = "#08754e";
-          ctx.font = '900 75px ui-monospace, Menlo, monospace';
-          ctx.textAlign = "center";
-          ctx.fillText("87", 235, 478);
-          ctx.fillStyle = "#74817b";
-          ctx.font = '700 21px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("网络参考分", 235, 520);
-          ctx.textAlign = "left";
-          ctx.fillStyle = "#17221e";
-          ctx.font = '900 48px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("通用数字环境", 430, 415);
-          ctx.fillStyle = "#405049";
-          ctx.font = '500 24px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("环境基本可用，但有 2 项信号需要核对。", 430, 470);
-          ctx.fillStyle = "#a46a18";
-          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("⚠ 时区待核对   ⚠ 语言待核对", 430, 530);
-          ctx.fillStyle = "#08754e";
-          ctx.fillText("✓ WebRTC 正常", 430, 580);
-          ctx.strokeStyle = "#dce5df";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(92, 665);
-          ctx.lineTo(988, 665);
-          ctx.stroke();
-          const rows = [["出口 IP", maskedIp()], ["位置", "美国 · 洛杉矶"], ["浏览器", "Chrome · macOS"], ["覆盖率", "84%"]];
-          rows.forEach((row, index) => {
-            const x = index % 2 === 0 ? 92 : 545;
-            const y = index < 2 ? 735 : 865;
-            ctx.fillStyle = "#74817b";
-            ctx.font = '500 21px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-            ctx.fillText(row[0], x, y);
-            ctx.fillStyle = "#17221e";
-            ctx.font = '800 25px ui-monospace, Menlo, monospace';
-            ctx.fillText(row[1], x, y + 39);
-          });
-          ctx.fillStyle = "#08754e";
-          ctx.font = '800 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("✓ 结果只存在于当前浏览器", 92, 1000);
-          ctx.fillStyle = "#74817b";
-          ctx.font = '500 22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif';
-          ctx.fillText("IP 已脱敏 · 2026.08.21", 72, 1160);
-          ctx.fillText("AI Signal Guard / mobile result card", 72, 1210);
-          const link = document.createElement("a");
-          link.download = "aisg-mobile-result.png";
-          link.href = canvas.toDataURL("image/png");
-          link.click();
-          showToast("分享 PNG 已生成");
+        function markCopyComplete() {
+          const button = $("#floating-copy");
+          button.dataset.copyComplete = "true";
+          button.setAttribute("aria-label", "摘要已复制");
+          button.title = "摘要已复制";
+          $("#floating-copy-label").textContent = "摘要已复制";
+          $("#mobile-copy").textContent = "已复制";
+          window.clearTimeout(markCopyComplete.timer);
+          markCopyComplete.timer = window.setTimeout(() => {
+            button.dataset.copyComplete = "false";
+            button.setAttribute("aria-label", "复制摘要");
+            button.title = "复制摘要";
+            $("#floating-copy-label").textContent = "复制摘要";
+            $("#mobile-copy").textContent = "复制摘要";
+          }, 1600);
+        }
+        function copySummary() {
+          copyText(summaryText(), "摘要已复制 🤩");
+          markCopyComplete();
         }
 
         validateEvidenceCatalog();
@@ -1062,43 +1016,11 @@
         $$(".fingerprint-tab").forEach((button) => button.addEventListener("click", () => { state.fingerprint = button.dataset.fingerprint; updateFingerprintView(); }));
         $("#privacy-toggle").addEventListener("click", () => { state.privacy = !state.privacy; updateSensitiveValues(); showToast(state.privacy ? "已开启隐私遮罩" : "已显示原始值"); });
         $("#mobile-privacy").addEventListener("click", () => $("#privacy-toggle").click());
-        $("#share-button").addEventListener("click", openShareDialog);
-        $("#mobile-share").addEventListener("click", openShareDialog);
-        $("#download-image").addEventListener("click", drawShareImage);
-        $("#copy-button").addEventListener("click", () => copyText(summaryText()));
-        $("#mobile-copy").addEventListener("click", () => $("#copy-button").click());
-        $("#dialog-copy").addEventListener("click", () => copyText(summaryText(), "摘要已复制"));
+        $("#floating-copy").addEventListener("click", copySummary);
+        $("#mobile-copy").addEventListener("click", copySummary);
+        $("#floating-recheck").addEventListener("click", runRecheck);
+        $("#mobile-recheck").addEventListener("click", runRecheck);
         $("#fingerprint-copy").addEventListener("click", () => copyText(maskedFingerprint(), "指纹摘要已复制"));
-        $("#dialog-close").addEventListener("click", () => $("#share-dialog").close());
-        $("#share-dialog").addEventListener("click", (event) => { if (event.target === $("#share-dialog")) $("#share-dialog").close(); });
-        $("#recheck-button").addEventListener("click", () => {
-          if (state.running) return;
-          state.running = true;
-          state.runCount += 1;
-          const button = $("#recheck-button");
-          button.disabled = true;
-          button.textContent = "检测中…";
-          $(".status-badge").textContent = "正在检测";
-          $(".status-badge").style.color = "var(--blue)";
-          $(".status-badge").style.background = "var(--blue-soft)";
-          $("[aria-live='polite']").textContent = "正在重新核对网络、浏览器与服务路径…";
-          window.setTimeout(() => {
-            state.running = false;
-            button.disabled = false;
-            button.textContent = "重新检测";
-            $(".status-badge").textContent = "需要核对";
-            $(".status-badge").style.color = "var(--amber)";
-            $(".status-badge").style.background = "var(--amber-soft)";
-            $("[aria-live='polite']").textContent = `检测完成，第 ${state.runCount} 次本地模拟结果已更新。`;
-            showToast("检测完成 ✦");
-          }, 1400);
-        });
-
-        const liveStatus = document.createElement("div");
-        liveStatus.setAttribute("aria-live", "polite");
-        liveStatus.className = "visually-hidden";
-        liveStatus.style.cssText = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap";
-        document.body.appendChild(liveStatus);
         updateSensitiveValues();
         updateFingerprintView();
       })();
