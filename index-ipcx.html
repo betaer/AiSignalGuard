@@ -359,8 +359,8 @@
         .signal-group-icon { width: 36px; height: 36px; border-radius: 11px; font-size: 15px; }
         .signal-group-title { font-size: 15px; }
         .signal-group-evaluation { grid-column: 2; grid-row: 2; margin-top: -6px; text-align: left; }
-        .signal-group-result { display: inline; font-size: 12px; }
-        .signal-group-count { display: inline; margin-left: 7px; }
+        .signal-group-result { display: block; font-size: 12px; }
+        .signal-group-count { display: block; margin: 2px 0 0; }
         .signal-group-chevron { grid-column: 3; grid-row: 1 / span 2; }
         .signal-group-body { padding: 10px; }
         .signal-subsection + .signal-subsection { margin-top: 15px; padding-top: 13px; }
@@ -460,7 +460,7 @@
                 <div class="signal-subsection-rows">
                   <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot warn"></span><span class="signal-row-title"><strong>位置一致性</strong><small>出口位置 / 时区 / 语言</small></span><span class="signal-row-value warn">部分匹配</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>存在地区提示差异</strong></div><div class="row-detail-item"><span>证据说明</span><p>出口显示美国 · 洛杉矶，系统时区为 Asia/Taipei，浏览器语言为 zh-CN。</p></div><div class="row-detail-item"><span>建议</span><p>核对设备时区、首选语言与实际使用地区，避免长期画像出现不必要矛盾。</p></div></div></div></details>
                   <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>ASN 与组织</strong><small>ARIN · AS26042</small></span><span class="signal-row-value">FiberState, LLC</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>归属信息可核对</strong></div><div class="row-detail-item"><span>证据说明</span><p>ARIN、ipwho.is 与 ASN lookup 返回的 ASN、组织名称保持一致。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；若后续 ASN 或组织发生变化，再与实际运营商线路核对。</p></div></div></div></details>
-                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>多源地区判断</strong><small>6 / 8 个来源可用</small></span><span class="signal-row-value good">主流判定 US</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地理冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 等 6 个可用来源均指向美国。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；城市粒度轻微变化属于数据库差异，国家冲突才需优先核对。</p></div></div></div></details>
+                  <details class="signal-row"><summary class="signal-row-summary"><span class="row-status-dot good"></span><span class="signal-row-title"><strong>多源地区判断</strong><small>地理来源交叉验证</small></span><span class="signal-row-value good">主流判定 US</span><span class="signal-row-chevron">›</span></summary><div class="signal-row-body"><div class="row-detail-grid"><div class="row-detail-item"><span>检测结果</span><strong>未发现地理冲突</strong></div><div class="row-detail-item"><span>证据说明</span><p>ipwho.is、ip.sb、country.is、db-ip 等 6 个可用来源均指向美国。</p></div><div class="row-detail-item"><span>建议</span><p>无需处理；城市粒度轻微变化属于数据库差异，国家冲突才需优先核对。</p></div></div></div></details>
                 </div>
               </section>
               <section class="signal-subsection" aria-label="网络类型">
