@@ -168,7 +168,7 @@ Inject a fake `fetchImpl` and assert that `runIpIntel()`:
 
 - [ ] **Step 9: Implement request orchestration**
 
-Implement `fetchWithTimeout`, `runPool`, `runIpIntel`, and `runRouteEvidence` with a concurrency limit of four and per-source timeout. IANA/RDAP resolves the authoritative RIR from the actual bootstrap response. PeeringDB and CAIDA execute only after a real consensus ASN exists.
+Implement `fetchWithTimeout`, `runPool`, `runIpIntel`, and `runRouteEvidence` with a concurrency limit of four and per-source timeout. IANA/RDAP resolves the authoritative RIR from the actual bootstrap response. When no ASN is supplied, `runRouteEvidence` first requests the seven IP-address sources, derives a real consensus ASN, and only then requests PeeringDB, RIPEstat Announced Prefixes, and CAIDA. If ASN discovery fails, those three remain explicitly blocked and the UI reports the actual attempted count.
 
 - [ ] **Step 10: Write and implement isolated STUN tests**
 

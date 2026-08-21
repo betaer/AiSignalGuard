@@ -246,6 +246,7 @@
       registry: null,
       detail: null,
       voteEligible: false,
+      attempted: false,
     };
   }
 
@@ -695,6 +696,7 @@
         var startedAt = nowMs();
         records[index].state = "loading";
         records[index].status = statusLabel("loading");
+        records[index].attempted = true;
         try {
           var response = await fetchWithTimeout(fetchImpl, source.endpoint(targetIp), {
             timeoutMs: config.timeoutMs,
@@ -705,11 +707,13 @@
             targetIp: targetIp,
           });
           normalized.latencyMs = Math.round(nowMs() - startedAt);
+          normalized.attempted = true;
           records[index] = normalized;
         } catch (error) {
           records[index] = Object.assign(createPendingRecord(source), classifyFailure(error), {
             latencyMs: Math.round(nowMs() - startedAt),
             detail: stringValue(error && error.message),
+            attempted: true,
           });
         }
         reportSnapshot(config.onUpdate, records);
@@ -725,6 +729,7 @@
   function summarizeSources(records) {
     var result = {
       total: records.length,
+      attempted: 0,
       responded: 0,
       usable: 0,
       complete: 0,
@@ -732,6 +737,7 @@
       failed: 0,
     };
     records.forEach(function (record) {
+      if (record.attempted) result.attempted += 1;
       if (respondedState(record.state)) result.responded += 1;
       if (record.voteEligible) result.usable += 1;
       if (record.state === "success") result.complete += 1;
@@ -1013,10 +1019,14 @@
     var fetchImpl = config.fetchImpl || fetch;
     var records = createPendingRecords(ROUTE_SOURCES);
     reportSnapshot(config.onUpdate, records);
-    await runPool(
-      ROUTE_SOURCES,
-      config.concurrency || DEFAULT_CONCURRENCY,
-      async function (source, index) {
+    async function runBatch(sources) {
+      await runPool(
+        sources,
+        config.concurrency || DEFAULT_CONCURRENCY,
+        async function (source) {
+          var index = ROUTE_SOURCES.findIndex(function (entry) {
+            return entry.id === source.id;
+          });
         var startedAt = nowMs();
         if (source.needsAsn && !context.asn) {
           records[index] = Object.assign(createPendingRecord(source), {
@@ -1024,12 +1034,14 @@
             status: statusLabel("blocked"),
             detail: "本轮没有可用于查询该服务的真实 ASN",
             latencyMs: 0,
+            attempted: false,
           });
           reportSnapshot(config.onUpdate, records);
           return;
         }
         records[index].state = "loading";
         records[index].status = statusLabel("loading");
+        records[index].attempted = true;
         try {
           var response = await fetchWithTimeout(fetchImpl, source.endpoint(context), {
             timeoutMs: config.timeoutMs,
@@ -1038,16 +1050,31 @@
           var payload = await readResponse(response, source.responseType);
           var normalized = normalizeRoutePayload(source, payload, context);
           normalized.latencyMs = Math.round(nowMs() - startedAt);
+          normalized.attempted = true;
           records[index] = normalized;
         } catch (error) {
           records[index] = Object.assign(createPendingRecord(source), classifyFailure(error), {
             latencyMs: Math.round(nowMs() - startedAt),
             detail: stringValue(error && error.message),
+            attempted: true,
           });
         }
         reportSnapshot(config.onUpdate, records);
-      },
-    );
+        },
+      );
+    }
+
+    if (context.asn) {
+      await runBatch(ROUTE_SOURCES);
+    } else {
+      await runBatch(ROUTE_SOURCES.filter(function (source) {
+        return !source.needsAsn;
+      }));
+      context.asn = computeAsnConsensus(records).value;
+      await runBatch(ROUTE_SOURCES.filter(function (source) {
+        return source.needsAsn;
+      }));
+    }
     return cloneRecords(records);
   }
 
@@ -1090,6 +1117,7 @@
         resolve(
           Object.assign(createPendingRecord(node), fields, {
             latencyMs: Math.round(nowMs() - startedAt),
+            attempted: true,
           }),
         );
       }
@@ -1162,6 +1190,7 @@
       async function (node, index) {
         records[index].state = "loading";
         records[index].status = statusLabel("loading");
+        records[index].attempted = true;
         records[index] = await probeStunNode(node, config);
         reportSnapshot(config.onUpdate, records);
       },

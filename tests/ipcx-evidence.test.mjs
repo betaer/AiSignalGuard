@@ -82,6 +82,7 @@ test("来源统计保留失败项，票数只使用真实可用字段", () => {
         return {
           ...record,
           state: "success",
+          attempted: true,
           voteEligible: true,
           countryCode: index === 5 ? "CA" : "US",
           asn: "AS64501",
@@ -92,17 +93,19 @@ test("来源统计保留失败项，票数只使用真实可用字段", () => {
         return {
           ...record,
           state: "partial",
+          attempted: true,
           voteEligible: true,
           countryCode: "US",
         };
       }
-      return { ...record, state: index === 7 ? "timeout" : "network_error" };
+      return { ...record, attempted: true, state: index === 7 ? "timeout" : "network_error" };
     },
   );
 
   const summary = api.summarizeSources(records);
   assert.deepEqual(summary, {
     total: 10,
+    attempted: 10,
     responded: 7,
     usable: 7,
     complete: 6,
@@ -147,6 +150,7 @@ test("runIpIntel 对 10 家逐一请求并保留超时或限流状态", async ()
   });
 
   assert.equal(calls.length, 10);
+  assert.ok(records.every(({ attempted }) => attempted));
   assert.equal(records.length, 10);
   assert.equal(records[8].state, "rate_limited");
   assert.ok(snapshots.length >= 11, "应先发送 pending，再增量发送每家结果");
@@ -194,6 +198,7 @@ test("每个 STUN 节点使用独立 RTCPeerConnection，不借用其他节点�
   assert.equal(new Set(iceServerUrls).size, 10);
   assert.ok(records.every(({ state }) => state === "success"));
   assert.ok(records.every(({ observedIp }) => observedIp === "203.0.113.9"));
+  assert.ok(records.every(({ attempted }) => attempted));
 });
 
 test("路由来源不会因 IPv6 路径编码或裸 ASN 文本丢失真实结果", async () => {
@@ -233,6 +238,39 @@ test("路由来源不会因 IPv6 路径编码或裸 ASN 文本丢失真实结果
     "Cloudflare, Inc.",
   );
   assert.equal(records.find(({ id }) => id === "rir-rdap").state, "success");
+  assert.equal(calls.length, 10);
+});
+
+test("路由证据会先用 IP 来源发现 ASN，再真正请求全部 10 个来源", async () => {
+  const calls = [];
+  const records = await api.runRouteEvidence({
+    targetIp: "203.0.113.9",
+    timeoutMs: 100,
+    concurrency: 10,
+    fetchImpl: async (url) => {
+      calls.push(url);
+      if (url.includes("network-info")) {
+        return new Response(
+          JSON.stringify({ data: { asns: [64501], prefix: "203.0.113.0/24" } }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      if (url.includes("hackertarget")) {
+        return new Response("64501 Example Transit", { status: 200 });
+      }
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  assert.equal(calls.length, 10);
+  assert.equal(new Set(calls).size, 10);
+  assert.ok(calls.some((url) => url.includes("peeringdb.com/api/net?asn=64501")));
+  assert.ok(calls.some((url) => url.includes("announced-prefixes") && url.includes("AS64501")));
+  assert.ok(calls.some((url) => url.includes("asrank.caida.org") && url.endsWith("/64501")));
+  assert.ok(records.every(({ attempted }) => attempted));
 });
 
 test("HackerTarget 的 IPv6 CSV 响应会保留 ASN、前缀与组织", async () => {

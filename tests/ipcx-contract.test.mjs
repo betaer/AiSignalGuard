@@ -16,6 +16,11 @@ test("IPCX 页面不再携带模拟网络结果", () => {
     source,
     /(?:US\s*·\s*)?6\s*票|可用\s*·?\s*4\s*\/\s*4|可用\s*·?\s*2\s*\/\s*2|6\s*\/\s*8\s*节点/,
   );
+  assert.doesNotMatch(
+    html,
+    /美国 · 洛杉矶|洛杉矶出口|住宅 \/ 移动网络|ISP · Mobile|多源结果一致|未发现明显泄漏|时区、语言不一致|0 项明确冲突|旗帜彩色|HeiTi \/ SongTi/,
+    "初始 HTML 只能包含中性等待状态，不能在实时检测前预设结论",
+  );
 });
 
 test("IPCX 页面由统一的十源证据模块驱动", () => {
@@ -63,4 +68,20 @@ test("AI 诊断复制内容包含产品名称与公开链接", () => {
     app,
     /"AI Signal Guard",\s*"https:\/\/betaer\.github\.io\/AiSignalGuard\/"/,
   );
+});
+
+test("来源标题按当前指标的真实字段计数，并公开实际请求数", () => {
+  assert.match(app, /return item\.usable === true/);
+  assert.match(app, /已请求 " \+ attempted \+ " \/ " \+ items\.length/);
+  assert.match(app, /asnFieldCount/);
+  assert.match(app, /typeFieldCount/);
+  assert.match(app, /riskFieldCount/);
+  assert.match(app, /routeSummary\.attempted/);
+});
+
+test("完全没有网络证据时不生成基础分或绿色泄漏结论", () => {
+  assert.match(app, /var scoreAvailable = evidenceCount > 0/);
+  assert.match(app, /scoreAvailable \? String\(score\) : "—"/);
+  assert.match(app, /泄漏证据不足/);
+  assert.match(app, /!webrtc\.successes\.length \|\| !state\.dns\.records\.length/);
 });
