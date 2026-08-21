@@ -5,9 +5,10 @@ import test from "node:test";
 await import("../starPromptPolicy.js");
 
 const policyApi = globalThis.AISGStarPromptPolicy;
-const [ipcxHtml, appSource] = await Promise.all([
+const [ipcxHtml, appSource, ipcxAppSource] = await Promise.all([
   readFile(new URL("../index-ipcx.html", import.meta.url), "utf8"),
   readFile(new URL("../app.js", import.meta.url), "utf8"),
+  readFile(new URL("../ipcxApp.js", import.meta.url), "utf8"),
 ]);
 
 function createStorage(initial = {}) {
@@ -124,10 +125,12 @@ test("存储不可用时策略安全降级为提示，不阻断检测", () => {
 });
 
 test("IPCX 摘要与页面统一使用准确的不一致措辞和 AI 排查提示", () => {
-  assert.match(ipcxHtml, /AI Signal Guard · 通用数字环境检测\\nhttps:\/\/betaer\.github\.io\/AiSignalGuard\//);
-  assert.match(ipcxHtml, /关键状态：时区不一致、语言不一致、WebRTC 正常/);
-  assert.doesNotMatch(ipcxHtml, /时区待核对|语言待核对/);
-  assert.match(ipcxHtml, /已复制，请发给AI协助排查解决问题 👨‍🔧/);
+  assert.match(ipcxAppSource, /"AI Signal Guard · 通用数字环境检测",\s*PROJECT_URL/);
+  assert.match(ipcxAppSource, /https:\/\/betaer\.github\.io\/AiSignalGuard\//);
+  assert.match(ipcxAppSource, /时区不一致/);
+  assert.match(ipcxAppSource, /语言不一致/);
+  assert.doesNotMatch(ipcxHtml + ipcxAppSource, /时区待核对|语言待核对/);
+  assert.match(ipcxAppSource, /已复制，请发给AI协助排查解决问题 👨‍🔧/);
 });
 
 test("正式页与 IPCX 都把 Star 主按钮接入待处理检测，并让重测进入 Loading", () => {
@@ -138,9 +141,9 @@ test("正式页与 IPCX 都把 Star 主按钮接入待处理检测，并让重�
   assert.match(ipcxHtml, /id="star-support-dialog"/);
   assert.match(ipcxHtml, /id="star-support-github"/);
   assert.match(ipcxHtml, /id="recheck-loading"/);
-  assert.match(ipcxHtml, /function requestRecheck\(\)/);
-  assert.match(ipcxHtml, /\$\("#star-support-github"\)\.addEventListener\("click", continueStarSupport\)/);
-  assert.match(ipcxHtml, /function continueStarSupport\(\)[\s\S]*?if \(shouldContinue\) runRecheck\(\)/);
+  assert.match(ipcxAppSource, /function requestRecheck\(\)/);
+  assert.match(ipcxAppSource, /\$\("#star-support-github"\)\.addEventListener\("click", continueStarSupport\)/);
+  assert.match(ipcxAppSource, /function continueStarSupport\(\)[\s\S]*?if \(shouldContinue\) runRecheck\(\)/);
   assert.match(ipcxHtml, /读取浏览器与时区信号/);
   assert.match(ipcxHtml, /交叉核对 DNS、WebRTC 与多源数据/);
   assert.match(ipcxHtml, /生成检测结论/);

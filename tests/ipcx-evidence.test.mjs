@@ -195,3 +195,68 @@ test("每个 STUN 节点使用独立 RTCPeerConnection，不借用其他节点�
   assert.ok(records.every(({ state }) => state === "success"));
   assert.ok(records.every(({ observedIp }) => observedIp === "203.0.113.9"));
 });
+
+test("路由来源不会因 IPv6 路径编码或裸 ASN 文本丢失真实结果", async () => {
+  const calls = [];
+  const records = await api.runRouteEvidence({
+    targetIp: "2606:4700:4700::1111",
+    asn: "AS13335",
+    timeoutMs: 100,
+    concurrency: 10,
+    fetchImpl: async (url) => {
+      calls.push(url);
+      if (url.includes("hackertarget")) {
+        return new Response("13335 Cloudflare, Inc.", { status: 200 });
+      }
+      if (url.includes("rdap.org")) {
+        return new Response(
+          JSON.stringify({
+            startAddress: "2606:4700::",
+            endAddress: "2606:4700:ffff:ffff:ffff:ffff:ffff:ffff",
+            name: "CLOUDFLARENET",
+            handle: "NET6-2606-4700-1",
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  assert.ok(calls.some((url) => url.endsWith("/2606:4700:4700::1111")));
+  assert.equal(records.find(({ id }) => id === "hackertarget").asn, "AS13335");
+  assert.equal(
+    records.find(({ id }) => id === "hackertarget").organization,
+    "Cloudflare, Inc.",
+  );
+  assert.equal(records.find(({ id }) => id === "rir-rdap").state, "success");
+});
+
+test("HackerTarget 的 IPv6 CSV 响应会保留 ASN、前缀与组织", async () => {
+  const records = await api.runRouteEvidence({
+    targetIp: "2606:4700:4700::1111",
+    asn: "AS13335",
+    timeoutMs: 100,
+    concurrency: 10,
+    fetchImpl: async (url) => {
+      if (url.includes("hackertarget")) {
+        return new Response(
+          '"2606:4700:4700::1111","13335","2606:4700::/32","CLOUDFLARENET, US"',
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+  const record = records.find(({ id }) => id === "hackertarget");
+  assert.equal(record.state, "success");
+  assert.equal(record.asn, "AS13335");
+  assert.equal(record.prefix, "2606:4700::/32");
+  assert.equal(record.organization, "CLOUDFLARENET, US");
+});

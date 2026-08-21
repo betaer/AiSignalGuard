@@ -78,7 +78,7 @@
 5. Team Cymru IP-to-ASN（通过标准 DoH 查询）
 6. PeeringDB
 7. IP.guide Network
-8. IPinfo.app IP-to-ASN
+8. RIPEstat Announced Prefixes
 9. HackerTarget AS Lookup
 10. CAIDA AS Rank
 

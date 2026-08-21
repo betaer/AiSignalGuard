@@ -111,7 +111,7 @@
       id: "rir-rdap",
       name: "权威 RIR RDAP",
       endpoint: function (context) {
-        return "https://rdap.org/ip/" + encodeURIComponent(context.targetIp);
+        return "https://rdap.org/ip/" + context.targetIp;
       },
     },
     {
@@ -971,7 +971,20 @@
     }
     if (source.id === "hackertarget") {
       var line = stringValue(payload) || "";
-      var match = line.match(/^(AS?\d+)\s+(.+)$/i);
+      var csvValues = [];
+      line.replace(/"([^"]*)"/g, function (_, value) {
+        csvValues.push(value);
+        return _;
+      });
+      if (csvValues.length >= 4) {
+        return routeRecord(source, {
+          asn: normalizeAsn(csvValues[1]),
+          prefix: stringValue(csvValues[2]),
+          organization: stringValue(csvValues.slice(3).join(", ")),
+          detail: "HackerTarget AS Lookup 实时 CSV 结果",
+        });
+      }
+      var match = line.match(/^((?:AS)?\d+)\s+(.+)$/i);
       return routeRecord(source, {
         asn: normalizeAsn(match && match[1]),
         organization: stringValue(match && match[2]),

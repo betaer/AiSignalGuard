@@ -495,6 +495,9 @@
 
   function maskIpValue(value) {
     var text = String(value || "");
+    if (text.indexOf(" / ") >= 0) {
+      return text.split(" / ").map(maskIpValue).join(" / ");
+    }
     if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(text)) {
       var parts = text.split(".");
       return parts[0] + "." + parts[1] + ".x.x";
@@ -563,13 +566,26 @@
     var successes = state.stun.filter(function (record) { return record.state === "success" && record.observedIp; });
     var ips = Array.from(new Set(successes.map(function (record) { return record.observedIp; })));
     var exitIp = state.observations.exitIp;
-    var conflicts = exitIp ? successes.filter(function (record) { return record.observedIp !== exitIp; }) : [];
+    function family(ip) { return ip && ip.indexOf(":") >= 0 ? 6 : ip ? 4 : 0; }
+    var conflicts = exitIp ? successes.filter(function (record) {
+      return family(record.observedIp) === family(exitIp) && record.observedIp !== exitIp;
+    }) : [];
+    var alternateFamily = exitIp ? successes.filter(function (record) {
+      return family(record.observedIp) !== family(exitIp);
+    }) : [];
     return {
       successes: successes,
       ips: ips,
       conflicts: conflicts,
-      tone: !successes.length ? "warn" : conflicts.length ? "bad" : "good",
-      label: !successes.length ? "证据不足" : conflicts.length ? "发现候选分歧" : "候选与出口一致",
+      alternateFamily: alternateFamily,
+      tone: !successes.length ? "warn" : conflicts.length ? "bad" : alternateFamily.length ? "warn" : "good",
+      label: !successes.length
+        ? "证据不足"
+        : conflicts.length
+          ? "同地址族候选分歧"
+          : alternateFamily.length
+            ? "检测到双栈公网候选"
+            : "候选与出口一致",
     };
   }
 
@@ -715,8 +731,8 @@
       value: webrtc.label,
       tone: webrtc.tone,
       result: webrtc.label,
-      evidence: "10 个独立 STUN 节点中 " + webrtc.successes.length + " 个返回公网候选，候选地址种类 " + webrtc.ips.length + " 个。",
-      advice: "若发现与 HTTP 出口不同的公网候选，优先核对代理、TUN 与 WebRTC 设置。",
+      evidence: "10 个独立 STUN 节点中 " + webrtc.successes.length + " 个返回公网候选；同地址族分歧 " + webrtc.conflicts.length + " 个，另一地址族候选 " + webrtc.alternateFamily.length + " 个。",
+      advice: "另一地址族候选常见于双栈网络；只有同地址族出现额外公网地址时才优先核对代理、TUN 与 WebRTC 设置。",
     });
     setRow("stun-nodes", {
       value: webrtc.successes.length + " / 10 响应",
@@ -788,6 +804,84 @@
     $("#snapshot-status").textContent = state.running ? "实时检测中" : state.observations.exitIp ? "实时结果" : "未取得出口";
   }
 
+  function setToneText(node, text, tone) {
+    if (!node) return;
+    node.textContent = text;
+    node.classList.remove("good", "warn", "bad");
+    if (tone && tone !== "neutral") node.classList.add(tone);
+  }
+
+  function updateGroupSummaries() {
+    var groups = $$(".signal-group");
+    var byTitle = function (title) {
+      return groups.find(function (group) {
+        return group.querySelector(".signal-group-title")?.textContent.trim() === title;
+      });
+    };
+    var intel = evidenceApi.summarizeSources(state.ipIntel);
+    var routes = evidenceApi.summarizeSources(state.routes);
+    var country = evidenceApi.computeCountryConsensus(state.ipIntel);
+    var asn = evidenceApi.computeAsnConsensus(state.ipIntel);
+    var timezoneCountry = timezoneRegion(state.observations.timezone);
+    var languageCountry = languageRegion(state.observations.languages[0]);
+    var identityMismatch = Boolean(
+      country.value &&
+        ((timezoneCountry && timezoneCountry !== country.value) ||
+          (languageCountry && languageCountry !== country.value)),
+    );
+    var webrtc = webrtcAssessment();
+    var dnsMismatch = Boolean(
+      state.dns.records.length &&
+        country.value &&
+        state.dns.records.some(function (record) {
+          return record.countryCode && record.countryCode !== country.value;
+        }),
+    );
+    var countryConflict = country.conflicts;
+    var asnConflict = state.ipIntel.filter(function (record) {
+      return sourceUsable(record) && asn.value && record.asn && record.asn !== asn.value;
+    }).length;
+
+    var exitGroup = byTitle("出口 IP");
+    setToneText(
+      exitGroup?.querySelector(".signal-group-result"),
+      state.running ? "实时检测中" : state.observations.exitIp ? "出口已读取 · 可用 " + intel.usable + " / 10" : "未取得出口",
+      state.running ? "neutral" : state.observations.exitIp ? (intel.usable >= 6 ? "good" : "warn") : "bad",
+    );
+    var identityGroup = byTitle("身份信号");
+    setToneText(
+      identityGroup?.querySelector(".signal-group-result"),
+      !country.value ? "等待地区共识" : identityMismatch ? "时区或语言不一致" : "未见明确不一致",
+      !country.value ? "neutral" : identityMismatch ? "warn" : "good",
+    );
+    var leakGroup = byTitle("网络泄漏");
+    var leakNeedsReview = webrtc.conflicts.length || webrtc.alternateFamily.length || dnsMismatch || state.dns.error;
+    setToneText(
+      leakGroup?.querySelector(".signal-group-result"),
+      state.running ? "实时检测中" : leakNeedsReview ? "发现需核对信号" : "未发现明确泄漏",
+      state.running ? "neutral" : leakNeedsReview ? "warn" : "good",
+    );
+    var multiGroup = byTitle("多源互证");
+    var sourceConflicts = countryConflict + asnConflict;
+    setToneText(
+      multiGroup?.querySelector(".signal-group-result"),
+      state.running ? "多源核对中" : sourceConflicts ? sourceConflicts + " 项来源分歧" : "多源未见明确分歧",
+      state.running ? "neutral" : sourceConflicts ? "warn" : intel.usable || routes.usable ? "good" : "neutral",
+    );
+
+    var subsection = function (label) {
+      return document.querySelector('.signal-subsection[aria-label="' + label + '"] .signal-subsection-status');
+    };
+    setToneText(subsection("位置一致性"), !country.value ? "等待" : identityMismatch ? "部分匹配" : "未见冲突", !country.value ? "neutral" : identityMismatch ? "warn" : "good");
+    setToneText(subsection("网络类型"), "可用 " + intel.usable + " / 10", intel.usable >= 6 ? "good" : intel.usable ? "warn" : "neutral");
+    setToneText(subsection("时区"), !country.value ? "等待" : timezoneCountry && timezoneCountry !== country.value ? "不一致" : "未见冲突", !country.value ? "neutral" : timezoneCountry && timezoneCountry !== country.value ? "warn" : "good");
+    setToneText(subsection("语言"), !country.value ? "等待" : languageCountry && languageCountry !== country.value ? "不一致" : "未见冲突", !country.value ? "neutral" : languageCountry && languageCountry !== country.value ? "warn" : "good");
+    setToneText(subsection("DNS"), state.dns.running ? "检测中" : state.dns.error ? "检测失败" : dnsMismatch ? "地区分歧" : state.dns.records.length ? "已取得结果" : "无结果", state.dns.running ? "neutral" : state.dns.error || dnsMismatch ? "warn" : state.dns.records.length ? "good" : "neutral");
+    setToneText(subsection("WebRTC"), webrtc.label, webrtc.tone);
+    setToneText(subsection("地理交叉"), country.value ? country.votes + " / 10 票" : "等待", country.value ? country.conflicts ? "warn" : "good" : "neutral");
+    setToneText(subsection("网络标签"), "可用 " + intel.usable + " / 10", intel.usable >= 6 ? "good" : intel.usable ? "warn" : "neutral");
+  }
+
   function browserLabel() {
     var ua = navigator.userAgent || "";
     var browser = /Edg\//.test(ua) ? "Edge" : /Chrome\//.test(ua) ? "Chrome" : /Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "浏览器";
@@ -825,7 +919,7 @@
     chips.forEach(function (chip) {
       tagRow.append(makeTextElement("span", "chip " + chip.tone, chip.text));
     });
-    var needsReview = timezoneMismatch || languageMismatch || webrtc.conflicts.length;
+    var needsReview = timezoneMismatch || languageMismatch || webrtc.conflicts.length || webrtc.alternateFamily.length;
     var badge = $(".status-badge");
     badge.textContent = state.running ? "检测中" : needsReview ? "需要核对" : coverage < 50 ? "证据不足" : "状态稳定";
     badge.style.color = state.running ? "var(--blue)" : needsReview ? "var(--amber)" : "var(--green-deep)";
@@ -842,7 +936,7 @@
     setSensitiveValue($("#webrtc-http-ip"), state.observations.exitIp || state.publicIp.status);
     setSensitiveValue($("#webrtc-public-ip"), assessment.ips.length ? assessment.ips.join(" / ") : "未取得");
     $("#webrtc-node-consensus").textContent = assessment.successes.length + " / 10 响应 · " + assessment.ips.length + " 种候选";
-    $("#webrtc-panel-note").textContent = "本轮以 10 个独立 STUN 节点探测；" + assessment.successes.length + " 个返回公网候选，" + assessment.conflicts.length + " 个与 HTTP 出口不同。";
+    $("#webrtc-panel-note").textContent = "本轮以 10 个独立 STUN 节点探测；" + assessment.successes.length + " 个返回公网候选，同地址族分歧 " + assessment.conflicts.length + " 个，另一地址族候选 " + assessment.alternateFamily.length + " 个。";
     [$("#webrtc-http-status"), $("#webrtc-public-status"), $("#webrtc-node-status")].forEach(function (node) {
       node.classList.remove("good", "warn", "bad");
     });
@@ -857,6 +951,7 @@
   function render() {
     updateSnapshot();
     updateRowSummaries();
+    updateGroupSummaries();
     updateOverview();
     updateWebrtcPanel();
     renderEvidenceLists();
