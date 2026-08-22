@@ -56,18 +56,19 @@ try {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   const starContinue = page.locator("#star-support-continue");
   if (await starContinue.isVisible().catch(() => false)) await starContinue.click();
+  await page.waitForFunction(
+    () => document.querySelector("#webrtc-panel-status")?.textContent.trim() !== "检测中",
+    null,
+    { timeout: 10000 },
+  );
   await page.locator('.signal-row[data-row-id="exit-ip-quality"] > summary').click();
   const firstTip = page.locator('.signal-row[data-row-id="exit-ip-quality"] .metric-evidence .info-tip').first();
+  const tooltipLayer = page.locator("#hover-tooltip-layer");
   await firstTip.locator("summary").waitFor({ state: "visible" });
   await firstTip.locator("summary").hover();
-  const visibleInfoBubble = await firstTip.locator(".info-tip-bubble").evaluate((node) => {
+  const visibleInfoBubble = await tooltipLayer.evaluate((node) => {
     const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();
-    const clippingAncestors = [".metric-evidence", ".signal-subsection-rows", ".signal-group", ".result-card"]
-      .map((selector) => node.closest(selector))
-      .filter(Boolean)
-      .filter((ancestor) => getComputedStyle(ancestor).overflow !== "visible")
-      .map((ancestor) => ancestor.className);
     return {
       x: rect.x,
       y: rect.y,
@@ -76,13 +77,17 @@ try {
       opacity: style.opacity,
       visibility: style.visibility,
       pointerEvents: style.pointerEvents,
-      clippingAncestors,
+      position: style.position,
+      parent: node.parentElement?.tagName,
+      copy: node.textContent.trim(),
     };
   });
   assert.equal(visibleInfoBubble.opacity, "1", "桌面悬停信息按钮应直接显示气泡");
   assert.equal(visibleInfoBubble.visibility, "visible", "桌面悬停信息按钮气泡应可见");
   assert.equal(visibleInfoBubble.pointerEvents, "none", "气泡不应接管鼠标，以便移出按钮后立即隐藏");
-  assert.deepEqual(visibleInfoBubble.clippingAncestors, [], "信息气泡不应被父级圆角容器裁切");
+  assert.equal(visibleInfoBubble.position, "fixed", "信息气泡应固定挂载在视口层");
+  assert.equal(visibleInfoBubble.parent, "BODY", "信息气泡应直接挂载到 body，避免被圆角容器裁切");
+  assert.match(visibleInfoBubble.copy, /有效表示当前指标拥有可参与判断的字段/, "信息气泡应显示当前指标说明");
   assert.ok(
     visibleInfoBubble.x >= 0 && visibleInfoBubble.y >= 0 &&
       visibleInfoBubble.x + visibleInfoBubble.width <= 1200 && visibleInfoBubble.y + visibleInfoBubble.height <= 800,
@@ -90,7 +95,7 @@ try {
   );
   await page.mouse.move(18, 18);
   await page.waitForTimeout(180);
-  const hoverBubbleState = await firstTip.locator(".info-tip-bubble").evaluate((node) => {
+  const hoverBubbleState = await tooltipLayer.evaluate((node) => {
     const style = getComputedStyle(node);
     return { opacity: style.opacity, visibility: style.visibility, pointerEvents: style.pointerEvents };
   });
@@ -106,7 +111,7 @@ try {
   await firstTip.locator("summary").focus();
   await firstTip.evaluate((node) => { window.__aisgFocusedTip = node; });
 
-  const bubble = await firstTip.locator(".info-tip-bubble").boundingBox();
+  const bubble = await tooltipLayer.boundingBox();
   assert.ok(bubble, "桌面信息气泡应可见");
   assert.ok(bubble.width >= 240 && bubble.height >= 40, "桌面信息气泡不应被容器裁切");
   assert.ok(
@@ -114,12 +119,7 @@ try {
     "桌面信息气泡应完整位于视口内",
   );
 
-  await page.waitForTimeout(900);
-  await page.waitForFunction(
-    () => document.querySelector("#webrtc-panel-status")?.textContent.trim() !== "检测中",
-    null,
-    { timeout: 6000 },
-  );
+  await page.waitForTimeout(500);
   assert.notEqual(
     await page.locator("#webrtc-panel-status").textContent(),
     "检测中",
@@ -144,14 +144,9 @@ try {
   const rowHelp = page.locator('.signal-row[data-row-id="position-consistency"] .row-help-tip').first();
   await rowHelp.scrollIntoViewIfNeeded();
   await rowHelp.locator("summary").hover();
-  const rowHelpBubble = await rowHelp.locator(".row-help-bubble").evaluate((node) => {
+  const rowHelpBubble = await tooltipLayer.evaluate((node) => {
     const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();
-    const clippingAncestors = [".signal-subsection-rows", ".signal-group"]
-      .map((selector) => node.closest(selector))
-      .filter(Boolean)
-      .filter((ancestor) => getComputedStyle(ancestor).overflow !== "visible")
-      .map((ancestor) => ancestor.className);
     return {
       x: rect.x,
       y: rect.y,
@@ -160,13 +155,17 @@ try {
       opacity: style.opacity,
       visibility: style.visibility,
       pointerEvents: style.pointerEvents,
-      clippingAncestors,
+      position: style.position,
+      parent: node.parentElement?.tagName,
+      copy: node.textContent.trim(),
     };
   });
   assert.equal(rowHelpBubble.opacity, "1", "移动端悬停行内说明应直接显示气泡");
   assert.equal(rowHelpBubble.visibility, "visible", "移动端悬停行内说明应直接可见");
   assert.equal(rowHelpBubble.pointerEvents, "none", "行内气泡不应接管鼠标事件");
-  assert.deepEqual(rowHelpBubble.clippingAncestors, [], "行内说明气泡不应被父级圆角容器裁切");
+  assert.equal(rowHelpBubble.position, "fixed", "行内说明应使用固定定位全局气泡");
+  assert.equal(rowHelpBubble.parent, "BODY", "行内说明应挂载到 body");
+  assert.ok(rowHelpBubble.copy.length > 8, "行内说明气泡应包含完整文案");
   assert.ok(
     rowHelpBubble.x >= 0 && rowHelpBubble.y >= 0 &&
       rowHelpBubble.x + rowHelpBubble.width <= 390 && rowHelpBubble.y + rowHelpBubble.height <= 844,
@@ -176,7 +175,7 @@ try {
   assert.equal(await rowHelp.evaluate((node) => node.open), false, "鼠标点击说明胶囊不应触发展开状态");
   await page.mouse.move(18, 18);
   await page.waitForTimeout(180);
-  const rowHoverState = await rowHelp.locator(".row-help-bubble").evaluate((node) => {
+  const rowHoverState = await tooltipLayer.evaluate((node) => {
     const style = getComputedStyle(node);
     return { opacity: style.opacity, visibility: style.visibility, pointerEvents: style.pointerEvents };
   });
@@ -184,6 +183,23 @@ try {
     rowHoverState,
     { opacity: "0", visibility: "hidden", pointerEvents: "none" },
     "鼠标移出行内说明后气泡应立即隐藏",
+  );
+  const adviceHelp = page.locator('.signal-row[data-row-id="position-consistency"] .row-help-tip').nth(1);
+  await adviceHelp.locator("summary").hover();
+  const adviceBubble = await tooltipLayer.evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { opacity: style.opacity, visibility: style.visibility, copy: node.textContent.trim() };
+  });
+  assert.equal(adviceBubble.opacity, "1", "建议入口悬停后应立即显示气泡");
+  assert.equal(adviceBubble.visibility, "visible", "建议气泡应直接可见");
+  assert.ok(adviceBubble.copy.length > 8, "建议气泡应包含完整建议文案");
+  assert.notEqual(adviceBubble.copy, rowHelpBubble.copy, "证据说明与建议应分别显示各自文案");
+  await page.mouse.move(18, 18);
+  await page.waitForTimeout(40);
+  assert.equal(
+    await tooltipLayer.evaluate((node) => getComputedStyle(node).visibility),
+    "hidden",
+    "鼠标移出建议入口后气泡应立即隐藏",
   );
   await page.locator('.signal-row[data-row-id="position-consistency"] > summary').click();
 

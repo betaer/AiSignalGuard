@@ -459,156 +459,145 @@
     return node;
   }
 
-  function positionInfoTip(tip) {
-    var summary = tip.querySelector("summary");
-    var bubble = tip.querySelector(".info-tip-bubble");
-    if (!summary || !bubble) return;
-    var summaryRect = summary.getBoundingClientRect();
-    var bubbleRect = bubble.getBoundingClientRect();
+  var hoverTooltipState = { layer: null, trigger: null, previousDescription: null };
+
+  function hoverTooltipTriggerFrom(target) {
+    if (!target || target.nodeType !== 1) return null;
+    return target.closest(".row-help-tip > summary, .info-tip > summary");
+  }
+
+  function hoverTooltipCopy(trigger) {
+    var source = trigger ? trigger.nextElementSibling : null;
+    return source && source.matches(".row-help-bubble, .info-tip-bubble") ? source.textContent.trim() : "";
+  }
+
+  function positionHoverTooltip() {
+    var layer = hoverTooltipState.layer;
+    var trigger = hoverTooltipState.trigger;
+    if (!layer || !trigger || !trigger.isConnected) return;
+    layer.classList.remove("is-visible");
+    layer.classList.add("is-measuring");
+    var triggerRect = trigger.getBoundingClientRect();
+    var layerRect = layer.getBoundingClientRect();
     var viewportPadding = 12;
     var viewportWidth = window.visualViewport ? window.visualViewport.width : document.documentElement.clientWidth;
     var viewportHeight = window.visualViewport ? window.visualViewport.height : document.documentElement.clientHeight;
-    var desiredLeft = Math.min(
-      Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
-      viewportWidth - bubbleRect.width - viewportPadding,
-    );
-    var desiredTop = summaryRect.top - bubbleRect.height - 8;
-    if (desiredTop < viewportPadding) desiredTop = summaryRect.bottom + 8;
-    desiredTop = Math.min(
-      Math.max(viewportPadding, desiredTop),
-      viewportHeight - bubbleRect.height - viewportPadding,
-    );
-    var tipRect = tip.getBoundingClientRect();
-    bubble.style.setProperty("--info-tip-left", Math.round(desiredLeft - tipRect.left) + "px");
-    bubble.style.setProperty("--info-tip-top", Math.round(desiredTop - tipRect.top) + "px");
-    bubble.style.right = "auto";
-    bubble.style.bottom = "auto";
+    var left = triggerRect.left + (triggerRect.width - layerRect.width) / 2;
+    left = Math.min(Math.max(viewportPadding, left), viewportWidth - layerRect.width - viewportPadding);
+    var top = triggerRect.top - layerRect.height - 9;
+    var placement = "top";
+    if (top < viewportPadding) {
+      top = triggerRect.bottom + 9;
+      placement = "bottom";
+    }
+    top = Math.min(Math.max(viewportPadding, top), viewportHeight - layerRect.height - viewportPadding);
+    layer.style.left = Math.round(left) + "px";
+    layer.style.top = Math.round(top) + "px";
+    layer.dataset.placement = placement;
+    layer.classList.remove("is-measuring");
+    layer.classList.add("is-visible");
   }
 
-  function positionRowHelpTip(tip) {
+  function restoreHoverTooltipDescription() {
+    var trigger = hoverTooltipState.trigger;
+    if (!trigger) return;
+    if (hoverTooltipState.previousDescription) trigger.setAttribute("aria-describedby", hoverTooltipState.previousDescription);
+    else trigger.removeAttribute("aria-describedby");
+  }
+
+  function showHoverTooltip(trigger) {
+    var copy = hoverTooltipCopy(trigger);
+    if (!copy) return;
+    var layer = hoverTooltipState.layer;
+    if (!layer) return;
+    if (hoverTooltipState.trigger !== trigger) {
+      restoreHoverTooltipDescription();
+      hoverTooltipState.trigger = trigger;
+      hoverTooltipState.previousDescription = trigger.getAttribute("aria-describedby");
+      var descriptions = [hoverTooltipState.previousDescription, layer.id].filter(Boolean);
+      trigger.setAttribute("aria-describedby", descriptions.join(" "));
+    }
+    layer.textContent = copy;
+    layer.setAttribute("aria-hidden", "false");
+    positionHoverTooltip();
+  }
+
+  function hideHoverTooltip() {
+    var layer = hoverTooltipState.layer;
+    if (!layer) return;
+    restoreHoverTooltipDescription();
+    hoverTooltipState.trigger = null;
+    hoverTooltipState.previousDescription = null;
+    layer.classList.remove("is-visible", "is-measuring");
+    layer.setAttribute("aria-hidden", "true");
+  }
+
+  function setupHoverTooltipPortal() {
+    if (hoverTooltipState.layer) return;
+    var layer = makeTextElement("div", "hover-tooltip-layer", "");
+    layer.id = "hover-tooltip-layer";
+    layer.setAttribute("role", "tooltip");
+    layer.setAttribute("aria-hidden", "true");
+    document.body.append(layer);
+    hoverTooltipState.layer = layer;
+    document.addEventListener("mouseover", function (event) {
+      var trigger = hoverTooltipTriggerFrom(event.target);
+      if (!trigger) return;
+      if (event.relatedTarget && trigger.contains(event.relatedTarget)) return;
+      showHoverTooltip(trigger);
+    });
+    document.addEventListener("mouseout", function (event) {
+      var trigger = hoverTooltipTriggerFrom(event.target);
+      if (!trigger || trigger !== hoverTooltipState.trigger) return;
+      if (event.relatedTarget && trigger.contains(event.relatedTarget)) return;
+      if (document.activeElement === trigger) return;
+      hideHoverTooltip();
+    });
+    document.addEventListener("focusin", function (event) {
+      var trigger = hoverTooltipTriggerFrom(event.target);
+      if (trigger) showHoverTooltip(trigger);
+    });
+    document.addEventListener("focusout", function (event) {
+      var trigger = hoverTooltipTriggerFrom(event.target);
+      if (!trigger || trigger !== hoverTooltipState.trigger) return;
+      requestAnimationFrame(function () {
+        if (!trigger.matches(":hover") && document.activeElement !== trigger) hideHoverTooltip();
+      });
+    });
+  }
+
+  function setupHoverOnlyDetails(tip, readyKey) {
+    if (tip.dataset[readyKey] === "true") return;
+    tip.dataset[readyKey] = "true";
     var summary = tip.querySelector("summary");
-    var bubble = tip.querySelector(".row-help-bubble");
-    if (!summary || !bubble) return;
-    var summaryRect = summary.getBoundingClientRect();
-    var bubbleRect = bubble.getBoundingClientRect();
-    var viewportPadding = 12;
-    var viewportWidth = window.visualViewport ? window.visualViewport.width : document.documentElement.clientWidth;
-    var desiredLeft = Math.min(
-      Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
-      viewportWidth - bubbleRect.width - viewportPadding,
-    );
-    var tipRect = tip.getBoundingClientRect();
-    bubble.style.left = Math.round(desiredLeft - tipRect.left) + "px";
-    bubble.style.right = "auto";
+    if (summary) {
+      var pointerActivation = false;
+      summary.addEventListener("pointerdown", function (event) {
+        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+        pointerActivation = true;
+        event.preventDefault();
+        tip.open = false;
+        summary.blur();
+      });
+      summary.addEventListener("click", function (event) {
+        if (!pointerActivation) return;
+        pointerActivation = false;
+        event.preventDefault();
+        tip.open = false;
+        summary.blur();
+      });
+      summary.addEventListener("pointercancel", function () {
+        pointerActivation = false;
+      });
+    }
   }
 
   function setupRowHelpTip(tip) {
-    if (tip.dataset.rowHelpReady === "true") return;
-    tip.dataset.rowHelpReady = "true";
-    var summary = tip.querySelector("summary");
-    var syncContainers = function () {
-      var containers = [tip.closest(".signal-subsection-rows"), tip.closest(".signal-group")].filter(Boolean);
-      containers.forEach(function (container) {
-        var visible = Array.from(container.querySelectorAll(".row-help-tip")).some(function (item) {
-          return item.matches(":hover") || Boolean(item.querySelector("summary:focus-visible"));
-        });
-        container.classList.toggle("is-help-visible", visible);
-      });
-    };
-    // 鼠标提示只由 hover 控制，避免原生 details 的第一次点击把提示固定成展开态。
-    // 键盘仍保留原生 details 行为，方便键盘用户查看完整说明。
-    if (summary) {
-      var pointerActivation = false;
-      summary.addEventListener("pointerdown", function (event) {
-        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-        pointerActivation = true;
-        event.preventDefault();
-        tip.open = false;
-        summary.blur();
-        syncContainers();
-      });
-      summary.addEventListener("click", function (event) {
-        if (!pointerActivation) return;
-        pointerActivation = false;
-        event.preventDefault();
-        tip.open = false;
-        summary.blur();
-        syncContainers();
-      });
-      summary.addEventListener("pointercancel", function () {
-        pointerActivation = false;
-      });
-    }
-    tip.addEventListener("toggle", function () {
-      syncContainers();
-      requestAnimationFrame(function () { positionRowHelpTip(tip); });
-    });
-    tip.addEventListener("mouseenter", function () {
-      syncContainers();
-      requestAnimationFrame(function () { positionRowHelpTip(tip); });
-    });
-    tip.addEventListener("mouseleave", function () { requestAnimationFrame(syncContainers); });
-    tip.addEventListener("focusin", function () {
-      syncContainers();
-      requestAnimationFrame(function () { positionRowHelpTip(tip); });
-    });
-    tip.addEventListener("focusout", function () { requestAnimationFrame(syncContainers); });
+    setupHoverOnlyDetails(tip, "rowHelpReady");
   }
 
   function setupInfoTip(tip) {
-    if (tip.dataset.infoTipReady === "true") return;
-    tip.dataset.infoTipReady = "true";
-    var summary = tip.querySelector("summary");
-    var syncContainers = function () {
-      var containers = [
-        tip.closest(".metric-evidence"),
-        tip.closest(".signal-subsection-rows"),
-        tip.closest(".signal-group"),
-        tip.closest(".result-card"),
-      ].filter(Boolean);
-      containers.forEach(function (container) {
-        var visible = Array.from(container.querySelectorAll(".info-tip")).some(function (item) {
-          return item.matches(":hover") || Boolean(item.querySelector("summary:focus-visible"));
-        });
-        container.classList.toggle("is-info-visible", visible);
-      });
-    };
-    if (summary) {
-      var pointerActivation = false;
-      summary.addEventListener("pointerdown", function (event) {
-        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
-        pointerActivation = true;
-        event.preventDefault();
-        tip.open = false;
-        summary.blur();
-        syncContainers();
-      });
-      summary.addEventListener("click", function (event) {
-        if (!pointerActivation) return;
-        pointerActivation = false;
-        event.preventDefault();
-        tip.open = false;
-        summary.blur();
-        syncContainers();
-      });
-      summary.addEventListener("pointercancel", function () {
-        pointerActivation = false;
-      });
-    }
-    tip.addEventListener("toggle", function () {
-      syncContainers();
-      requestAnimationFrame(function () { positionInfoTip(tip); });
-    });
-    tip.addEventListener("mouseenter", function () {
-      syncContainers();
-      requestAnimationFrame(function () { positionInfoTip(tip); });
-    });
-    tip.addEventListener("mouseleave", function () { requestAnimationFrame(syncContainers); });
-    tip.addEventListener("focusin", function () {
-      syncContainers();
-      requestAnimationFrame(function () { positionInfoTip(tip); });
-    });
-    tip.addEventListener("focusout", function () { requestAnimationFrame(syncContainers); });
+    setupHoverOnlyDetails(tip, "infoTipReady");
   }
 
   function makeInfoTip(label, text) {
@@ -1934,6 +1923,7 @@
 
   validatePageContract();
   prepareSignalRows();
+  setupHoverTooltipPortal();
   $$(".signal-row-chevron, .row-status-dot").forEach(function (node) { node.setAttribute("aria-hidden", "true"); });
   $$(".module-tab").forEach(function (link) {
     link.addEventListener("click", function (event) {
@@ -1977,13 +1967,13 @@
     scheduleBackToTopUpdate();
     scheduleSectionNavigationUpdate();
     updateFloatingDockReadingState();
-    $$(".info-tip[open]").forEach(positionInfoTip);
+    positionHoverTooltip();
   }, { passive: true });
   window.addEventListener("resize", function () {
     scheduleBackToTopUpdate();
     scheduleSectionNavigationUpdate();
     resetFloatingDockReadingState();
-    $$(".info-tip[open]").forEach(positionInfoTip);
+    positionHoverTooltip();
   });
   window.addEventListener("hashchange", alignSectionFromLocationHash);
   window.addEventListener("popstate", alignSectionFromLocationHash);

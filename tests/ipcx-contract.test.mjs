@@ -162,29 +162,29 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.match(html, /class="info-tip"/);
   assert.match(html, /<summary[^>]+aria-label="网络参考分说明"/);
   assert.match(app, /function makeInfoTip\(/);
-  assert.match(app, /function positionInfoTip\(/);
+  assert.match(app, /function setupHoverTooltipPortal\(/);
+  assert.match(app, /function positionHoverTooltip\(/);
   assert.match(app, /有效表示当前指标拥有可参与判断的字段/);
   assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/s);
-  assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*absolute;/s);
-  assert.match(html, /\.metric-evidence\.is-info-visible\s*\{\s*overflow:\s*visible;/s);
+  assert.match(html, /\.row-help-bubble,\s*\.info-tip-bubble\s*\{\s*display:\s*none;/s);
+  assert.match(html, /\.hover-tooltip-layer\s*\{[^}]*position:\s*fixed;/s);
   assert.match(app, /function setupInfoTip\(/);
   assert.match(app, /summary\.addEventListener\("pointerdown"/);
   assert.match(app, /event\.preventDefault\(\)/);
-  assert.match(html, /\.info-tip:hover\s*>\s*\.info-tip-bubble/);
-  assert.match(html, /summary:focus-visible\s*\+\s*\.info-tip-bubble/);
-  assert.doesNotMatch(html, /\.info-tip\[open\]\s*>\s*\.info-tip-bubble/);
+  assert.match(app, /document\.addEventListener\("mouseover"/);
+  assert.match(app, /document\.addEventListener\("mouseout"/);
+  assert.match(app, /document\.addEventListener\("focusin"/);
+  assert.doesNotMatch(html, /\.info-tip:hover\s*>\s*\.info-tip-bubble/);
 });
 
-test("一级分组内容保持圆角，行内说明气泡独立于列表裁切", () => {
+test("一级分组保持圆角，行内说明统一使用 body 全局气泡层", () => {
   assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*16px;/s);
-  assert.match(html, /\.row-help-bubble\s*\{[^}]*position:\s*absolute;/s);
-  assert.match(app, /function positionRowHelpTip\(/);
+  assert.match(app, /document\.body\.append\(layer\)/);
+  assert.match(app, /target\.closest\("\.row-help-tip > summary, \.info-tip > summary"\)/);
   assert.match(app, /summary\.addEventListener\("pointerdown"/);
   assert.match(app, /event\.preventDefault\(\)/);
-  assert.match(html, /\.row-help-tip:hover\s*>\s*\.row-help-bubble/);
-  assert.match(html, /summary:focus-visible\s*\+\s*\.row-help-bubble/);
-  assert.doesNotMatch(html, /\.row-help-tip\[open\]\s*>\s*\.row-help-bubble/);
-  assert.match(app, /tip\.closest\("\.signal-group"\)/);
+  assert.doesNotMatch(html, /\.row-help-tip:hover\s*>\s*\.row-help-bubble/);
+  assert.doesNotMatch(app, /classList\.toggle\("is-help-visible"/);
 });
 
 test("状态指示灯与状态文案共享四级颜色语义", () => {
