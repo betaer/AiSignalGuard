@@ -164,8 +164,11 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.match(app, /function makeInfoTip\(/);
   assert.match(app, /function positionInfoTip\(/);
   assert.match(app, /有效表示当前指标拥有可参与判断的字段/);
-  assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s);
+  assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/s);
   assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*fixed;/s);
+  assert.match(app, /function setupInfoTip\(/);
+  assert.match(app, /summary\.addEventListener\("pointerdown"/);
+  assert.match(app, /event\.preventDefault\(\)/);
   assert.match(html, /\.info-tip:hover\s*>\s*\.info-tip-bubble/);
   assert.match(html, /summary:focus-visible\s*\+\s*\.info-tip-bubble/);
   assert.doesNotMatch(html, /\.info-tip\[open\]\s*>\s*\.info-tip-bubble/);

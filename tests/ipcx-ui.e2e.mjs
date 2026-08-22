@@ -74,6 +74,8 @@ try {
   );
   await firstTip.locator("summary").hover();
   await firstTip.locator("summary").click();
+  assert.equal(await firstTip.evaluate((node) => node.open), false, "鼠标点击信息按钮不应固定展开气泡");
+  await firstTip.locator("summary").press("Enter");
   await firstTip.locator("summary").focus();
   await firstTip.evaluate((node) => { window.__aisgFocusedTip = node; });
 

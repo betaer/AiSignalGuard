@@ -556,6 +556,27 @@
   function setupInfoTip(tip) {
     if (tip.dataset.infoTipReady === "true") return;
     tip.dataset.infoTipReady = "true";
+    var summary = tip.querySelector("summary");
+    if (summary) {
+      var pointerActivation = false;
+      summary.addEventListener("pointerdown", function (event) {
+        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+        pointerActivation = true;
+        event.preventDefault();
+        tip.open = false;
+        summary.blur();
+      });
+      summary.addEventListener("click", function (event) {
+        if (!pointerActivation) return;
+        pointerActivation = false;
+        event.preventDefault();
+        tip.open = false;
+        summary.blur();
+      });
+      summary.addEventListener("pointercancel", function () {
+        pointerActivation = false;
+      });
+    }
     tip.addEventListener("toggle", function () {
       requestAnimationFrame(function () { positionInfoTip(tip); });
     });
