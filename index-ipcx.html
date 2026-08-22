@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#eef2f0">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <title>AI Signal Guard · 实时网络检测</title>
@@ -30,14 +30,21 @@
         --shadow-small: 0 8px 22px rgba(41, 70, 57, 0.08);
         --radius-card: 22px;
         --radius-control: 12px;
+        --content-max: 1080px;
+        --header-height: 68px;
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
         --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
         --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
       }
 
       * { box-sizing: border-box; }
       [hidden] { display: none !important; }
-      html { min-width: 320px; background: var(--bg); scroll-behavior: smooth; }
+      html { min-width: 320px; scroll-padding-top: calc(var(--header-height) + var(--safe-top) + 72px); background: var(--bg); scroll-behavior: smooth; }
       body {
+        min-height: 100vh;
         min-height: 100dvh;
         margin: 0;
         overflow-x: clip;
@@ -50,6 +57,7 @@
         line-height: 1.55;
         -webkit-font-smoothing: antialiased;
       }
+      @supports not (overflow: clip) { body { overflow-x: hidden; } }
       body::before {
         position: fixed;
         inset: 0;
@@ -69,8 +77,8 @@
 
       .skip-link {
         position: fixed;
-        top: 10px;
-        left: 12px;
+        top: calc(10px + var(--safe-top));
+        left: max(12px, var(--safe-left));
         z-index: 20;
         padding: 9px 12px;
         border-radius: 10px;
@@ -87,8 +95,12 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        min-height: 68px;
-        padding: 10px max(18px, calc((100vw - 1120px) / 2));
+        min-height: calc(var(--header-height) + var(--safe-top));
+        padding:
+          calc(10px + var(--safe-top))
+          max(18px, calc((100vw - var(--content-max)) / 2), var(--safe-right))
+          10px
+          max(18px, calc((100vw - var(--content-max)) / 2), var(--safe-left));
         border-bottom: 1px solid rgba(197, 209, 201, 0.74);
         background: rgba(244, 247, 245, 0.86);
         backdrop-filter: blur(18px);
@@ -113,15 +125,18 @@
       .brand-copy { display: grid; gap: 1px; }
       .brand-name { font-size: 14px; font-weight: 800; letter-spacing: 0.02em; }
       .brand-note { color: var(--muted); font-size: 11px; }
-      .page-shell { width: min(100% - 32px, 860px); margin: 0 auto; padding: 54px 0 110px; }
-      .intro { max-width: 640px; margin-bottom: 27px; }
+      .page-shell { width: min(calc(100% - clamp(28px, 5vw, 56px)), var(--content-max)); margin: 0 auto; padding: clamp(40px, 6vw, 64px) var(--safe-right) calc(118px + var(--safe-bottom)) var(--safe-left); }
+      .intro { max-width: 760px; margin-bottom: 27px; }
       .eyebrow { margin: 0 0 11px; color: var(--green-deep); font-family: var(--mono); font-size: 11px; font-weight: 800; letter-spacing: 0.16em; }
       h1, h2, h3, p { margin-top: 0; }
-      h1 { max-width: 620px; margin-bottom: 12px; font-size: clamp(32px, 6vw, 54px); line-height: 1.05; letter-spacing: -0.06em; }
+      h1 { max-width: 720px; margin-bottom: 12px; font-size: clamp(32px, 5.4vw, 56px); line-height: 1.05; letter-spacing: -0.06em; text-wrap: balance; }
       h1 span { color: var(--green-deep); }
-      .intro p { max-width: 590px; margin-bottom: 0; color: var(--ink-2); font-size: 16px; }
+      .intro p { max-width: 690px; margin-bottom: 0; color: var(--ink-2); font-size: 16px; text-wrap: pretty; }
 
       .module-tabs {
+        position: sticky;
+        top: calc(var(--header-height) + var(--safe-top) + 8px);
+        z-index: 9;
         display: flex;
         gap: 6px;
         width: 100%;
@@ -130,13 +145,17 @@
         overflow-x: auto;
         border: 1px solid var(--line);
         border-radius: 16px;
-        background: rgba(255, 255, 255, 0.62);
+        background: rgba(247, 250, 248, 0.88);
+        box-shadow: 0 8px 22px rgba(41, 70, 57, 0.08);
+        backdrop-filter: blur(16px);
         scrollbar-width: none;
       }
       .module-tabs::-webkit-scrollbar { display: none; }
       .module-tab {
+        display: grid;
         flex: 1 0 145px;
         min-height: 42px;
+        align-content: center;
         padding: 0 16px;
         border: 0;
         border-radius: 11px;
@@ -145,9 +164,14 @@
         font-size: 14px;
         font-weight: 700;
         cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
       }
       .module-tab small { display: block; margin-top: -2px; color: inherit; font-size: 10px; font-weight: 500; opacity: 0.76; }
-      .module-tab[aria-selected="true"] { color: white; background: var(--green); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
+      .module-tab[aria-current="true"] { color: white; background: var(--green); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
+      .module-tab:hover { color: var(--green-deep); background: rgba(224, 243, 232, 0.72); }
+      .module-tab[aria-current="true"]:hover { color: white; background: var(--green-deep); }
 
       .result-card {
         position: relative;
@@ -181,6 +205,7 @@
       .score-ring-content { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; text-align: center; transform: translateY(-1px); }
       .score-number { display: block; width: 100%; color: var(--green-deep); font-family: var(--mono); font-size: 38px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; letter-spacing: -0.04em; text-align: center; text-indent: 0.04em; }
       .score-label { display: block; width: 100%; margin-top: 7px; color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.2; text-align: center; }
+      .result-title-line { display: flex; align-items: center; gap: 7px; }
       .result-title { margin: 0 0 6px; font-size: clamp(23px, 4vw, 31px); line-height: 1.1; letter-spacing: -0.045em; }
       .result-copy { margin: 0 0 13px; color: var(--ink-2); font-size: 14px; }
       .tag-row { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -192,8 +217,8 @@
       .result-data-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
       .data-item { min-width: 0; padding: 13px 12px 12px; border-right: 1px solid var(--line); }
       .data-item:last-child { border-right: 0; }
-      .data-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 11px; }
-      .data-value { display: block; overflow: hidden; color: var(--ink); font-family: var(--mono); font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+      .data-label { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; color: var(--muted); font-size: 11px; }
+      .data-value { display: block; min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-family: var(--mono); font-size: 13px; font-weight: 800; white-space: normal; }
       .card-foot { position: relative; z-index: 1; padding-top: 14px; }
       .local-note { display: inline-flex; align-items: center; gap: 6px; }
       .local-note::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: var(--green); }
@@ -201,7 +226,7 @@
       .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
       .section-heading h2 { margin: 0; font-size: 22px; line-height: 1.1; letter-spacing: -0.04em; }
       .section-heading p { margin: 0; color: var(--muted); font-size: 12px; }
-      .view-panel { margin-top: 31px; scroll-margin-top: 86px; }
+      .view-panel { margin-top: clamp(31px, 5vw, 50px); scroll-margin-top: calc(var(--header-height) + var(--safe-top) + 72px); }
       .signal-stack { display: grid; gap: 10px; }
       .signal-group { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: rgba(255, 255, 255, 0.84); box-shadow: var(--shadow-small); transition: border-color 180ms ease, box-shadow 180ms ease; }
       .signal-group[open] { border-color: #a9cfb6; box-shadow: 0 12px 30px rgba(41, 70, 57, 0.11); }
@@ -218,7 +243,7 @@
       .signal-group-count { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
       .signal-group-chevron, .signal-row-chevron { color: var(--muted); font-size: 20px; font-weight: 800; line-height: 1; transition: transform 180ms ease, color 180ms ease; }
       .signal-group[open] > .signal-group-summary .signal-group-chevron { color: var(--green-deep); transform: rotate(90deg); }
-      .signal-group-body { padding: 16px; border-top: 1px solid var(--line); background: linear-gradient(180deg, rgba(247, 250, 248, 0.78), rgba(255, 255, 255, 0.76)); }
+      .signal-group-body { padding: clamp(12px, 2vw, 18px); border-top: 1px solid var(--line); background: linear-gradient(180deg, rgba(247, 250, 248, 0.78), rgba(255, 255, 255, 0.76)); }
       .signal-subsection + .signal-subsection { margin-top: 17px; padding-top: 15px; border-top: 1px dashed rgba(116, 129, 123, 0.28); }
       .signal-subsection-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 2px 8px; }
       .signal-subsection-copy { min-width: 0; }
@@ -246,37 +271,53 @@
       .row-status-dot.warn { background: #d49a3a; box-shadow: 0 0 0 5px rgba(212, 154, 58, 0.16); }
       .row-status-dot.bad { background: var(--red); box-shadow: 0 0 0 5px rgba(180, 68, 66, 0.13); }
       .signal-row-title { min-width: 0; }
-      .signal-row-title strong { display: block; color: var(--ink); font-size: 12px; }
-      .signal-row-title small { display: block; margin-top: 1px; overflow: hidden; color: var(--muted); font-family: var(--mono); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-      .signal-row-value { min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); font-family: var(--mono); font-size: 11px; font-weight: 800; text-align: right; }
+      .signal-row-title strong { display: block; color: var(--ink); font-size: 13px; }
+      .signal-row-title small { display: block; margin-top: 1px; overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: 10px; white-space: normal; }
+      .signal-row-value { min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); font-family: var(--mono); font-size: 12px; font-weight: 800; text-align: right; }
       .signal-row-value.good { color: var(--green-deep); }
       .signal-row-value.warn { color: var(--amber); }
       .signal-row[open] > .signal-row-summary .signal-row-chevron { color: var(--green-deep); transform: rotate(90deg); }
       .signal-row-body { padding: 12px 14px 14px; border-top: 1px solid var(--line); background: var(--surface-soft); }
-      .row-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .row-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
       .row-detail-item { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: white; }
       .row-detail-item span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 9px; font-weight: 800; }
       .row-detail-item strong, .row-detail-item p { margin: 0; overflow-wrap: anywhere; color: var(--ink-2); font-size: 10px; line-height: 1.6; }
       .row-detail-item strong { color: var(--ink); font-family: var(--mono); font-size: 11px; }
+      .row-detail-grid > .row-detail-item:first-child { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: baseline; border-style: dashed; background: rgba(255, 255, 255, 0.72); }
+      .row-detail-grid > .row-detail-item:first-child span { margin: 0; white-space: nowrap; }
+      .row-explanation { margin-top: 8px; border: 1px dashed rgba(116, 129, 123, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.58); }
+      .row-explanation > summary { display: flex; min-height: 36px; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 10px; color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 800; list-style: none; }
+      .row-explanation > summary::-webkit-details-marker { display: none; }
+      .row-explanation > summary::after { content: "+"; color: var(--green-deep); font-family: var(--mono); font-size: 15px; line-height: 1; }
+      .row-explanation[open] > summary::after { content: "−"; }
+      .row-explanation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 8px 8px; }
       .source-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
       .source-badge { padding: 4px 7px; border-radius: 7px; color: var(--muted); background: #edf4ef; font-family: var(--mono); font-size: 9px; }
       .metric-evidence { margin-top: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.9); }
       .metric-evidence-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 11px; border-bottom: 1px solid var(--line); background: #f4f8f5; }
-      .metric-evidence-title { min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 10px; font-weight: 900; }
-      .metric-evidence-caption { flex: 0 0 auto; color: var(--muted); font-size: 9px; }
+      .metric-evidence-meta { display: flex; min-width: 0; align-items: center; justify-content: flex-end; gap: 6px; }
+      .metric-evidence-title { min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-size: 11px; font-weight: 900; }
+      .metric-evidence-caption { flex: 0 0 auto; color: var(--muted); font-size: 10px; }
       .metric-evidence-list { margin: 0; padding: 0; list-style: none; }
-      .metric-evidence-item { display: grid; grid-template-columns: 28px minmax(170px, 1.2fr) minmax(150px, 1fr) auto; gap: 10px; align-items: center; min-height: 52px; padding: 8px 11px; border-top: 1px solid var(--line); }
+      .metric-evidence-item { display: grid; grid-template-columns: 28px minmax(190px, 0.95fr) minmax(220px, 1.25fr) minmax(72px, auto); gap: 12px; align-items: center; min-height: 52px; padding: 9px 12px; border-top: 1px solid var(--line); }
       .metric-evidence-item:first-child { border-top: 0; }
-      .metric-evidence-index { color: var(--muted); font-family: var(--mono); font-size: 9px; }
+      .metric-evidence-index { color: var(--muted); font-family: var(--mono); font-size: 10px; }
       .metric-evidence-source { min-width: 0; }
-      .metric-evidence-source strong { display: block; overflow-wrap: anywhere; color: var(--ink); font-size: 10px; }
-      .metric-evidence-source small { display: block; margin-top: 2px; overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: 9px; }
-      .metric-evidence-value { min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); font-family: var(--mono); font-size: 10px; font-weight: 800; }
-      .metric-evidence-status { font-size: 9px; font-weight: 900; text-align: right; white-space: normal; }
+      .metric-evidence-source strong { display: block; overflow-wrap: anywhere; color: var(--ink); font-size: 11px; }
+      .metric-evidence-source small { display: block; margin-top: 2px; overflow-wrap: anywhere; color: var(--muted); font-family: var(--mono); font-size: 10px; }
+      .metric-evidence-value { min-width: 0; overflow-wrap: anywhere; color: var(--ink-2); font-family: var(--mono); font-size: 11px; font-weight: 800; }
+      .metric-evidence-status { font-size: 10px; font-weight: 900; text-align: right; white-space: normal; }
       .metric-evidence-status.good { color: var(--green-deep); }
       .metric-evidence-status.warn { color: var(--amber); }
       .metric-evidence-status.bad { color: var(--red); }
       .metric-evidence-status.neutral { color: var(--muted); }
+
+      .info-tip { position: relative; display: inline-flex; flex: 0 0 auto; vertical-align: middle; }
+      .info-tip > summary { display: grid; width: 30px; height: 30px; place-items: center; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--green-deep); background: rgba(255, 255, 255, 0.84); cursor: help; font-family: var(--mono); font-size: 11px; font-weight: 900; line-height: 1; list-style: none; }
+      .info-tip > summary::-webkit-details-marker { display: none; }
+      .info-tip > summary:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.28); outline-offset: 2px; }
+      .info-tip-bubble { position: fixed; top: var(--info-tip-top, 12px); left: var(--info-tip-left, 12px); z-index: 30; width: min(270px, calc(100vw - 24px)); max-height: min(260px, calc(100dvh - 24px)); padding: 10px 11px; overflow: auto; border: 1px solid #c9d9ce; border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-family: var(--sans); font-size: 11px; font-weight: 500; line-height: 1.55; text-align: left; white-space: normal; }
+      .info-tip-bubble::after { display: none; }
 
       .detail-panel { padding: 21px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 255, 255, 0.78); box-shadow: var(--shadow-small); }
       .detail-panel + .detail-panel { margin-top: 15px; }
@@ -284,17 +325,18 @@
       .comparison { display: grid; gap: 7px; }
       .comparison-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 47px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
       .comparison-label { color: var(--muted); font-size: 12px; }
-      .comparison-value { min-width: 0; overflow: hidden; font-family: var(--mono); font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+      .comparison-value { min-width: 0; overflow-wrap: anywhere; font-family: var(--mono); font-size: 12px; font-weight: 800; white-space: normal; }
       .mini-status { padding: 4px 7px; font-size: 10px; }
       .mini-status.good { color: var(--green-deep); background: var(--green-soft); }
       .mini-status.warn { color: var(--amber); background: var(--amber-soft); }
       .mini-status.bad { color: var(--red); background: var(--red-soft); }
-      .fingerprint-tabs { display: flex; gap: 5px; margin-bottom: 16px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
-      .fingerprint-tab { flex: 1; min-height: 37px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
-      .fingerprint-tab[aria-selected="true"] { color: white; background: var(--green); }
-      .fingerprint-id { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 17px; border: 1px solid #c1dec9; border-radius: 15px; background: #f4fbf6; }
-      .fingerprint-id span { display: block; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: 0.14em; }
-      .fingerprint-id code { color: var(--ink); font-family: var(--mono); font-size: clamp(13px, 3vw, 17px); font-weight: 900; letter-spacing: -0.04em; }
+      .fingerprint-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .fingerprint-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface-soft); }
+      .fingerprint-card[data-fingerprint-card="tls"] { grid-column: 1 / -1; background: #f3f7f4; }
+      .fingerprint-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+      .fingerprint-card-label { color: var(--muted); font-family: var(--mono); font-size: 9px; font-weight: 900; letter-spacing: 0.12em; }
+      .fingerprint-card code { display: block; min-width: 0; overflow-wrap: anywhere; color: var(--ink); font-family: var(--mono); font-size: 13px; font-weight: 900; line-height: 1.55; }
+      .fingerprint-card p { margin: 9px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; text-wrap: pretty; }
       .copy-mini { flex: 0 0 auto; min-width: 42px; min-height: 36px; border: 1px solid var(--line-strong); border-radius: 9px; color: var(--ink-2); background: white; cursor: pointer; }
       .evidence-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin: 15px 0 0; padding: 0; list-style: none; }
       .evidence-list li { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink-2); background: var(--surface-soft); font-size: 12px; }
@@ -304,7 +346,7 @@
 
       .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; color: var(--muted); font-size: 11px; }
       .site-footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; }
-      .floating-tool-dock { position: fixed; right: calc(18px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 12; display: flex; flex-direction: column; gap: 9px; }
+      .floating-tool-dock { position: fixed; right: calc(18px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 12; display: flex; flex-direction: column; gap: 9px; transition: opacity 200ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1); }
       .floating-tool-button { position: relative; display: grid; flex: 0 0 48px; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(92, 133, 101, 0.42); border-radius: 50%; color: var(--green-deep); background: rgba(247, 251, 244, 0.96); box-shadow: 0 12px 28px rgba(41, 70, 57, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.82); cursor: pointer; text-decoration: none; backdrop-filter: blur(14px); transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease; }
       .floating-tool-button:hover { border-color: rgba(72, 123, 84, 0.66); background: #edf6ec; box-shadow: 0 15px 32px rgba(41, 70, 57, 0.21), inset 0 1px 0 rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
       .floating-tool-button:active { transform: translateY(0) scale(0.97); }
@@ -372,15 +414,42 @@
       .star-support-secondary { margin-top: 22px; padding: 3px 0; border: 0; border-bottom: 1px solid transparent; color: rgba(255, 255, 255, 0.5); background: transparent; cursor: pointer; font-family: var(--mono); font-size: 14px; font-weight: 700; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 5px; transition: color 180ms ease, text-decoration-color 180ms ease; }
       .star-support-secondary:hover { color: white; text-decoration-color: rgba(255, 255, 255, 0.44); }
 
+      @media (max-width: 960px) {
+        .page-shell { width: min(calc(100% - 36px), 900px); }
+        .result-data-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .data-item:nth-child(2) { border-right: 0; }
+        .data-item:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }
+        .signal-fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; }
+        .signal-fact:nth-child(2) { border-right: 0; }
+        .metric-evidence-item { grid-template-columns: 26px minmax(160px, 0.9fr) minmax(180px, 1.1fr) minmax(68px, auto); gap: 9px; }
+      }
+
+      @media (max-width: 760px) {
+        :root { --header-height: 61px; }
+        .demo-header { min-height: calc(var(--header-height) + var(--safe-top)); }
+        .page-shell { width: min(calc(100% - 28px), 700px); padding-top: 36px; }
+        .module-tabs { top: calc(var(--header-height) + var(--safe-top) + 6px); }
+        .signal-group-summary { padding-inline: 14px; }
+        .signal-group-body { padding: 11px; }
+        .metric-evidence-item { grid-template-columns: 25px minmax(0, 1fr) auto; gap: 8px; }
+        .metric-evidence-value { grid-column: 2 / 4; grid-row: 2; margin-top: -3px; }
+        .metric-evidence-status { grid-column: 3; grid-row: 1; max-width: 108px; overflow-wrap: anywhere; }
+        .row-explanation-grid { grid-template-columns: 1fr; }
+        .fingerprint-grid { grid-template-columns: 1fr; }
+        .fingerprint-card[data-fingerprint-card="tls"] { grid-column: auto; }
+      }
+
       @media (max-width: 680px) {
-        .demo-header { min-height: 61px; padding: 8px 15px; }
+        .demo-header { min-height: calc(var(--header-height) + var(--safe-top)); padding: calc(8px + var(--safe-top)) max(15px, var(--safe-right)) 8px max(15px, var(--safe-left)); }
         .brand-note { display: none; }
         .floating-tool-dock { right: calc(10px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); left: calc(10px + env(safe-area-inset-left)); flex-direction: row; justify-content: center; gap: 6px; }
+        .floating-tool-dock[data-reading="true"] { opacity: 0; pointer-events: none; transform: translateY(calc(100% + 22px)); }
+        .floating-tool-dock[data-reading="true"]:focus-within { opacity: 1; pointer-events: auto; transform: none; }
         .floating-tool-button { flex-basis: 44px; width: 44px; height: 44px; }
         .floating-tool-icon { width: 19px; height: 19px; }
         .floating-tool-label { display: none; }
         .floating-star-badge { top: -5px; right: -4px; min-width: 20px; height: 20px; font-size: 8px; }
-        .page-shell { width: min(100% - 28px, 560px); padding-top: 32px; padding-bottom: 118px; }
+        .page-shell { width: min(calc(100% - 28px), 560px); padding-top: 32px; padding-bottom: 126px; }
         .intro { margin-bottom: 20px; }
         .eyebrow { margin-bottom: 9px; font-size: 9px; }
         h1 { font-size: 34px; }
@@ -420,7 +489,8 @@
         .signal-row-chevron { grid-column: 3; grid-row: 1 / span 2; }
         .signal-row-body { padding: 10px 11px 12px; }
         .row-detail-grid { grid-template-columns: 1fr; }
-        .metric-evidence-head { align-items: flex-start; }
+        .metric-evidence-head { flex-wrap: wrap; align-items: flex-start; }
+        .metric-evidence-meta { width: 100%; justify-content: space-between; }
         .metric-evidence-item { grid-template-columns: 23px minmax(0, 1fr) auto; gap: 7px; padding: 9px; }
         .metric-evidence-value { grid-column: 2 / 4; grid-row: 2; margin-top: -4px; }
         .metric-evidence-status { grid-column: 3; grid-row: 1; max-width: 92px; overflow-wrap: anywhere; }
@@ -441,6 +511,31 @@
         .star-support-primary { font-size: 15px; }
       }
 
+      @media (max-width: 480px) {
+        .page-shell { width: calc(100% - 20px); }
+        .intro { margin-bottom: 17px; }
+        h1 { font-size: clamp(30px, 9vw, 34px); }
+        .module-tabs { gap: 3px; padding: 4px; border-radius: 13px; }
+        .module-tab { flex: 1 1 0; min-width: 0; min-height: 40px; padding-inline: 4px; font-size: 11px; }
+        .module-tab small { font-size: 8px; }
+        .result-card { padding: 17px; border-radius: 18px; }
+        .result-head { align-items: flex-start; }
+        .result-kicker { max-width: 66%; }
+        .score-layout { grid-template-columns: 104px minmax(0, 1fr); gap: 12px; }
+        .score-ring { width: 100px; height: 100px; }
+        .result-title { font-size: 21px; }
+        .chip { white-space: normal; }
+        .signal-group { border-radius: 15px; }
+        .signal-row-summary { align-items: start; }
+        .signal-row-value { padding-right: 4px; }
+        .signal-row-body { padding: 10px; }
+        .metric-evidence { border-radius: 10px; }
+        .metric-evidence-caption { white-space: normal; }
+        .info-tip-bubble { position: fixed; top: auto; right: calc(10px + var(--safe-right)); bottom: calc(72px + var(--safe-bottom)); left: calc(10px + var(--safe-left)); width: auto; }
+        .info-tip-bubble::after { display: none; }
+        .detail-panel { padding: 13px; }
+      }
+
       @media (max-width: 360px) {
         .floating-tool-dock { gap: 4px; }
         .floating-tool-button { flex-basis: 40px; width: 40px; height: 40px; }
@@ -450,6 +545,22 @@
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
         .recheck-loading-orbit::before { animation: none; border-color: rgba(21, 152, 104, 0.42); }
+      }
+
+      @media (forced-colors: active) {
+        .signal-group, .signal-subsection-rows, .metric-evidence, .detail-panel, .fingerprint-card { border: 1px solid CanvasText; }
+        .row-status-dot, .status-badge::before { forced-color-adjust: none; }
+      }
+
+      @media print {
+        html { background: white; scroll-padding-top: 0; }
+        body { color: #111; background: white; }
+        body::before, .demo-header, .intro, .module-tabs, .floating-tool-dock, .toast, .recheck-loading { display: none !important; }
+        .page-shell { width: 100%; max-width: none; padding: 0; }
+        .view-panel { margin-top: 24px; break-inside: avoid-page; }
+        .result-card, .signal-group, .detail-panel { box-shadow: none; }
+        details:not([open]) > :not(summary) { display: block !important; }
+        .row-explanation:not([open]) > :not(summary) { display: none !important; }
       }
     </style>
   </head>
@@ -465,15 +576,15 @@
 
     <main class="page-shell" id="main">
       <section class="intro" aria-labelledby="demo-title">
-        <p class="eyebrow">AI SIGNAL GUARD / MOBILE RESULT CARD</p>
+        <p class="eyebrow">AI SIGNAL GUARD / LIVE DIAGNOSTICS</p>
         <h1 id="demo-title">先给结论，<span>再看证据。</span></h1>
-        <p>一个专门为手机截图和对外分享设计的实时检测结果页。每个多源指标都会如实列出成功、缺失、超时与失败来源。</p>
+        <p>兼顾桌面核对、手机截图与对外分享。关键结果和真实来源直接展示，失败、缺失与超时也会原样保留。</p>
       </section>
 
       <nav class="module-tabs" aria-label="检测模块">
-        <button class="module-tab" type="button" data-view="overview" aria-selected="true">总览<small>快速结论</small></button>
-        <button class="module-tab" type="button" data-view="webrtc" aria-selected="false">WebRTC<small>地址泄漏</small></button>
-        <button class="module-tab" type="button" data-view="fingerprint" aria-selected="false">浏览器指纹<small>设备信号</small></button>
+        <a class="module-tab" href="#overview-view" data-view="overview" aria-current="true">总览<small>关键状态</small></a>
+        <a class="module-tab" href="#webrtc-view" data-view="webrtc">WebRTC<small>地址泄漏</small></a>
+        <a class="module-tab" href="#fingerprint-view" data-view="fingerprint">浏览器指纹<small>设备信号</small></a>
       </nav>
 
       <section class="result-card" id="result-summary-card" aria-labelledby="result-title">
@@ -481,7 +592,7 @@
         <div class="score-layout">
           <div class="score-ring" aria-label="网络信号参考分正在计算"><div class="score-ring-inner"><div class="score-ring-content"><span class="score-number">—</span><span class="score-label">网络参考分</span></div></div></div>
           <div>
-            <h2 class="result-title" id="result-title">通用数字环境</h2>
+            <div class="result-title-line"><h2 class="result-title" id="result-title">通用数字环境</h2><details class="info-tip"><summary aria-label="网络参考分说明">i</summary><span class="info-tip-bubble" role="note">这是依据本轮真实来源覆盖率与环境差异生成的参考值，不代表账号、设备或身份的安全评级。</span></details></div>
             <p class="result-copy">正在读取出口地址、浏览器环境、路由注册与 WebRTC 实时证据。</p>
             <div class="tag-row" aria-label="关键状态"><span class="chip neutral">实时来源检测中</span></div>
           </div>
@@ -490,13 +601,13 @@
           <div class="data-item"><span class="data-label">出口 IP</span><span class="data-value sensitive-value" data-sensitive="ip" id="summary-exit-ip">检测中…</span></div>
           <div class="data-item"><span class="data-label">位置</span><span class="data-value" id="summary-location">等待来源</span></div>
           <div class="data-item"><span class="data-label">浏览器</span><span class="data-value" id="summary-browser">读取中…</span></div>
-          <div class="data-item"><span class="data-label">覆盖率</span><span class="data-value" id="summary-coverage">0%</span></div>
+          <div class="data-item"><span class="data-label">覆盖率 <details class="info-tip"><summary aria-label="覆盖率说明">i</summary><span class="info-tip-bubble" role="note">覆盖率反映本轮有多少真实来源返回了可用于当前指标的字段，不把超时或字段缺失计算为成功。</span></details></span><span class="data-value" id="summary-coverage">0%</span></div>
         </div>
         <div class="card-foot"><span class="local-note">结果只存在于当前浏览器</span><span>适合手机截图分享</span></div>
       </section>
 
       <section class="view-panel" id="overview-view" data-panel="overview" aria-labelledby="overview-title">
-        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>一级分组默认展开，二级详情按需展开</p></div></div>
+        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>关键结果与真实来源默认展开，判读说明按需查看</p></div></div>
         <div class="signal-stack">
           <details class="signal-group" open>
             <summary class="signal-group-summary">
@@ -608,7 +719,7 @@
         <div class="privacy-callout"><span aria-hidden="true">✓</span><div><b>隐私边界</b>检测在当前浏览器内执行；目标 IP 会发送给页面列出的公开情报与路由服务。页面默认显示原值，对外截图前可一键隐藏敏感信息。</div></div>
       </section>
 
-      <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title" hidden>
+      <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title">
         <div class="section-heading"><div><h2 id="webrtc-title">WebRTC 泄漏摘要</h2><p>把 HTTP 出口和浏览器候选地址放在一起比较</p></div><span class="mini-status">检测中</span></div>
         <div class="detail-panel">
           <p class="panel-note" id="webrtc-panel-note">正在通过 10 个独立 STUN 节点读取公网候选。</p>
@@ -621,16 +732,26 @@
         </div>
       </section>
 
-      <section class="view-panel" id="fingerprint-view" data-panel="fingerprint" aria-labelledby="fingerprint-title" hidden>
-        <div class="section-heading"><div><h2 id="fingerprint-title">浏览器指纹摘要</h2><p>先看稳定性，再展开原始信号</p></div><span class="mini-status">本地计算</span></div>
+      <section class="view-panel" id="fingerprint-view" data-panel="fingerprint" aria-labelledby="fingerprint-title">
+        <div class="section-heading"><div><h2 id="fingerprint-title">浏览器指纹摘要</h2><p>稳定摘要、宽域摘要与不可读取项同时展示</p></div><span class="mini-status">本地计算</span></div>
         <div class="detail-panel">
-          <div class="fingerprint-tabs" role="tablist" aria-label="指纹算法">
-            <button class="fingerprint-tab" type="button" role="tab" aria-selected="true" data-fingerprint="v3">FingerprintJS v3+</button>
-            <button class="fingerprint-tab" type="button" role="tab" aria-selected="false" data-fingerprint="v2">FingerprintJS2</button>
-            <button class="fingerprint-tab" type="button" role="tab" aria-selected="false" data-fingerprint="tls">JA3 / JA4</button>
+          <div class="fingerprint-grid" aria-label="浏览器本地摘要">
+            <article class="fingerprint-card" data-fingerprint-card="v3">
+              <div class="fingerprint-card-head"><span class="fingerprint-card-label" data-fingerprint-label="v3">LOCAL STABLE HASH</span><button class="copy-mini" type="button" data-copy-fingerprint="v3" aria-label="复制本地稳定摘要">⧉</button></div>
+              <code data-fingerprint-value="v3">计算中…</code>
+              <p data-fingerprint-description="v3">使用当前浏览器本地稳定信号生成摘要，不冒充官方 Visitor ID。</p>
+            </article>
+            <article class="fingerprint-card" data-fingerprint-card="v2">
+              <div class="fingerprint-card-head"><span class="fingerprint-card-label" data-fingerprint-label="v2">LOCAL BROAD HASH</span><button class="copy-mini" type="button" data-copy-fingerprint="v2" aria-label="复制本地宽域摘要">⧉</button></div>
+              <code data-fingerprint-value="v2">计算中…</code>
+              <p data-fingerprint-description="v2">使用更宽的本地浏览器信号生成摘要，并与官方算法明确区分。</p>
+            </article>
+            <article class="fingerprint-card" data-fingerprint-card="tls">
+              <div class="fingerprint-card-head"><span class="fingerprint-card-label" data-fingerprint-label="tls">JA3 / JA4</span></div>
+              <code data-fingerprint-value="tls">浏览器端不可读取</code>
+              <p data-fingerprint-description="tls">普通网页脚本无法直接读取 TLS ClientHello，因此不生成或伪造 JA3 / JA4 值。</p>
+            </article>
           </div>
-          <p class="panel-note" id="fingerprint-description">只采集跨会话较稳定的信号，适合判断浏览器环境是否过于独特。</p>
-          <div class="fingerprint-id"><div><span id="fingerprint-label">LOCAL SIGNAL HASH</span><code id="fingerprint-value">计算中…</code></div><button class="copy-mini" id="fingerprint-copy" type="button" aria-label="复制指纹摘要">⧉</button></div>
           <ul class="evidence-list" id="fingerprint-evidence">
             <li><strong>平台</strong>MacIntel · Chrome</li>
             <li><strong>屏幕</strong>2560 × 1440 · DPR 2</li>
@@ -645,21 +766,21 @@
     </main>
 
     <div class="floating-tool-dock" data-floating-tools role="toolbar" aria-label="快捷工具">
-      <button class="floating-tool-button floating-recheck-button" id="floating-recheck" type="button" data-running="false" aria-label="重新检测" title="重新检测">
+      <button class="floating-tool-button floating-recheck-button" id="floating-recheck" type="button" data-running="false" aria-label="重新检测">
         <svg class="floating-tool-icon floating-recheck-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M3 12a9 9 0 1 0 3-6.7"></path>
           <path d="M3 4v6h6"></path>
         </svg>
         <span class="floating-tool-label" id="floating-recheck-label">重新检测</span>
       </button>
-      <button class="floating-tool-button floating-copy-button floating-ai-button" id="floating-ai-report" type="button" data-copy-complete="false" aria-label="复制给 ChatGPT 或 Claude 诊断" title="复制给 ChatGPT 或 Claude 诊断">
+      <button class="floating-tool-button floating-copy-button floating-ai-button" id="floating-ai-report" type="button" data-copy-complete="false" aria-label="复制给 ChatGPT 或 Claude 诊断">
         <img class="floating-tool-icon floating-ai-logo floating-copy-icon-default" src="assets/merged_ai_logo.svg?v=20260720-1" alt="" aria-hidden="true">
         <svg class="floating-tool-icon floating-copy-icon-check" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="m5 12.5 4.4 4.4L19 7.3"></path>
         </svg>
         <span class="floating-tool-label" id="floating-ai-label">复制给 ChatGPT / Claude</span>
       </button>
-      <button class="floating-tool-button floating-copy-button" id="floating-copy" type="button" data-copy-complete="false" aria-label="复制摘要" title="复制摘要">
+      <button class="floating-tool-button floating-copy-button" id="floating-copy" type="button" data-copy-complete="false" aria-label="复制摘要">
         <svg class="floating-tool-icon floating-copy-icon-default" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <rect x="8" y="8" width="11" height="11" rx="2"></rect>
           <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
@@ -669,7 +790,7 @@
         </svg>
         <span class="floating-tool-label" id="floating-copy-label">复制摘要</span>
       </button>
-      <button class="floating-tool-button floating-privacy-button" id="privacy-toggle" type="button" data-privacy-active="false" aria-pressed="false" aria-label="隐藏原值" title="隐藏原值">
+      <button class="floating-tool-button floating-privacy-button" id="privacy-toggle" type="button" data-privacy-active="false" aria-pressed="false" aria-label="隐藏原值">
         <svg class="floating-tool-icon floating-privacy-icon-eye" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path>
           <circle cx="12" cy="12" r="2.5"></circle>
@@ -681,7 +802,7 @@
         </svg>
         <span class="floating-tool-label" id="privacy-label">隐藏原值</span>
       </button>
-      <a class="floating-tool-button floating-github-button" id="github-shortcut" href="https://github.com/betaer/AiSignalGuard" target="_blank" rel="noopener noreferrer" data-star-state="loading" aria-label="打开 GitHub 仓库" title="打开 GitHub 仓库">
+      <a class="floating-tool-button floating-github-button" id="github-shortcut" href="https://github.com/betaer/AiSignalGuard" target="_blank" rel="noopener noreferrer" data-star-state="loading" aria-label="打开 GitHub 仓库">
         <svg class="floating-tool-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
           <path d="M9 18c-4.51 2-5-2-7-2"></path>
@@ -689,7 +810,7 @@
         <span class="floating-star-badge" id="star-count" aria-hidden="true">Star</span>
         <span class="floating-tool-label" id="github-label">GitHub · Star</span>
       </a>
-      <a class="floating-tool-button" id="floating-top" href="#main" data-visible="false" aria-hidden="true" tabindex="-1" aria-label="回到顶部" title="回到顶部">
+      <a class="floating-tool-button" id="floating-top" href="#main" data-visible="false" aria-hidden="true" tabindex="-1" aria-label="回到顶部">
         <svg class="floating-tool-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M12 19V5"></path>
           <path d="m6 11 6-6 6 6"></path>

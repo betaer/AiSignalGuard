@@ -61,8 +61,6 @@
     : [navigator.language || "未知"];
 
   var state = {
-    view: "overview",
-    fingerprint: "v3",
     privacy: false,
     running: false,
     runCount: 0,
@@ -458,47 +456,126 @@
     return node;
   }
 
-  function buildEvidenceSection(setName, title, catalog) {
+  function positionInfoTip(tip) {
+    if (!tip.open || window.innerWidth <= 480) return;
+    var summary = tip.querySelector("summary");
+    var bubble = tip.querySelector(".info-tip-bubble");
+    if (!summary || !bubble) return;
+    var summaryRect = summary.getBoundingClientRect();
+    var bubbleRect = bubble.getBoundingClientRect();
+    var viewportPadding = 12;
+    var left = Math.min(
+      Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
+      window.innerWidth - bubbleRect.width - viewportPadding,
+    );
+    var top = summaryRect.top - bubbleRect.height - 8;
+    if (top < viewportPadding) top = summaryRect.bottom + 8;
+    top = Math.min(
+      Math.max(viewportPadding, top),
+      window.innerHeight - bubbleRect.height - viewportPadding,
+    );
+    bubble.style.setProperty("--info-tip-left", Math.round(left) + "px");
+    bubble.style.setProperty("--info-tip-top", Math.round(top) + "px");
+  }
+
+  function setupInfoTip(tip) {
+    if (tip.dataset.infoTipReady === "true") return;
+    tip.dataset.infoTipReady = "true";
+    tip.addEventListener("toggle", function () {
+      if (tip.open) requestAnimationFrame(function () { positionInfoTip(tip); });
+    });
+  }
+
+  function makeInfoTip(label, text) {
+    var tip = document.createElement("details");
+    tip.className = "info-tip";
+    var summary = document.createElement("summary");
+    summary.setAttribute("aria-label", label);
+    summary.textContent = "i";
+    var bubble = makeTextElement("span", "info-tip-bubble", text);
+    bubble.setAttribute("role", "note");
+    tip.append(summary, bubble);
+    setupInfoTip(tip);
+    return tip;
+  }
+
+  function createEvidenceListItem() {
+    var listItem = document.createElement("li");
+    listItem.className = "metric-evidence-item";
+    listItem.append(makeTextElement("span", "metric-evidence-index", ""));
+    var source = document.createElement("span");
+    source.className = "metric-evidence-source";
+    source.append(makeTextElement("strong", "", ""));
+    source.append(makeTextElement("small", "", ""));
+    listItem.append(source);
+    listItem.append(makeTextElement("span", "metric-evidence-value", ""));
+    listItem.append(makeTextElement("span", "metric-evidence-status neutral", ""));
+    return listItem;
+  }
+
+  function updateEvidenceListItem(listItem, item, index) {
+    listItem.dataset.evidenceName = item.name;
+    listItem.dataset.rawState = item.rawState || "unknown";
+    listItem.querySelector(".metric-evidence-index").textContent = String(index + 1).padStart(2, "0");
+    listItem.querySelector(".metric-evidence-source strong").textContent = item.name;
+    listItem.querySelector(".metric-evidence-source small").textContent = item.meta || "—";
+    var value = listItem.querySelector(".metric-evidence-value");
+    value.className = "metric-evidence-value";
+    value.textContent = item.value || "—";
+    delete value.dataset.sensitive;
+    delete value.dataset.sensitiveValue;
+    if (item.sensitive === "ip" && item.value) {
+      value.classList.add("sensitive-value");
+      value.dataset.sensitive = "ip";
+      value.dataset.sensitiveValue = item.value;
+    }
+    var status = listItem.querySelector(".metric-evidence-status");
+    status.className = "metric-evidence-status " + (item.tone || "neutral");
+    status.textContent = item.status || "已记录";
+  }
+
+  function updateEvidenceSection(section, setName, title, catalog) {
     var items = catalog[setName] || [];
-    var usable = items.filter(function (item) {
-      return item.usable === true;
-    }).length;
-    var attempted = items.filter(function (item) {
-      return item.attempted === true;
-    }).length;
-    var section = document.createElement("section");
-    section.className = "metric-evidence";
+    var usable = items.filter(function (item) { return item.usable === true; }).length;
+    var attempted = items.filter(function (item) { return item.attempted === true; }).length;
     section.dataset.evidenceSet = setName;
     section.setAttribute("aria-label", title + "，共 " + items.length + " 项");
+    section.querySelector(".metric-evidence-title").textContent = title + " · " + items.length + " 项";
+    section.querySelector(".metric-evidence-caption").textContent = "实时检测 · 有效 " + usable + " / " + items.length + " · 已请求 " + attempted + " / " + items.length;
+
+    var list = section.querySelector(".metric-evidence-list");
+    var existingItems = new Map();
+    Array.from(list.children).forEach(function (listItem) {
+      existingItems.set(listItem.dataset.evidenceName, listItem);
+    });
+    items.forEach(function (item, index) {
+      var listItem = existingItems.get(item.name) || createEvidenceListItem();
+      existingItems.delete(item.name);
+      updateEvidenceListItem(listItem, item, index);
+      list.append(listItem);
+    });
+    existingItems.forEach(function (listItem) { listItem.remove(); });
+  }
+
+  function buildEvidenceSection(setName, title, catalog) {
+    var section = document.createElement("section");
+    section.className = "metric-evidence";
     var head = document.createElement("div");
     head.className = "metric-evidence-head";
-    head.append(makeTextElement("strong", "metric-evidence-title", title + " · " + items.length + " 项"));
-    head.append(makeTextElement("span", "metric-evidence-caption", "实时检测 · 有效 " + usable + " / " + items.length + " · 已请求 " + attempted + " / " + items.length));
+    head.append(makeTextElement("strong", "metric-evidence-title", ""));
+    var meta = document.createElement("div");
+    meta.className = "metric-evidence-meta";
+    meta.append(makeTextElement("span", "metric-evidence-caption", ""));
+    meta.append(makeInfoTip(
+      title + "计数说明",
+      "有效表示当前指标拥有可参与判断的字段；已请求表示本轮确实发起过访问。超时、失败和字段缺失会保留，但不会计为有效。",
+    ));
+    head.append(meta);
     section.append(head);
     var list = document.createElement("ol");
     list.className = "metric-evidence-list";
-    items.forEach(function (item, index) {
-      var listItem = document.createElement("li");
-      listItem.className = "metric-evidence-item";
-      listItem.dataset.evidenceName = item.name;
-      listItem.dataset.rawState = item.rawState || "unknown";
-      listItem.append(makeTextElement("span", "metric-evidence-index", String(index + 1).padStart(2, "0")));
-      var source = document.createElement("span");
-      source.className = "metric-evidence-source";
-      source.append(makeTextElement("strong", "", item.name));
-      source.append(makeTextElement("small", "", item.meta || "—"));
-      listItem.append(source);
-      var value = makeTextElement("span", "metric-evidence-value", item.value || "—");
-      if (item.sensitive === "ip" && item.value) {
-        value.classList.add("sensitive-value");
-        value.dataset.sensitive = "ip";
-        value.dataset.sensitiveValue = item.value;
-      }
-      listItem.append(value);
-      listItem.append(makeTextElement("span", "metric-evidence-status " + (item.tone || "neutral"), item.status || "已记录"));
-      list.append(listItem);
-    });
     section.append(list);
+    updateEvidenceSection(section, setName, title, catalog);
     return section;
   }
 
@@ -510,15 +587,47 @@
       var row = document.querySelector('.signal-row[data-row-id="' + rowId + '"]');
       if (!row) return;
       var body = row.querySelector(".signal-row-body");
-      body.querySelector(":scope > .metric-evidence")?.remove();
       body.querySelector(".source-badges")?.remove();
-      body.append(buildEvidenceSection(mapping.set, mapping.title, catalog));
+      var section = body.querySelector(":scope > .metric-evidence");
+      if (section) updateEvidenceSection(section, mapping.set, mapping.title, catalog);
+      else body.append(buildEvidenceSection(mapping.set, mapping.title, catalog));
     });
     $$('[data-evidence-set]').filter(function (host) {
       return !host.classList.contains("metric-evidence");
     }).forEach(function (host) {
       var setName = host.dataset.evidenceSet;
-      host.replaceChildren(buildEvidenceSection(setName, host.dataset.evidenceTitle || "证据明细", catalog));
+      var title = host.dataset.evidenceTitle || "证据明细";
+      var section = host.querySelector(":scope > .metric-evidence");
+      if (section) updateEvidenceSection(section, setName, title, catalog);
+      else host.append(buildEvidenceSection(setName, title, catalog));
+    });
+  }
+
+  function prepareSignalRows() {
+    rowDefinitions.forEach(function (definition) {
+      var row = document.querySelector('.signal-row[data-row-id="' + definition.id + '"]');
+      if (!row) return;
+      row.open = Boolean(definition.evidenceSet);
+      row.dataset.defaultVisibility = definition.evidenceSet ? "expanded" : "summary";
+
+      var detailGrid = row.querySelector(".row-detail-grid");
+      if (!detailGrid || detailGrid.dataset.prepared === "true") return;
+      detailGrid.dataset.prepared = "true";
+      var detailItems = Array.from(detailGrid.children).filter(function (child) {
+        return child.classList.contains("row-detail-item");
+      });
+      var supportingItems = detailItems.slice(1);
+      if (!supportingItems.length) return;
+
+      var explanation = document.createElement("details");
+      explanation.className = "row-explanation";
+      var summary = document.createElement("summary");
+      summary.textContent = "判读说明与建议";
+      var explanationGrid = document.createElement("div");
+      explanationGrid.className = "row-explanation-grid";
+      supportingItems.forEach(function (item) { explanationGrid.append(item); });
+      explanation.append(summary, explanationGrid);
+      detailGrid.after(explanation);
     });
   }
 
@@ -545,7 +654,7 @@
   }
 
   function displayedFingerprint(type) {
-    var data = state.fingerprints[type || state.fingerprint];
+    var data = state.fingerprints[type || "v3"];
     if (!data) return "不可用";
     if (!state.privacy || !/^[0-9a-f]{16,}$/i.test(data.value)) return data.value;
     return data.value.slice(0, 8) + "••••••••";
@@ -557,13 +666,14 @@
       if (!raw || raw === "检测中…") raw = state.observations.exitIp || raw || "未取得";
       node.textContent = state.privacy ? maskIpValue(raw) : raw;
     });
-    $("#fingerprint-value").textContent = displayedFingerprint();
+    $$('[data-fingerprint-value]').forEach(function (node) {
+      node.textContent = displayedFingerprint(node.dataset.fingerprintValue);
+    });
     var privacyAction = state.privacy ? "显示原值" : "隐藏原值";
     $("#privacy-label").textContent = privacyAction;
     $("#privacy-toggle").dataset.privacyActive = String(state.privacy);
     $("#privacy-toggle").setAttribute("aria-pressed", String(state.privacy));
     $("#privacy-toggle").setAttribute("aria-label", privacyAction);
-    $("#privacy-toggle").title = privacyAction;
   }
 
   function countryName(code) {
@@ -1016,16 +1126,98 @@
     showToast.timer = setTimeout(function () { toast.classList.remove("is-visible"); }, 2200);
   }
 
-  function setView(view) {
-    state.view = view;
-    $$(".module-tab").forEach(function (button) {
-      button.setAttribute("aria-selected", String(button.dataset.view === view));
+  var sectionNavigationScheduled = false;
+  var alignedSectionId = null;
+  var sectionNavigationObserver = null;
+  var sectionNavigationStopTimer = null;
+
+  function sectionNavigationOffset() {
+    var headerHeight = $(".demo-header")?.getBoundingClientRect().height || 0;
+    var navHeight = $(".module-tabs")?.getBoundingClientRect().height || 0;
+    return headerHeight + navHeight + 16;
+  }
+
+  function scrollWindowImmediately(top) {
+    var root = document.documentElement;
+    var previousBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo(0, Math.max(0, top));
+    root.style.scrollBehavior = previousBehavior;
+  }
+
+  function alignCurrentSection() {
+    if (!alignedSectionId) return;
+    var target = document.getElementById(alignedSectionId);
+    if (!target) return;
+    var delta = target.getBoundingClientRect().top - sectionNavigationOffset();
+    if (Math.abs(delta) > 2) scrollWindowImmediately(window.scrollY + delta);
+    scheduleSectionNavigationUpdate();
+  }
+
+  function stopSectionNavigationAlignment() {
+    alignedSectionId = null;
+    clearTimeout(sectionNavigationStopTimer);
+    if (sectionNavigationObserver) sectionNavigationObserver.disconnect();
+    sectionNavigationObserver = null;
+  }
+
+  function beginSectionNavigationAlignment(target) {
+    stopSectionNavigationAlignment();
+    alignedSectionId = target.id;
+    requestAnimationFrame(alignCurrentSection);
+    if (typeof ResizeObserver === "function") {
+      sectionNavigationObserver = new ResizeObserver(function () {
+        requestAnimationFrame(alignCurrentSection);
+      });
+      var report = $("main") || document.body;
+      sectionNavigationObserver.observe(report);
+    }
+    sectionNavigationStopTimer = setTimeout(function () {
+      stopSectionNavigationAlignment();
+      scheduleSectionNavigationUpdate();
+    }, 9000);
+  }
+
+  function alignSectionFromLocationHash() {
+    if (!location.hash || location.hash === "#main") return;
+    var id;
+    try {
+      id = decodeURIComponent(location.hash.slice(1));
+    } catch (error) {
+      return;
+    }
+    var target = document.getElementById(id);
+    if (target && target.matches("[data-panel]")) beginSectionNavigationAlignment(target);
+  }
+
+  function updateSectionNavigation() {
+    var links = $$(".module-tab[href^='#']");
+    var panels = $$('[data-panel]');
+    if (!links.length || !panels.length) return;
+    var headerHeight = $(".demo-header")?.getBoundingClientRect().height || 0;
+    var navHeight = $(".module-tabs")?.getBoundingClientRect().height || 0;
+    var activationLine = headerHeight + navHeight + 28;
+    var activePanel = panels[0];
+    panels.forEach(function (panel) {
+      if (panel.getBoundingClientRect().top <= activationLine) activePanel = panel;
     });
-    $$('[data-panel]').forEach(function (panel) {
-      panel.hidden = panel.dataset.panel !== view;
+    var nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+    if (nearBottom) activePanel = panels[panels.length - 1];
+    if (alignedSectionId) {
+      activePanel = document.getElementById(alignedSectionId) || activePanel;
+    }
+    links.forEach(function (link) {
+      link.setAttribute("aria-current", String(link.getAttribute("href") === "#" + activePanel.id));
     });
-    var activePanel = document.querySelector('[data-panel="' + view + '"]');
-    if (activePanel) activePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function scheduleSectionNavigationUpdate() {
+    if (sectionNavigationScheduled) return;
+    sectionNavigationScheduled = true;
+    requestAnimationFrame(function () {
+      sectionNavigationScheduled = false;
+      updateSectionNavigation();
+    });
   }
 
   function fallbackCopy(text) {
@@ -1137,13 +1329,11 @@
     var label = $("#" + config.labelId);
     button.dataset.copyComplete = "true";
     button.setAttribute("aria-label", config.completeAria);
-    button.title = config.completeAria;
     label.textContent = config.completeLabel;
     clearTimeout(button.copyResetTimer);
     button.copyResetTimer = setTimeout(function () {
       button.dataset.copyComplete = "false";
       button.setAttribute("aria-label", config.idleAria);
-      button.title = config.idleAria;
       label.textContent = config.idleLabel;
     }, 1600);
   }
@@ -1159,12 +1349,15 @@
   }
 
   function updateFingerprintView() {
-    var data = state.fingerprints[state.fingerprint];
-    $("#fingerprint-label").textContent = data.label;
-    $("#fingerprint-description").textContent = data.description;
-    $("#fingerprint-value").textContent = displayedFingerprint();
-    $$(".fingerprint-tab").forEach(function (button) {
-      button.setAttribute("aria-selected", String(button.dataset.fingerprint === state.fingerprint));
+    Object.entries(state.fingerprints).forEach(function (entry) {
+      var type = entry[0];
+      var data = entry[1];
+      var label = document.querySelector('[data-fingerprint-label="' + type + '"]');
+      var value = document.querySelector('[data-fingerprint-value="' + type + '"]');
+      var description = document.querySelector('[data-fingerprint-description="' + type + '"]');
+      if (label) label.textContent = data.label;
+      if (value) value.textContent = displayedFingerprint(type);
+      if (description) description.textContent = data.description;
     });
     var list = $("#fingerprint-evidence");
     list.replaceChildren();
@@ -1422,7 +1615,6 @@
     button.disabled = running;
     button.dataset.running = String(running);
     button.setAttribute("aria-label", label);
-    button.title = label;
     $("#floating-recheck-label").textContent = label;
   }
 
@@ -1533,10 +1725,58 @@
     });
   }
 
+  var lastScrollY = window.scrollY;
+  var dockReadingTimer = 0;
+  function updateFloatingDockReadingState() {
+    var dock = $(".floating-tool-dock");
+    if (!dock) return;
+    var currentY = window.scrollY;
+    var mobileLayout = window.matchMedia
+      ? window.matchMedia("(max-width: 680px)").matches
+      : window.innerWidth <= 680;
+    if (!mobileLayout || currentY <= 96) {
+      dock.dataset.reading = "false";
+    } else if (currentY > lastScrollY + 8) {
+      dock.dataset.reading = "true";
+    } else if (currentY < lastScrollY - 8) {
+      dock.dataset.reading = "false";
+    }
+    if (Math.abs(currentY - lastScrollY) > 8) lastScrollY = currentY;
+    clearTimeout(dockReadingTimer);
+    dockReadingTimer = setTimeout(function () {
+      dock.dataset.reading = "false";
+    }, 850);
+  }
+
+  function resetFloatingDockReadingState() {
+    lastScrollY = window.scrollY;
+    var dock = $(".floating-tool-dock");
+    if (dock) dock.dataset.reading = "false";
+  }
+
   validatePageContract();
+  prepareSignalRows();
   $$(".signal-row-chevron, .row-status-dot").forEach(function (node) { node.setAttribute("aria-hidden", "true"); });
-  $$(".module-tab").forEach(function (button) { button.addEventListener("click", function () { setView(button.dataset.view); }); });
-  $$(".fingerprint-tab").forEach(function (button) { button.addEventListener("click", function () { state.fingerprint = button.dataset.fingerprint; updateFingerprintView(); }); });
+  $$(".module-tab").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      var target = document.querySelector(link.getAttribute("href"));
+      if (!target) return;
+      event.preventDefault();
+      $$(".module-tab").forEach(function (candidate) { candidate.setAttribute("aria-current", "false"); });
+      link.setAttribute("aria-current", "true");
+      if (location.hash === link.hash) history.replaceState(null, "", link.hash);
+      else history.pushState(null, "", link.hash);
+      beginSectionNavigationAlignment(target);
+    });
+  });
+  ["wheel", "touchstart", "pointerdown"].forEach(function (eventName) {
+    window.addEventListener(eventName, stopSectionNavigationAlignment, { passive: true });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) {
+      stopSectionNavigationAlignment();
+    }
+  });
   $("#privacy-toggle").addEventListener("click", function () { state.privacy = !state.privacy; updateSensitiveValues(); showToast(state.privacy ? "已开启隐私遮罩" : "已显示原始值"); });
   $("#floating-ai-report").addEventListener("click", copyAiReport);
   $("#floating-copy").addEventListener("click", copySummary);
@@ -1545,13 +1785,37 @@
   $("#star-support-continue").addEventListener("click", continueStarSupport);
   $("#star-support-github").addEventListener("click", continueStarSupport);
   $("#star-support-dialog").addEventListener("cancel", function (event) { event.preventDefault(); });
-  $("#fingerprint-copy").addEventListener("click", function () { copyText(displayedFingerprint(), "指纹摘要已复制"); });
-  window.addEventListener("scroll", scheduleBackToTopUpdate, { passive: true });
-  window.addEventListener("resize", scheduleBackToTopUpdate);
+  $$('[data-copy-fingerprint]').forEach(function (button) {
+    button.addEventListener("click", function () {
+      copyText(displayedFingerprint(button.dataset.copyFingerprint), "指纹摘要已复制");
+    });
+  });
+  document.addEventListener("click", function (event) {
+    $$(".info-tip[open]").forEach(function (tip) {
+      if (!tip.contains(event.target)) tip.removeAttribute("open");
+    });
+  });
+  window.addEventListener("scroll", function () {
+    scheduleBackToTopUpdate();
+    scheduleSectionNavigationUpdate();
+    updateFloatingDockReadingState();
+    $$(".info-tip[open]").forEach(positionInfoTip);
+  }, { passive: true });
+  window.addEventListener("resize", function () {
+    scheduleBackToTopUpdate();
+    scheduleSectionNavigationUpdate();
+    resetFloatingDockReadingState();
+    $$(".info-tip[open]").forEach(positionInfoTip);
+  });
+  window.addEventListener("hashchange", alignSectionFromLocationHash);
+  window.addEventListener("popstate", alignSectionFromLocationHash);
+  $$(".info-tip").forEach(setupInfoTip);
   updateBackToTopVisibility();
+  updateSectionNavigation();
   updateFingerprintView();
   computeFingerprints();
   loadStars();
   render();
   runLiveDetection();
+  alignSectionFromLocationHash();
 })();

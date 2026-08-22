@@ -18,7 +18,8 @@
     "test:ipcx": "node --test tests/ipcx-evidence.test.mjs tests/ipcx-contract.test.mjs",
     "test:connectivity-live": "node tests/connectivity-live.mjs",
     "test": "npm run test:identity && npm run test:star-prompt && npm run test:ipcx && npm run build && node --test tests/sites-worker.test.mjs",
-    "test:e2e": "node tests/e2e-smoke.mjs",
+    "test:e2e": "node tests/e2e-smoke.mjs && node tests/ipcx-ui.e2e.mjs",
+    "test:ipcx-ui": "node tests/ipcx-ui.e2e.mjs",
     "check": "node --check app.js && node --check starPromptPolicy.js && node --check demo/app-new.js && node --check identityProfiles.js && node --check identityAnalysis.js && node --check app.min.js && node --check demo/app-new.min.js && node scripts/build-min.mjs --check && node scripts/build-css.mjs --check && npm test",
     "check:full": "npm run check && npm run test:e2e"
   },

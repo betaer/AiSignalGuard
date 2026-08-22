@@ -1,0 +1,132 @@
+// IPCX 真实浏览器回归：覆盖响应式布局、气泡可见性、焦点稳定性和 Hash 导航。
+// 运行：npm run test:ipcx-ui
+import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium } from "playwright";
+
+const projectRoot = fileURLToPath(new URL("../", import.meta.url));
+const mimeTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".svg": "image/svg+xml",
+};
+
+const server = createServer(async (request, response) => {
+  const pathname = decodeURIComponent(new URL(request.url, "http://localhost/").pathname);
+  const file = resolve(projectRoot, `.${pathname === "/" ? "/index-ipcx.html" : pathname}`);
+  if (!file.startsWith(`${projectRoot.replace(/\/$/, "")}${sep}`)) {
+    response.writeHead(403).end();
+    return;
+  }
+  try {
+    const body = await readFile(file);
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": mimeTypes[extname(file).toLowerCase()] || "application/octet-stream",
+    });
+    response.end(body);
+  } catch {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Not Found");
+  }
+});
+
+await new Promise((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
+const baseUrl = `http://127.0.0.1:${server.address().port}/index-ipcx.html`;
+let browser;
+
+try {
+  browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  await context.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname === "127.0.0.1") {
+      await route.continue();
+      return;
+    }
+    // 给首轮实时渲染留出窗口，以验证更新期间不会替换已聚焦的气泡节点。
+    await new Promise((resolveDelay) => setTimeout(resolveDelay, 450));
+    await route.abort("failed");
+  });
+
+  const page = await context.newPage();
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  const firstTip = page.locator(".metric-evidence .info-tip").first();
+  await firstTip.waitFor();
+  await firstTip.locator("summary").click();
+  await firstTip.locator("summary").focus();
+  await firstTip.evaluate((node) => { window.__aisgFocusedTip = node; });
+
+  const bubble = await firstTip.locator(".info-tip-bubble").boundingBox();
+  assert.ok(bubble, "桌面信息气泡应可见");
+  assert.ok(bubble.width >= 240 && bubble.height >= 40, "桌面信息气泡不应被容器裁切");
+  assert.ok(
+    bubble.x >= 0 && bubble.y >= 0 && bubble.x + bubble.width <= 1200 && bubble.y + bubble.height <= 800,
+    "桌面信息气泡应完整位于视口内",
+  );
+
+  await page.waitForTimeout(900);
+  const focusState = await page.evaluate(() => ({
+    connected: window.__aisgFocusedTip?.isConnected === true,
+    sameNode: window.__aisgFocusedTip === document.querySelector(".metric-evidence .info-tip"),
+    open: window.__aisgFocusedTip?.open === true,
+    focused: document.activeElement === window.__aisgFocusedTip?.querySelector("summary"),
+  }));
+  assert.deepEqual(
+    focusState,
+    { connected: true, sameNode: true, open: true, focused: true },
+    "实时来源更新不应关闭气泡、替换节点或夺走键盘焦点",
+  );
+
+  for (const viewport of [
+    { width: 320, height: 700 },
+    { width: 390, height: 844 },
+    { width: 768, height: 900 },
+    { width: 1440, height: 1000 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const layout = await page.evaluate(() => ({
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      navOverflow: document.querySelector(".module-tabs").scrollWidth - document.querySelector(".module-tabs").clientWidth,
+      panelsVisible: Array.from(document.querySelectorAll("[data-panel]")).every(
+        (node) => !node.hidden && getComputedStyle(node).display !== "none",
+      ),
+      openEvidence: Array.from(document.querySelectorAll(".signal-row")).filter((node) => node.open).length,
+      openExplanations: Array.from(document.querySelectorAll(".row-explanation")).filter((node) => node.open).length,
+    }));
+    assert.equal(layout.pageOverflow, 0, `${viewport.width}px 页面不应横向溢出`);
+    assert.equal(layout.navOverflow, 0, `${viewport.width}px 模块导航不应横向溢出`);
+    assert.equal(layout.panelsVisible, true, `${viewport.width}px 三个主模块应同时可见`);
+    assert.equal(layout.openEvidence, 18, `${viewport.width}px 有真实明细的二级项应默认展开`);
+    assert.equal(layout.openExplanations, 0, `${viewport.width}px 重复判读说明应默认收起`);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}#fingerprint-view`, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(700);
+  const directHash = await page.evaluate(() => ({
+    current: document.querySelector('.module-tab[aria-current="true"]')?.getAttribute("href"),
+    top: document.querySelector("#fingerprint-view").getBoundingClientRect().top,
+  }));
+  assert.equal(directHash.current, "#fingerprint-view", "Hash 直达时应高亮浏览器指纹导航");
+  assert.ok(directHash.top >= 90 && directHash.top <= 180, "Hash 直达后目标应紧贴吸顶导航下方");
+
+  await page.getByRole("link", { name: "总览" }).click();
+  await page.getByRole("link", { name: "浏览器指纹" }).click();
+  await page.waitForTimeout(350);
+  const clickedHash = await page.evaluate(() => ({
+    current: document.querySelector('.module-tab[aria-current="true"]')?.getAttribute("href"),
+    top: document.querySelector("#fingerprint-view").getBoundingClientRect().top,
+  }));
+  assert.equal(clickedHash.current, "#fingerprint-view", "检测期间点击导航应立即保持正确高亮");
+  assert.ok(clickedHash.top >= 90 && clickedHash.top <= 180, "检测期间点击导航应快速定位到目标");
+
+  console.log("PASS IPCX 真实浏览器布局、气泡、焦点与 Hash 导航回归");
+  await context.close();
+} finally {
+  await browser?.close().catch(() => {});
+  await new Promise((resolveClose) => server.close(resolveClose));
+}

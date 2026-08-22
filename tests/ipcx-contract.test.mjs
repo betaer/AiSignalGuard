@@ -85,3 +85,81 @@ test("完全没有网络证据时不生成基础分或绿色泄漏结论", () =>
   assert.match(app, /泄漏证据不足/);
   assert.match(app, /!webrtc\.successes\.length \|\| !state\.dns\.records\.length/);
 });
+
+test("总览、WebRTC 与浏览器信号组成连续报告，不再被顶部导航隐藏", () => {
+  for (const target of ["overview-view", "webrtc-view", "fingerprint-view"]) {
+    assert.match(html, new RegExp(`class="module-tab"[^>]+href="#${target}"`));
+    assert.doesNotMatch(
+      html,
+      new RegExp(`<section[^>]+id="${target}"[^>]+hidden`),
+      `${target} 不应在初始页面被隐藏`,
+    );
+  }
+  assert.doesNotMatch(app, /panel\.hidden\s*=/);
+  assert.match(app, /nearBottom[\s\S]*activePanel\s*=\s*panels\[panels\.length\s*-\s*1\]/);
+});
+
+test("实时结果改变页面高度时，模块锚点会自动校正且允许用户中断", () => {
+  assert.match(app, /function beginSectionNavigationAlignment\(/);
+  assert.match(app, /new ResizeObserver\(/);
+  assert.match(app, /event\.preventDefault\(\)/);
+  assert.match(app, /\["wheel",\s*"touchstart",\s*"pointerdown"\]/);
+  assert.match(app, /scrollBehavior\s*=\s*"auto"/);
+  assert.match(app, /location\.hash/);
+  assert.match(app, /"hashchange"/);
+  assert.match(app, /"popstate"/);
+});
+
+test("有真实明细的二级指标默认展开，重复解释改为渐进披露", () => {
+  assert.match(app, /function prepareSignalRows\(/);
+  assert.match(app, /row\.open\s*=\s*Boolean\(definition\.evidenceSet\)/);
+  assert.match(app, /row-explanation/);
+  assert.match(app, /判读说明与建议/);
+});
+
+test("重要结果完整换行显示，并覆盖桌面、平板与窄屏断点", () => {
+  assert.match(html, /viewport-fit=cover/);
+  assert.match(html, /--content-max:/);
+  assert.match(html, /@media \(max-width: 960px\)/);
+  assert.match(html, /@media \(max-width: 480px\)/);
+  assert.match(html, /--safe-top:\s*env\(safe-area-inset-top/);
+  assert.match(html, /--safe-left:\s*env\(safe-area-inset-left/);
+  assert.match(html, /\.demo-header\s*\{[^}]*var\(--safe-top\)/s);
+  assert.match(html, /\.page-shell\s*\{[^}]*var\(--safe-left\)/s);
+  assert.match(html, /\.data-value\s*\{[^}]*overflow-wrap:\s*anywhere/s);
+  assert.doesNotMatch(html, /\.data-value\s*\{[^}]*text-overflow:\s*ellipsis/s);
+  assert.doesNotMatch(html, /\.signal-row-title small\s*\{[^}]*text-overflow:\s*ellipsis/s);
+});
+
+test("三类浏览器摘要同时可见且 JA3 / JA4 不伪造", () => {
+  assert.equal(
+    (html.match(/<article class="fingerprint-card" data-fingerprint-card=/g) || []).length,
+    3,
+  );
+  assert.doesNotMatch(html, /class="fingerprint-tabs"/);
+  assert.match(app, /\[data-fingerprint-value\]/);
+  assert.match(app, /普通网页脚本无法直接读取 TLS ClientHello/);
+});
+
+test("低频术语使用键盘和触控均可操作的说明气泡", () => {
+  assert.match(html, /class="info-tip"/);
+  assert.match(html, /<summary[^>]+aria-label="网络参考分说明"/);
+  assert.match(app, /function makeInfoTip\(/);
+  assert.match(app, /function positionInfoTip\(/);
+  assert.match(app, /有效表示当前指标拥有可参与判断的字段/);
+  assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*30px;[^}]*height:\s*30px;/s);
+  assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*fixed;/s);
+});
+
+test("实时证据更新复用现有 DOM，不打断气泡和键盘焦点", () => {
+  assert.match(app, /function updateEvidenceSection\(/);
+  assert.doesNotMatch(app, /body\.querySelector\(":scope > \.metric-evidence"\)\?\.remove\(\)/);
+  assert.doesNotMatch(app, /host\.replaceChildren\(buildEvidenceSection/);
+});
+
+test("移动端阅读明细时工具栏向下滚动自动让位", () => {
+  assert.match(html, /\.floating-tool-dock\[data-reading="true"\]/);
+  assert.match(html, /\.floating-tool-dock\[data-reading="true"\]:focus-within/);
+  assert.match(app, /currentY\s*>\s*lastScrollY\s*\+\s*8/);
+  assert.match(app, /dock\.dataset\.reading/);
+});
