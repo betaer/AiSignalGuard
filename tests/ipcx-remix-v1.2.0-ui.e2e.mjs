@@ -358,7 +358,7 @@ async function assertTopLayout(page, viewport, label) {
   assert.ok(metrics.activeView, `${label} 必须存在唯一可见视图`);
   assert.ok(metrics.pageOverflow <= 1, `${label} 页面横向溢出 ${metrics.pageOverflow}px`);
   assert.ok(metrics.titleRect, `${label} 必须有当前视图标题`);
-  assert.ok(metrics.titleRect.top >= -1, `${label} 标题顶部不得移出视口`);
+  assert.ok(metrics.titleRect.top >= -1, `${label} 标题顶部不得移出视口：${JSON.stringify(metrics.titleRect)}`);
   assert.ok(metrics.titleRect.bottom <= viewport.height + 1, `${label} 标题必须位于当前视口`);
   assert.deepEqual(metrics.titleBlockers, [], `${label} 标题不得被吸顶导航或其他层遮挡`);
   assert.equal(metrics.titleFocused, true, `${label} 路由标题必须保持程序化焦点`);
@@ -509,10 +509,14 @@ function controllerCoverageReport(entries, source) {
     ...targets.map((entry) => entry.source?.length || 0),
   );
   const ranges = targets
-    .flatMap((entry) => entry.ranges || [])
+    .flatMap((entry) => {
+      if (Array.isArray(entry.ranges)) return entry.ranges;
+      return (entry.functions || []).flatMap((coverageFunction) => coverageFunction.ranges || []);
+    })
+    .filter((range) => range.count === undefined || range.count > 0)
     .map((range) => ({
-      start: Math.max(0, Math.min(total, range.start)),
-      end: Math.max(0, Math.min(total, range.end)),
+      start: Math.max(0, Math.min(total, range.start ?? range.startOffset ?? 0)),
+      end: Math.max(0, Math.min(total, range.end ?? range.endOffset ?? 0)),
     }))
     .filter((range) => range.end > range.start)
     .sort((left, right) => left.start - right.start || left.end - right.end);
