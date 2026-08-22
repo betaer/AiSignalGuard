@@ -175,6 +175,8 @@ test("二级列表边界不露出空白圆角，行内说明气泡独立于列�
   assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*0;/s);
   assert.match(html, /\.row-help-bubble\s*\{[^}]*position:\s*absolute;/s);
   assert.match(app, /function positionRowHelpTip\(/);
+  assert.match(app, /summary\.addEventListener\("pointerdown"/);
+  assert.match(app, /event\.preventDefault\(\)/);
   assert.match(html, /\.row-help-tip:hover\s*>\s*\.row-help-bubble/);
   assert.match(html, /summary:focus-visible\s*\+\s*\.row-help-bubble/);
   assert.doesNotMatch(html, /\.row-help-tip\[open\]\s*>\s*\.row-help-bubble/);

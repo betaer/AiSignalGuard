@@ -116,15 +116,19 @@ try {
   await rowHelp.scrollIntoViewIfNeeded();
   await rowHelp.locator("summary").hover();
   const rowHelpBubble = await rowHelp.locator(".row-help-bubble").evaluate((node) => {
+    const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();
-    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, opacity: style.opacity, visibility: style.visibility };
   });
-  assert.ok(rowHelpBubble, "移动端行内说明气泡应可见");
+  assert.equal(rowHelpBubble.opacity, "1", "移动端悬停行内说明应直接显示气泡");
+  assert.equal(rowHelpBubble.visibility, "visible", "移动端悬停行内说明应直接可见");
   assert.ok(
     rowHelpBubble.x >= 0 && rowHelpBubble.y >= 0 &&
       rowHelpBubble.x + rowHelpBubble.width <= 390 && rowHelpBubble.y + rowHelpBubble.height <= 844,
     "移动端行内说明气泡不应被二级列表或视口裁切",
   );
+  await rowHelp.locator("summary").click();
+  assert.equal(await rowHelp.evaluate((node) => node.open), false, "鼠标点击说明胶囊不应触发展开状态");
   await page.mouse.move(18, 18);
   await page.waitForTimeout(180);
   const rowHoverState = await rowHelp.locator(".row-help-bubble").evaluate((node) => {

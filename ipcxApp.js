@@ -504,6 +504,7 @@
   function setupRowHelpTip(tip) {
     if (tip.dataset.rowHelpReady === "true") return;
     tip.dataset.rowHelpReady = "true";
+    var summary = tip.querySelector("summary");
     var container = tip.closest(".signal-subsection-rows");
     var syncContainer = function () {
       if (!container) return;
@@ -512,6 +513,30 @@
       });
       container.classList.toggle("is-help-visible", visible);
     };
+    // 鼠标提示只由 hover 控制，避免原生 details 的第一次点击把提示固定成展开态。
+    // 键盘仍保留原生 details 行为，方便键盘用户查看完整说明。
+    if (summary) {
+      var pointerActivation = false;
+      summary.addEventListener("pointerdown", function (event) {
+        if (event.pointerType !== "mouse" && event.pointerType !== "pen") return;
+        pointerActivation = true;
+        event.preventDefault();
+        tip.open = false;
+        summary.blur();
+        syncContainer();
+      });
+      summary.addEventListener("click", function (event) {
+        if (!pointerActivation) return;
+        pointerActivation = false;
+        event.preventDefault();
+        tip.open = false;
+        summary.blur();
+        syncContainer();
+      });
+      summary.addEventListener("pointercancel", function () {
+        pointerActivation = false;
+      });
+    }
     tip.addEventListener("toggle", function () {
       syncContainer();
       requestAnimationFrame(function () { positionRowHelpTip(tip); });
