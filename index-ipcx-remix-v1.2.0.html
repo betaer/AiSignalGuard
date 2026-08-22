@@ -15,18 +15,19 @@
         --surface-soft: #f7faf8;
         --ink: #17221e;
         --ink-2: #405049;
-        --muted: #74817b;
+        --muted: #606c66;
         --line: #dce5df;
         --line-strong: #c5d1c9;
         --green: #159868;
         --green-deep: #08754e;
         --green-soft: #e0f3e8;
-        --amber: #a46a18;
+        --amber: #925a12;
         --amber-soft: #fff2d9;
         --red: #b44442;
         --red-soft: #fde9e7;
         --blue: #4c6e9b;
         --blue-soft: #e8eff9;
+        --focus: #075f40;
         --shadow: 0 18px 46px rgba(41, 70, 57, 0.1);
         --shadow-small: 0 8px 22px rgba(41, 70, 57, 0.08);
         --radius-card: 22px;
@@ -72,7 +73,7 @@
       }
       button { font: inherit; }
       button, a { -webkit-tap-highlight-color: transparent; }
-      button:focus-visible, a:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.45); outline-offset: 3px; }
+      button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
       button:active { transform: translateY(1px) scale(0.99); }
       a { color: inherit; }
 
@@ -81,6 +82,9 @@
         top: calc(10px + var(--safe-top));
         left: max(12px, var(--safe-left));
         z-index: 20;
+        display: flex;
+        min-height: 44px;
+        align-items: center;
         padding: 9px 12px;
         border-radius: 10px;
         color: white;
@@ -169,8 +173,8 @@
         text-decoration: none;
         transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
       }
-      .module-tab small { display: block; margin-top: -2px; color: inherit; font-size: 10px; font-weight: 500; opacity: 0.76; }
-      .module-tab[aria-current="true"] { color: white; background: var(--green); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
+      .module-tab small { display: block; margin-top: -2px; color: inherit; font-size: 10px; font-weight: 500; }
+      .module-tab[aria-current="true"] { color: white; background: var(--green-deep); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
       .module-tab:hover { color: var(--green-deep); background: rgba(224, 243, 232, 0.72); }
       .module-tab[aria-current="true"]:hover { color: white; background: var(--green-deep); }
 
@@ -316,7 +320,7 @@
       .info-tip { position: relative; display: inline-flex; flex: 0 0 auto; vertical-align: middle; }
       .info-tip > summary { display: grid; width: 30px; height: 30px; place-items: center; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--green-deep); background: rgba(255, 255, 255, 0.84); cursor: help; font-family: var(--mono); font-size: 11px; font-weight: 900; line-height: 1; list-style: none; }
       .info-tip > summary::-webkit-details-marker { display: none; }
-      .info-tip > summary:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.28); outline-offset: 2px; }
+      .info-tip > summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
       .info-tip-bubble { position: fixed; top: var(--info-tip-top, 12px); left: var(--info-tip-left, 12px); z-index: 30; width: min(270px, calc(100vw - 24px)); max-height: min(260px, calc(100dvh - 24px)); padding: 10px 11px; overflow: auto; border: 1px solid #c9d9ce; border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-family: var(--sans); font-size: 11px; font-weight: 500; line-height: 1.55; text-align: left; white-space: normal; }
       .info-tip-bubble::after { display: none; }
 
@@ -351,7 +355,7 @@
       .floating-tool-button { position: relative; display: grid; flex: 0 0 48px; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(92, 133, 101, 0.42); border-radius: 50%; color: var(--green-deep); background: rgba(247, 251, 244, 0.96); box-shadow: 0 12px 28px rgba(41, 70, 57, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.82); cursor: pointer; text-decoration: none; backdrop-filter: blur(14px); transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease; }
       .floating-tool-button:hover { border-color: rgba(72, 123, 84, 0.66); background: #edf6ec; box-shadow: 0 15px 32px rgba(41, 70, 57, 0.21), inset 0 1px 0 rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
       .floating-tool-button:active { transform: translateY(0) scale(0.97); }
-      .floating-tool-button:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.26); outline-offset: 4px; }
+      .floating-tool-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
       .floating-tool-button:disabled { cursor: wait; opacity: 0.66; }
       .floating-tool-button[data-copy-complete="true"] { border-color: rgba(21, 152, 104, 0.64); background: var(--green-soft); }
       #floating-top[data-visible="false"] { display: none; }
@@ -398,22 +402,6 @@
       .recheck-loading-step.is-active { border-color: rgba(21, 152, 104, 0.4); color: var(--green-deep); background: rgba(224, 243, 232, 0.66); }
       .recheck-loading-step.is-active::before { background: var(--green); box-shadow: 0 0 0 4px rgba(21, 152, 104, 0.12); }
       @keyframes recheck-orbit { to { transform: rotate(360deg); } }
-
-      .star-support-dialog { position: fixed; width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 42px 38px 30px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; color: white; background: radial-gradient(circle at 50% 0%, rgba(132, 159, 99, 0.16), transparent 42%), #171816; box-shadow: 0 32px 100px rgba(26, 26, 24, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.05); text-align: center; }
-      .star-support-dialog::backdrop { background: rgba(8, 9, 8, 0.68); backdrop-filter: blur(7px); }
-      .star-support-close { position: absolute; top: 16px; right: 16px; display: grid; width: 38px; height: 38px; place-items: center; padding: 0; border: 0; border-radius: 10px; color: rgba(255, 255, 255, 0.58); background: transparent; cursor: pointer; transition: color 180ms ease, background 180ms ease, transform 180ms ease; }
-      .star-support-close:hover { color: white; background: rgba(255, 255, 255, 0.09); transform: rotate(4deg); }
-      .star-support-close svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-width: 2.4; }
-      .star-support-emoji { display: grid; width: 76px; height: 76px; margin: 0 auto 14px; place-items: center; border: 1px solid rgba(255, 215, 79, 0.2); border-radius: 24px; background: rgba(255, 215, 79, 0.08); box-shadow: 0 12px 28px rgba(255, 207, 57, 0.08); font-size: 42px; line-height: 1; transform: rotate(-3deg); }
-      .star-support-kicker { margin: 0 0 10px; color: #d5e8bd; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; }
-      .star-support-dialog h2 { margin: 0; color: white; font-size: clamp(24px, 5vw, 34px); line-height: 1.2; letter-spacing: -0.04em; text-wrap: balance; }
-      .star-support-copy { max-width: 420px; margin: 18px auto 30px; color: rgba(255, 255, 255, 0.6); font-size: 16px; line-height: 1.7; text-wrap: pretty; }
-      .star-support-primary { display: inline-flex; width: 100%; min-height: 58px; align-items: center; justify-content: center; gap: 11px; border: 1px solid white; border-radius: 14px; color: #11120f; background: white; font-size: 17px; font-weight: 800; text-decoration: none; transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease; }
-      .star-support-primary:hover { color: #11120f; background: #e9f2dd; box-shadow: 0 12px 24px rgba(181, 218, 142, 0.18); transform: translateY(-2px); }
-      .star-support-primary svg { width: 23px; height: 23px; fill: currentColor; }
-      .star-support-primary .star-support-external { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
-      .star-support-secondary { margin-top: 22px; padding: 3px 0; border: 0; border-bottom: 1px solid transparent; color: rgba(255, 255, 255, 0.5); background: transparent; cursor: pointer; font-family: var(--mono); font-size: 14px; font-weight: 700; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 5px; transition: color 180ms ease, text-decoration-color 180ms ease; }
-      .star-support-secondary:hover { color: white; text-decoration-color: rgba(255, 255, 255, 0.44); }
 
       @media (max-width: 960px) {
         .page-shell { width: min(calc(100% - 36px), 900px); }
@@ -507,9 +495,6 @@
         .recheck-loading-panel { padding: 29px 20px 24px; border-radius: 20px; }
         .recheck-loading-orbit { width: 82px; height: 82px; margin-bottom: 19px; }
         .recheck-loading-steps { grid-template-columns: 1fr; gap: 6px; }
-        .star-support-dialog { width: min(100% - 20px, 560px); padding: 38px 22px 24px; border-radius: 16px; }
-        .star-support-copy { font-size: 14px; }
-        .star-support-primary { font-size: 15px; }
       }
 
       @media (max-width: 480px) {
@@ -591,7 +576,7 @@
       .module-tabs::-webkit-scrollbar-track { background: transparent; }
       .module-tabs::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--line-strong); }
       .module-tab { min-height: 44px; }
-      .module-tab[aria-current="page"] { color: white; background: var(--green); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
+      .module-tab[aria-current="page"] { color: white; background: var(--green-deep); box-shadow: 0 5px 12px rgba(21, 152, 104, 0.22); }
       .module-tab[aria-current="page"]:hover { color: white; background: var(--green-deep); }
       .remix-route-view { margin-top: clamp(24px, 4vw, 40px); outline: none; }
       .remix-view-head {
@@ -601,8 +586,14 @@
         gap: 18px;
         margin-bottom: 16px;
       }
+      #main:focus { outline: none; }
       .remix-view-head h2 { margin: 0; font-size: clamp(25px, 4vw, 35px); line-height: 1.08; letter-spacing: -0.05em; }
-      .remix-view-head h2:focus-visible { outline: none; }
+      .remix-view-head h2:focus { outline: none; }
+      .remix-view-head h2[data-focus-origin="keyboard"]:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 7px;
+        border-radius: 4px;
+      }
       .remix-view-head p { max-width: 580px; margin: 7px 0 0; color: var(--muted); font-size: 13px; }
       .remix-view-kicker { margin: 0 0 7px; color: var(--green-deep); font-family: var(--mono); font-size: 10px; font-weight: 900; letter-spacing: 0.14em; }
       .remix-tools-link,
@@ -626,6 +617,33 @@
       .tool-back-link:hover { border-color: #96c0a4; color: var(--green-deep); background: var(--green-soft); }
       .remix-slot { min-width: 0; }
       .remix-slot + .remix-slot { margin-top: 18px; }
+      .overview-domain-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .overview-domain-card {
+        display: flex;
+        min-width: 0;
+        min-height: 112px;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 13px;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        color: inherit;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: var(--shadow-small);
+        text-decoration: none;
+        transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+      }
+      .overview-domain-card:hover { border-color: #9bc4a8; box-shadow: var(--shadow); transform: translateY(-2px); }
+      .overview-domain-card span { color: var(--muted); font-size: 10px; font-weight: 850; }
+      .overview-domain-card strong { overflow-wrap: anywhere; color: var(--blue); font-family: var(--mono); font-size: 11px; line-height: 1.5; }
+      .overview-domain-state.good { color: var(--green-deep); }
+      .overview-domain-state.warn { color: var(--amber); }
+      .overview-domain-state.bad { color: var(--red); }
       .compact-status-strip {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
@@ -641,6 +659,9 @@
       .compact-status-strip strong { display: block; font-size: 13px; }
       .compact-status-strip span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
       .compact-status-strip b { color: var(--blue); font-family: var(--mono); font-size: 11px; }
+      .compact-status-strip b.good { color: var(--green-deep); }
+      .compact-status-strip b.warn { color: var(--amber); }
+      .compact-status-strip b.bad { color: var(--red); }
       .boundary-card {
         min-width: 0;
         padding: clamp(17px, 3vw, 24px);
@@ -715,6 +736,7 @@
         .floating-tool-label { display: none; }
         .remix-view-head { align-items: flex-start; }
         .advanced-tools-grid { grid-template-columns: 1fr; }
+        .overview-domain-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .advanced-tool-card { min-height: 0; }
         .tool-boundary-grid { grid-template-columns: 1fr; }
         .brand,
@@ -740,6 +762,8 @@
         .remix-view-head { display: block; }
         .remix-tools-link { width: 100%; margin-top: 13px; }
         .compact-status-strip { grid-template-columns: 1fr; gap: 7px; }
+        .overview-domain-grid { grid-template-columns: 1fr; }
+        .overview-domain-card { min-height: 84px; }
         .boundary-facts,
         .advanced-tool-facts { grid-template-columns: 1fr; }
         .advanced-tool-card { padding: 17px; }
@@ -763,7 +787,7 @@
       <span class="brand-version">v1.2.0</span>
     </header>
 
-    <main class="page-shell" id="main">
+    <main class="page-shell" id="main" tabindex="-1">
       <section class="intro" aria-labelledby="demo-title">
         <p class="eyebrow">IPCX REMIX v1.2.0 / LIVE DIAGNOSTICS</p>
         <h1 id="demo-title">先给结论，<span>再看证据。</span></h1>
@@ -785,7 +809,7 @@
         <div class="score-layout">
           <div class="score-ring" aria-label="网络信号参考分正在计算"><div class="score-ring-inner"><div class="score-ring-content"><span class="score-number">—</span><span class="score-label">网络参考分</span></div></div></div>
           <div>
-            <div class="result-title-line"><h2 class="result-title" id="result-title">等待证据结论</h2><details class="info-tip"><summary aria-label="网络参考分说明">i</summary><span class="info-tip-bubble" role="note">这是依据本轮真实来源覆盖率与环境差异生成的参考值，不代表账号、设备或身份的安全评级。</span></details></div>
+            <div class="result-title-line"><h2 class="result-title" id="result-title">等待证据结论</h2><details class="info-tip"><summary aria-label="网络参考分说明">i</summary><span class="info-tip-bubble" role="note">只有 IP 情报、路由注册、DNS 与 STUN 均达到最低证据门槛时才生成参考分；分值同时计入来源分歧与明确风险字段，不代表账号、设备或身份的安全评级。</span></details></div>
             <p class="result-copy">正在读取出口地址、浏览器环境、路由注册与 WebRTC 实时证据。</p>
             <div class="tag-row" aria-label="关键状态"><span class="chip neutral">实时来源检测中</span></div>
           </div>
@@ -887,7 +911,7 @@
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true">⊙</span>
               <span class="signal-group-heading"><span class="signal-group-title">多源互证</span><span class="signal-group-note">地理情报、网络标签与最终判断</span></span>
-              <span class="signal-group-evaluation"><strong class="signal-group-result">多源核对中</strong><span class="signal-group-count">5 项详情</span></span>
+              <span class="signal-group-evaluation"><strong class="signal-group-result">多源核对中</strong><span class="signal-group-count">4 项详情</span></span>
               <span class="signal-group-chevron" aria-hidden="true">›</span>
             </summary>
             <div class="signal-group-body">
@@ -967,7 +991,15 @@
           <a class="remix-tools-link" href="#/tools">进入高级工具中心 <span aria-hidden="true">→</span></a>
         </div>
         <div class="remix-slot" id="overview-summary-slot" data-remix-slot="summary"></div>
-        <div class="remix-slot" id="overview-core-slot" data-remix-slot="overview"></div>
+        <div class="remix-slot" id="overview-core-slot" data-remix-slot="overview">
+          <nav class="overview-domain-grid" aria-label="本轮五域状态">
+            <a class="overview-domain-card" href="#/network"><span>网络身份</span><strong class="overview-domain-state neutral" id="overview-network-state">等待实时证据</strong></a>
+            <a class="overview-domain-card" href="#/leaks"><span>泄漏与解析</span><strong class="overview-domain-state neutral" id="overview-leaks-state">等待实时证据</strong></a>
+            <a class="overview-domain-card" href="#/paths"><span>路径与节点</span><strong class="overview-domain-state neutral" id="overview-paths-state">等待实时证据</strong></a>
+            <a class="overview-domain-card" href="#/browser"><span>浏览器环境</span><strong class="overview-domain-state neutral" id="overview-browser-state">读取本地信号</strong></a>
+            <a class="overview-domain-card" href="#/network"><span>多源互证</span><strong class="overview-domain-state neutral" id="overview-sources-state">等待来源结算</strong></a>
+          </nav>
+        </div>
       </section>
 
       <section class="remix-route-view" data-remix-view="network" aria-labelledby="remix-network-title" hidden>
@@ -979,7 +1011,7 @@
           </div>
           <a class="remix-tools-link" href="#/tools/ip">查看 IP 工具边界 <span aria-hidden="true">→</span></a>
         </div>
-        <div class="compact-status-strip"><div><strong>网络身份实时证据</strong><span>仅真实返回字段参与共识；来源失败保持未知。</span></div><b>检测中</b></div>
+        <div class="compact-status-strip" data-compact-domain="network"><div><strong>网络身份实时证据</strong><span id="network-compact-copy">仅真实返回字段参与共识；来源失败保持未知。</span></div><b id="network-compact-state">检测中</b></div>
         <div class="remix-slot" id="network-core-slot" data-remix-slot="network">
           <div class="signal-stack" id="network-signal-stack"></div>
           <div id="network-privacy-slot"></div>
@@ -995,7 +1027,7 @@
           </div>
           <a class="remix-tools-link" href="#/tools/stun">查看 STUN 工具边界 <span aria-hidden="true">→</span></a>
         </div>
-        <div class="compact-status-strip"><div><strong>泄漏判断等待证据</strong><span>无 DNS 记录或无 STUN 响应时只显示证据不足，不生成安全结论。</span></div><b>未确认</b></div>
+        <div class="compact-status-strip" data-compact-domain="leaks"><div><strong>泄漏判断等待证据</strong><span id="leaks-compact-copy">无 DNS 记录或无 STUN 响应时只显示证据不足，不生成安全结论。</span></div><b id="leaks-compact-state">未确认</b></div>
         <div class="remix-slot" id="leaks-core-slot" data-remix-slot="leaks"><div class="signal-stack" id="leaks-signal-stack"></div></div>
         <div class="remix-slot" id="leaks-detail-slot" data-remix-slot="webrtc"></div>
       </section>
@@ -1009,7 +1041,7 @@
           </div>
           <a class="remix-tools-link" href="#/tools">浏览全部高级工具 <span aria-hidden="true">→</span></a>
         </div>
-        <div class="compact-status-strip"><div><strong>当前路径证据</strong><span>只计算实际取得的 RIR、路由和注册字段。</span></div><b>读取中</b></div>
+        <div class="compact-status-strip" data-compact-domain="paths"><div><strong>当前路径证据</strong><span id="paths-compact-copy">只计算实际取得的 RIR、路由和注册字段。</span></div><b id="paths-compact-state">读取中</b></div>
         <div class="remix-slot" id="paths-route-registry-slot" data-remix-slot="route-registry-sources" aria-label="路由与注册来源目标位置"><div class="signal-subsection-rows" id="route-registry-slot"></div></div>
         <div class="remix-slot" id="paths-core-slot" data-remix-slot="paths"></div>
         <article class="boundary-card" aria-labelledby="paths-boundary-title">
@@ -1033,7 +1065,7 @@
           </div>
           <a class="remix-tools-link" href="#/tools/dns">查看 DNS 工具边界 <span aria-hidden="true">→</span></a>
         </div>
-        <div class="compact-status-strip"><div><strong>浏览器本地信号</strong><span>本地摘要只用于本轮环境对照，不冒充商业 Visitor ID。</span></div><b>读取中</b></div>
+        <div class="compact-status-strip" data-compact-domain="browser"><div><strong>浏览器本地信号</strong><span id="browser-compact-copy">本地摘要只用于本轮环境对照，不冒充商业 Visitor ID。</span></div><b id="browser-compact-state">读取中</b></div>
         <article class="boundary-card" aria-labelledby="browser-address-title">
           <h3 id="browser-address-title">浏览器地址边界</h3>
           <p>仅在浏览器真实暴露对应候选时显示；未取得不等于不存在。</p>
@@ -1202,12 +1234,12 @@
     <span class="visually-hidden" id="route-announcer" role="status" aria-live="polite">已打开总览</span>
     <span class="visually-hidden" id="floating-action-status" role="status" aria-live="polite"></span>
 
-    <section class="recheck-loading" id="recheck-loading" role="status" aria-live="polite" aria-labelledby="recheck-loading-title" aria-busy="true" hidden>
+    <section class="recheck-loading" id="recheck-loading" role="dialog" aria-modal="true" aria-labelledby="recheck-loading-title" aria-describedby="recheck-loading-copy" aria-busy="true" tabindex="-1" hidden>
       <div class="recheck-loading-panel">
         <p class="recheck-loading-kicker">AI SIGNAL GUARD / LOCAL ANALYSIS</p>
         <div class="recheck-loading-orbit" aria-hidden="true"><span>◎</span></div>
         <h2 class="recheck-loading-title" id="recheck-loading-title">读取浏览器与时区信号</h2>
-        <p class="recheck-loading-copy" id="recheck-loading-copy">正在重新读取当前浏览器环境，旧结果会在本轮分析完成后更新。</p>
+        <p class="recheck-loading-copy" id="recheck-loading-copy" role="status" aria-live="polite">正在重新读取当前浏览器环境，旧结果会在本轮分析完成后更新。</p>
         <div class="recheck-progress-track" role="progressbar" aria-label="重新检测进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="recheck-progress-track"><span class="recheck-progress-fill" id="recheck-progress-fill"></span></div>
         <div class="recheck-progress-meta"><span class="recheck-progress-value" id="recheck-progress-value">0%</span><span>本地处理 · 不上传检测数据</span></div>
         <ol class="recheck-loading-steps" aria-label="检测阶段">

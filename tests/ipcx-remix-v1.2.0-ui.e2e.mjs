@@ -508,26 +508,41 @@ function controllerCoverageReport(entries, source) {
     source.length,
     ...targets.map((entry) => entry.source?.length || 0),
   );
-  const ranges = targets
+  const rawRanges = targets
     .flatMap((entry) => {
       if (Array.isArray(entry.ranges)) return entry.ranges;
       return (entry.functions || []).flatMap((coverageFunction) => coverageFunction.ranges || []);
     })
-    .filter((range) => range.count === undefined || range.count > 0)
     .map((range) => ({
       start: Math.max(0, Math.min(total, range.start ?? range.startOffset ?? 0)),
       end: Math.max(0, Math.min(total, range.end ?? range.endOffset ?? 0)),
+      count: Number(range.count ?? 0),
     }))
-    .filter((range) => range.end > range.start)
-    .sort((left, right) => left.start - right.start || left.end - right.end);
+    .filter((range) => range.end > range.start);
 
-  const merged = [];
-  for (const range of ranges) {
-    const previous = merged.at(-1);
-    if (!previous || range.start > previous.end) merged.push({ ...range });
-    else previous.end = Math.max(previous.end, range.end);
+  // V8 会给已执行的顶层 IIFE 一个覆盖全文件的正计数 range。若直接合并正计数
+  // range，任何未执行函数和分支都会被顶层 range 吞掉，得到虚假的 100%。这里对
+  // 每个字节区间采用“最具体（跨度最小）的 range”判定，零计数子 range 会正确覆盖
+  // 已执行的父 range。
+  const exactRanges = new Map();
+  for (const range of rawRanges) {
+    const key = `${range.start}:${range.end}`;
+    const previous = exactRanges.get(key);
+    if (!previous || range.count > previous.count) exactRanges.set(key, range);
   }
-  const executed = merged.reduce((sum, range) => sum + range.end - range.start, 0);
+  const ranges = [...exactRanges.values()];
+  const boundaries = [...new Set([0, total, ...ranges.flatMap((range) => [range.start, range.end])])]
+    .sort((left, right) => left - right);
+  let executed = 0;
+  for (let index = 0; index < boundaries.length - 1; index += 1) {
+    const start = boundaries[index];
+    const end = boundaries[index + 1];
+    if (end <= start) continue;
+    const containing = ranges
+      .filter((range) => range.start <= start && range.end >= end)
+      .sort((left, right) => (left.end - left.start) - (right.end - right.start));
+    if (containing[0]?.count > 0) executed += end - start;
+  }
   return { executed, total, ratio: total ? executed / total : 0, entries: targets.length };
 }
 
@@ -683,6 +698,48 @@ try {
   );
   await assertActiveView(page, "overview", "#/overview");
   await waitForDetectionIdle(page);
+  const settledShell = await page.evaluate(() => ({
+    title: document.querySelector("#result-title")?.textContent.trim() || "",
+    overviewCards: document.querySelectorAll("#overview-core-slot .overview-domain-card").length,
+    compact: Object.fromEntries(["network", "leaks", "paths", "browser"].map((domain) => [
+      domain,
+      document.querySelector(`#${domain}-compact-state`)?.textContent.trim() || "",
+    ])),
+  }));
+  assert.doesNotMatch(settledShell.title, /等待证据结论|检测中|读取中/, "检测结算后标题必须给出真实终态");
+  assert.equal(settledShell.overviewCards, 5, "总览必须渲染五个可深入的域摘要");
+  assert.doesNotMatch(settledShell.compact.network, /^检测中$/, "网络状态条必须脱离首帧占位");
+  assert.doesNotMatch(settledShell.compact.leaks, /^未确认$/, "泄漏状态条必须脱离首帧占位");
+  assert.doesNotMatch(settledShell.compact.paths, /^读取中$/, "路径状态条必须脱离首帧占位");
+  assert.doesNotMatch(settledShell.compact.browser, /^读取中$/, "浏览器状态条必须脱离首帧占位");
+
+  const scoreTip = page.locator(".result-title-line .info-tip");
+  await scoreTip.locator("summary").click();
+  assert.equal(await scoreTip.evaluate((node) => node.open), true, "网络参考分说明必须可由真实浏览器打开");
+  await page.locator("#demo-title").click();
+  assert.equal(await scoreTip.evaluate((node) => node.open), false, "点击说明外部必须关闭信息气泡");
+
+  await page.locator('.module-tab[data-route="overview"]').click();
+  await assertActiveView(page, "overview", "#/overview");
+
+  await clickResultRoute(page, "network");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForFunction(() => document.querySelector("#floating-top")?.dataset.visible === "true");
+  await page.locator("#floating-top").click();
+  await page.waitForFunction(() => window.scrollY < 2);
+
+  await page.locator(".skip-link").focus();
+  const skipLinkRect = await page.locator(".skip-link").boundingBox();
+  assert.ok(
+    skipLinkRect && skipLinkRect.width >= 43.5 && skipLinkRect.height >= 43.5,
+    `聚焦后跳过链接的触控目标不得小于 44×44，当前为 ${skipLinkRect?.width || 0}×${skipLinkRect?.height || 0}`,
+  );
+  await page.keyboard.press("Enter");
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.id),
+    "main",
+    "跳过链接必须把焦点真正送到主要内容，而不是留在页头",
+  );
 
   // 非法 Hash 必须在一次全新文档加载时规范化，不能留下不可分享的未知状态。
   await page.goto("about:blank");
@@ -733,6 +790,11 @@ try {
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
   await assertActiveView(page, "network", "#/network");
+  assert.notEqual(
+    await page.locator("#remix-network-title").evaluate((node) => getComputedStyle(node).outlineStyle),
+    "none",
+    "键盘进入路由后，标题焦点必须可见",
+  );
 
   // 工具中心与七个详情都必须可分享、可返回，并保持未启用的诚实语义。
   await navigateWithHash(page, "#/tools", "tools");
@@ -808,6 +870,39 @@ try {
     "复制完成必须提供文本反馈",
   );
 
+  const writesBeforeAiReport = await page.evaluate(() => globalThis.__e2eClipboardWrites.length);
+  await page.locator("#floating-ai-report").click();
+  await page.waitForFunction((count) => globalThis.__e2eClipboardWrites.length > count, writesBeforeAiReport);
+  const copiedAiReport = await page.evaluate(() => globalThis.__e2eClipboardWrites.at(-1));
+  assert.match(copiedAiReport, /【检测概览】[\s\S]*【网络出口】[\s\S]*【泄漏与多源互证】/, "AI 诊断报告必须包含结构化真实结果");
+  assert.equal(copiedAiReport.includes(rawFingerprint), false, "隐私模式 AI 诊断报告不得泄漏完整指纹");
+
+  const writesBeforeFingerprint = await page.evaluate(() => globalThis.__e2eClipboardWrites.length);
+  await page.locator('[data-copy-fingerprint="v2"]').click();
+  await page.waitForFunction((count) => globalThis.__e2eClipboardWrites.length > count, writesBeforeFingerprint);
+  assert.equal(
+    (await page.evaluate(() => globalThis.__e2eClipboardWrites.at(-1))).includes(rawFingerprint),
+    false,
+    "隐私模式复制单项摘要也不得泄漏完整稳定指纹",
+  );
+
+  await page.evaluate(() => {
+    globalThis.__e2eSavedClipboard = navigator.clipboard;
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: null });
+  });
+  await page.locator('[data-copy-fingerprint="v3"]').click();
+  assert.match(
+    await page.locator("#floating-action-status").innerText(),
+    /复制|手动选择/,
+    "剪贴板 API 不可用时必须进入可感知的降级复制分支",
+  );
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: globalThis.__e2eSavedClipboard,
+    });
+  });
+
   await privacy.click();
   assert.equal((await fingerprint.textContent()).trim(), rawFingerprint, "关闭隐私模式必须恢复本地原值");
   await privacy.click();
@@ -824,8 +919,29 @@ try {
   const httpAttemptsBeforeRecheck = externalHttp.length;
   const rtcAttemptsBeforeRecheck = await page.evaluate(() => globalThis.__e2eRtcConfigurations.length);
   await page.locator("#floating-recheck").click();
+  await page.locator("#recheck-loading").waitFor({ state: "visible" });
+  const loadingFocus = await page.evaluate(() => ({
+    activeId: document.activeElement?.id || "",
+    mainInert: document.querySelector("#main")?.inert === true,
+    headerInert: document.querySelector(".demo-header")?.inert === true,
+    dockInert: document.querySelector(".floating-tool-dock")?.inert === true,
+  }));
+  assert.equal(loadingFocus.activeId, "recheck-loading", "重测开始后焦点必须进入进度遮罩");
+  assert.equal(loadingFocus.mainInert, true, "重测遮罩显示时主要内容必须 inert");
+  assert.equal(loadingFocus.headerInert, true, "重测遮罩显示时页头必须 inert");
+  assert.equal(loadingFocus.dockInert, true, "重测遮罩显示时浮动操作必须 inert");
   await page.waitForFunction(() => globalThis.__e2eActionStatusHistory.some((text) => /重测|检测|正在|完成/.test(text)));
   await waitForDetectionIdle(page);
+  assert.deepEqual(
+    await page.evaluate(() => ({
+      activeId: document.activeElement?.id || "",
+      mainInert: document.querySelector("#main")?.inert === true,
+      headerInert: document.querySelector(".demo-header")?.inert === true,
+      dockInert: document.querySelector(".floating-tool-dock")?.inert === true,
+    })),
+    { activeId: "floating-recheck", mainInert: false, headerInert: false, dockInert: false },
+    "重测完成后必须解除 inert 并把焦点还给触发按钮",
+  );
   assert.ok(externalHttp.length > httpAttemptsBeforeRecheck, "重测必须重新执行既有实时 HTTP 探针");
   assert.ok(
     await page.evaluate(() => globalThis.__e2eRtcConfigurations.length) > rtcAttemptsBeforeRecheck,

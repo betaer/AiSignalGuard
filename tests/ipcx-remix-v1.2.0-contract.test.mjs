@@ -128,6 +128,36 @@ function sorted(values) {
   return [...values].sort((left, right) => left.localeCompare(right, "en"));
 }
 
+function cssHexVariable(source, name) {
+  const match = source.match(new RegExp(`${escapeRegExp(name)}\\s*:\\s*(#[0-9a-f]{6})\\s*;`, "i"));
+  assert.ok(match, `缺少可审计的颜色变量 ${name}`);
+  return match[1];
+}
+
+function relativeLuminance(hex) {
+  const channels = hex.slice(1).match(/.{2}/g).map((value) => Number.parseInt(value, 16) / 255);
+  const [red, green, blue] = channels.map((value) =>
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4,
+  );
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function contrastRatio(foreground, background) {
+  const lighter = Math.max(relativeLuminance(foreground), relativeLuminance(background));
+  const darker = Math.min(relativeLuminance(foreground), relativeLuminance(background));
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function compositeHex(foreground, background, opacity) {
+  const foregroundChannels = foreground.slice(1).match(/.{2}/g).map((value) => Number.parseInt(value, 16));
+  const backgroundChannels = background.slice(1).match(/.{2}/g).map((value) => Number.parseInt(value, 16));
+  return `#${foregroundChannels.map((value, index) =>
+    Math.round(value * opacity + backgroundChannels[index] * (1 - opacity))
+      .toString(16)
+      .padStart(2, "0"),
+  ).join("")}`;
+}
+
 function viewRecords(source) {
   const records = openingTags(source)
     .filter(({ source: tag }) => attribute(tag, "data-remix-view") !== null)
@@ -439,14 +469,26 @@ test("页面与控制器不包含示例结果、真实用户资料或嵌入式�
   );
 });
 
-test("失败和来源缺失保持未知语义，且未接入工具不参与评分", () => {
+test("失败和来源缺失保持未知语义，评分必须满足跨域证据门槛，且未接入工具不参与评分", () => {
   const html = requiredSource(htmlFile);
   const app = requiredSource(appFile);
 
-  assert.match(app, /var\s+scoreAvailable\s*=\s*evidenceCount\s*>\s*0/);
+  assert.match(app, /MIN_SCORE_(?:COVERAGE|EVIDENCE)/, "评分门槛必须使用具名常量，不能任意一条来源就出分");
+  assert.match(app, /intelSummary\.usable\s*>=/);
+  assert.match(app, /routeSummary\.usable\s*>=/);
+  assert.match(app, /stunSummary\.usable\s*>=/);
+  assert.match(app, /dnsComparable/, "数字分必须纳入可比较的 DNS 证据");
   assert.match(app, /scoreAvailable\s*\?\s*String\(score\)\s*:\s*["']—["']/);
   assert.match(app, /泄漏证据不足/);
-  assert.match(app, /!webrtc\.successes\.length\s*\|\|\s*!state\.dns\.records\.length/);
+  assert.match(app, /dnsCountryMissing|dnsEvidenceIncomplete/);
+  const scoreCautionInputs = app.match(
+    /var\s+scoreCaution\s*=\s*Boolean\(([\s\S]*?)\n\s*\);/,
+  )?.[1] || "";
+  assert.match(
+    scoreCautionInputs,
+    /dnsCountryMissing/,
+    "部分 DNS 地区字段缺失时，分数环也必须进入核对态而不是保持绿色",
+  );
   assert.match(app, /未知|未确认/);
   assert.match(
     plainText(html),
@@ -468,7 +510,11 @@ test("控制器定义确定性的五结果与七工具 Hash 路由", () => {
   assert.match(app, /history\.replaceState\s*\(/);
   assert.match(app, /location\.hash/);
   assert.match(app, /["']hashchange["']/);
-  assert.match(app, /["']popstate["']/);
+  assert.equal(
+    (app.match(/addEventListener\(\s*["'](?:hashchange|popstate)["']/g) || []).length,
+    1,
+    "纯 Hash SPA 只应注册一个历史变化监听，避免同一次切换重复渲染",
+  );
   assert.match(app, /aria-current/);
   assert.match(app, /route-announcer/);
   assert.match(app, /\.focus\s*\(\s*\{\s*preventScroll:\s*true\s*\}/);
@@ -556,14 +602,150 @@ test("跳过链接、礼貌播报、焦点样式与非阻断 Star 入口齐全",
       attribute(opening, "href") === "#main" && /跳到|跳过/.test(plainText(source))),
     "页面必须提供跳过链接",
   );
+  assert.equal(attribute(ids.get("main") || "", "tabindex"), "-1", "主要内容必须可接收跳过链接焦点");
+  assert.equal(attribute(ids.get("recheck-loading") || "", "tabindex"), "-1", "重测遮罩必须可接收程序化焦点");
+  assert.equal(attribute(ids.get("recheck-loading") || "", "role"), "dialog", "阻断式重测遮罩必须使用对话框语义");
+  assert.equal(attribute(ids.get("recheck-loading") || "", "aria-modal"), "true", "阻断式重测遮罩必须声明 aria-modal");
   assert.equal(attribute(ids.get("route-announcer") || "", "role"), "status");
   assert.equal(attribute(ids.get("route-announcer") || "", "aria-live"), "polite");
   assert.equal(attribute(ids.get("floating-action-status") || "", "role"), "status");
   assert.equal(attribute(ids.get("floating-action-status") || "", "aria-live"), "polite");
   assert.match(html, /:focus-visible\b/);
+  assert.match(app, /\.inert\s*=/, "重测期间必须让遮罩后的交互区域 inert");
+  assert.match(app, /focusOrigin|keyboard/i, "键盘触发路由后必须保留可见焦点来源");
   assert.doesNotMatch(html, /<dialog\b[^>]*id=["']star-support-dialog["']/i);
+  assert.doesNotMatch(html, /\.star-support-(?:dialog|close|primary|secondary)\b/);
   assert.doesNotMatch(app, /star-support-dialog|\.showModal\s*\(/);
   assert.match(plainText(html), /GitHub|Star/, "Star 支持入口应保留在页脚或更多菜单中");
+});
+
+test("总览五域摘要和四个结果域状态条均有可更新的真实节点", () => {
+  const html = requiredSource(htmlFile);
+  const ids = openingTags(html)
+    .map(({ source }) => attribute(source, "id"))
+    .filter(Boolean);
+
+  for (const id of [
+    "overview-network-state",
+    "overview-leaks-state",
+    "overview-paths-state",
+    "overview-browser-state",
+    "overview-sources-state",
+    "network-compact-state",
+    "leaks-compact-state",
+    "paths-compact-state",
+    "browser-compact-state",
+  ]) {
+    assert.ok(ids.includes(id), `缺少动态结果节点 #${id}`);
+  }
+
+  const overviewSlot = elementBlocks(html, "div").find(({ opening }) =>
+    attribute(opening, "id") === "overview-core-slot",
+  );
+  assert.ok(overviewSlot, "总览核心插槽必须存在");
+  assert.equal(
+    openingTags(overviewSlot.source).filter(({ source }) => hasClass(source, "overview-domain-card")).length,
+    5,
+    "总览必须直接呈现五个可深入的域摘要，不能留下空插槽",
+  );
+});
+
+test("来源进行中不冒充失败，风险与冲突只统计 voteEligible 来源", () => {
+  const app = requiredSource(appFile);
+
+  assert.match(app, /function\s+summarizeSourceProgress\s*\(/);
+  assert.match(app, /pending|loading/);
+  assert.match(app, /进行中/);
+  assert.match(
+    app,
+    /riskFlags\s*=\s*state\.ipIntel\.filter\([\s\S]*?record\.voteEligible/,
+    "path_mismatch 等不可投票来源不得进入风险计数",
+  );
+  assert.match(app, /dnsCountryMissing|dnsEvidenceIncomplete/);
+  assert.match(app, /state\.completedAt[\s\S]*autoDisclosure/, "自动展开必须等首轮真实检测结算后再执行");
+});
+
+test("重测会重新采集本地浏览器环境，并用 runId 阻止旧指纹迟到覆盖", () => {
+  const app = requiredSource(appFile);
+
+  assert.match(app, /function\s+refreshLocalEnvironment\s*\(/);
+  assert.match(app, /state\.localSignals\s*=\s*collectLocalSignals\s*\(\s*\)/);
+  assert.match(app, /state\.observations\.timezone\s*=/);
+  assert.match(app, /state\.observations\.languages\s*=/);
+  assert.match(app, /computeFingerprints\s*\(\s*runId\s*\)/);
+  assert.match(
+    app,
+    /runId[^\n]*(?:!==|===)[^\n]*state\.runId|state\.runId[^\n]*(?:!==|===)[^\n]*runId/,
+    "异步指纹计算提交结果前必须核对当前检测轮次",
+  );
+});
+
+test("小字号次要文字与琥珀状态色在实际浅色背景上达到 WCAG AA", () => {
+  const html = requiredSource(htmlFile);
+  const muted = cssHexVariable(html, "--muted");
+  const amber = cssHexVariable(html, "--amber");
+  const backgrounds = [
+    ["页面底色", cssHexVariable(html, "--bg")],
+    ["卡片底色", cssHexVariable(html, "--surface")],
+    ["柔和卡片底色", cssHexVariable(html, "--surface-soft")],
+  ];
+
+  for (const [label, background] of backgrounds) {
+    assert.ok(
+      contrastRatio(muted, background) >= 4.5,
+      `--muted 在${label}上的对比度必须至少为 4.5:1`,
+    );
+  }
+  assert.ok(
+    contrastRatio(amber, cssHexVariable(html, "--amber-soft")) >= 4.5,
+    "--amber 在 --amber-soft 上的对比度必须至少为 4.5:1",
+  );
+  assert.ok(
+    contrastRatio("#ffffff", cssHexVariable(html, "--green-deep")) >= 4.5,
+    "一级导航选中态的白字与绿色底必须至少达到 4.5:1",
+  );
+  assert.match(
+    html,
+    /\.module-tab\[aria-current="page"\]\s*\{[^}]*background:\s*var\(--green-deep\)/s,
+    "一级导航实际选中态必须使用通过对比度合同的深绿色",
+  );
+  const tabSmallRule = html.match(/\.module-tab\s+small\s*\{([^}]*)\}/s)?.[1] || "";
+  assert.ok(tabSmallRule, "缺少一级导航副标签样式");
+  const tabSmallOpacity = Number(tabSmallRule.match(/opacity:\s*([\d.]+)/)?.[1] ?? 1);
+  assert.ok(
+    contrastRatio(
+      compositeHex(muted, cssHexVariable(html, "--surface-soft"), tabSmallOpacity),
+      cssHexVariable(html, "--surface-soft"),
+    ) >= 4.5,
+    "未选中导航副标签按实际透明度合成后必须达到 4.5:1",
+  );
+  assert.ok(
+    contrastRatio(
+      compositeHex("#ffffff", cssHexVariable(html, "--green-deep"), tabSmallOpacity),
+      cssHexVariable(html, "--green-deep"),
+    ) >= 4.5,
+    "选中导航副标签按实际透明度合成后必须达到 4.5:1",
+  );
+});
+
+test("四类可见焦点指示器使用不透明专用颜色并达到 3:1", () => {
+  const html = requiredSource(htmlFile);
+  const focus = cssHexVariable(html, "--focus");
+  for (const [label, background] of [
+    ["页面底色", cssHexVariable(html, "--bg")],
+    ["卡片底色", cssHexVariable(html, "--surface")],
+    ["柔和卡片底色", cssHexVariable(html, "--surface-soft")],
+  ]) {
+    assert.ok(
+      contrastRatio(focus, background) >= 3,
+      `焦点指示器在${label}上的对比度必须至少为 3:1`,
+    );
+  }
+  assert.equal(
+    (html.match(/outline:\s*3px\s+solid\s+var\(--focus\)/g) || []).length,
+    4,
+    "全局控件、说明气泡、浮动按钮和键盘路由标题必须统一使用专用焦点色",
+  );
 });
 
 test("响应式样式覆盖窄屏、安全区、触控尺寸和减少动画偏好", () => {
@@ -618,7 +800,12 @@ test("package.json 注册 Remix 定向测试、完整回归和语法检查", () 
     scripts["test:ipcx-remix-ui"],
     "node tests/ipcx-remix-v1.2.0-ui.e2e.mjs",
   );
+  assert.equal(
+    scripts["test:ipcx-remix-semantics"],
+    "node tests/ipcx-remix-v1.2.0-semantics.e2e.mjs",
+  );
   assert.match(scripts.test || "", /npm run test:ipcx-remix/);
   assert.match(scripts["test:e2e"] || "", /npm run test:ipcx-remix-ui/);
+  assert.match(scripts["test:e2e"] || "", /npm run test:ipcx-remix-semantics/);
   assert.match(scripts.check || "", /node --check ipcx-remix-v1\.2\.0\.js/);
 });
