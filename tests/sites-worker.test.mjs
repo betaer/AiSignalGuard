@@ -164,6 +164,64 @@ test("serves the live IPCX page and all of its browser controllers", async () =>
   }
 });
 
+test("serves the versioned IPCX Remix page without aliasing missing versions", async () => {
+  const worker = await loadWorker();
+  const env = { ASSETS: mockAssets() };
+  const htmlPath = "/index-ipcx-remix-v1.2.0.html";
+  const controllerPath = "/ipcx-remix-v1.2.0.js";
+
+  const htmlResponse = await worker.fetch(
+    new Request(`https://ai-signal-guard.example${htmlPath}`, {
+      headers: { accept: "text/html" },
+    }),
+    env,
+    context(),
+  );
+  assert.equal(htmlResponse.status, 200);
+  assert.match(htmlResponse.headers.get("content-type") || "", /^text\/html/);
+  assert.equal(htmlResponse.headers.get("cache-control"), "no-cache");
+  assert.equal(htmlResponse.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(htmlResponse.headers.get("x-frame-options"), "DENY");
+  const html = await htmlResponse.text();
+  assert.match(html, /data-remix-version="1\.2\.0"/);
+  assert.match(html, /src="starPromptPolicy\.js"/);
+  assert.match(html, /src="ipcxEvidence\.js"/);
+  assert.match(html, /src="ipcx-remix-v1\.2\.0\.js"/);
+
+  const controllerResponse = await worker.fetch(
+    new Request(`https://ai-signal-guard.example${controllerPath}`),
+    env,
+    context(),
+  );
+  assert.equal(controllerResponse.status, 200);
+  assert.match(
+    controllerResponse.headers.get("content-type") || "",
+    /^text\/javascript/,
+  );
+  assert.equal(controllerResponse.headers.get("x-content-type-options"), "nosniff");
+  assert.match(await controllerResponse.text(), /renderRemixRoute/);
+
+  for (const pathname of [htmlPath, controllerPath]) {
+    const response = await worker.fetch(
+      new Request(`https://ai-signal-guard.example${pathname}`, { method: "HEAD" }),
+      env,
+      context(),
+    );
+    assert.equal(response.status, 200, pathname);
+    assert.equal(await response.text(), "", pathname);
+  }
+
+  const missingVersion = await worker.fetch(
+    new Request("https://ai-signal-guard.example/index-ipcx-remix-v1.2.1.html", {
+      headers: { accept: "text/html" },
+    }),
+    env,
+    context(),
+  );
+  assert.equal(missingVersion.status, 404);
+  assert.doesNotMatch(await missingVersion.text(), /data-remix-version="1\.2\.0"/);
+});
+
 test("serves the isolated identity demo and its browser assets", async () => {
   const worker = await loadWorker();
   const env = { ASSETS: mockAssets() };
