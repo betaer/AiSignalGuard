@@ -258,6 +258,8 @@
       .signal-subsection-status { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; font-weight: 900; }
       .signal-subsection-status.good { color: var(--green-deep); }
       .signal-subsection-status.warn { color: var(--amber); }
+      .signal-subsection-status.bad { color: var(--red); }
+      .signal-subsection-status.neutral { color: var(--muted); }
       .signal-subsection-rows { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: rgba(255, 255, 255, 0.88); }
       .signal-snapshot { margin-bottom: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(135deg, #fafffb, #f2f8f4); }
       .signal-snapshot-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
@@ -272,9 +274,10 @@
       .signal-row { border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, 0.72); }
       .signal-row:last-child { border-bottom: 0; }
       .signal-row-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(120px, auto) auto; gap: 10px; align-items: center; min-height: 58px; padding: 9px 14px; cursor: pointer; list-style: none; }
-      .row-status-dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 5px rgba(116, 129, 123, 0.1); }
+      .row-status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 5px rgba(116, 129, 123, 0.12); }
+      .row-status-dot.neutral { background: var(--muted); box-shadow: 0 0 0 5px rgba(116, 129, 123, 0.12); }
       .row-status-dot.good { background: var(--green); box-shadow: 0 0 0 5px rgba(21, 152, 104, 0.13); }
-      .row-status-dot.warn { background: #d49a3a; box-shadow: 0 0 0 5px rgba(212, 154, 58, 0.16); }
+      .row-status-dot.warn { background: var(--amber); box-shadow: 0 0 0 5px rgba(212, 154, 58, 0.16); }
       .row-status-dot.bad { background: var(--red); box-shadow: 0 0 0 5px rgba(180, 68, 66, 0.13); }
       .signal-row-title { min-width: 0; }
       .signal-row-title strong { display: block; color: var(--ink); font-size: 13px; }

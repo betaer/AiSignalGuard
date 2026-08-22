@@ -182,6 +182,18 @@ test("一级分组内容保持圆角，行内说明气泡独立于列表裁切",
   assert.doesNotMatch(html, /\.row-help-tip\[open\]\s*>\s*\.row-help-bubble/);
 });
 
+test("状态指示灯与状态文案共享四级颜色语义", () => {
+  assert.match(html, /\.row-status-dot\.neutral\s*\{[^}]*background:\s*var\(--muted\);/s);
+  assert.match(html, /\.row-status-dot\.good\s*\{[^}]*background:\s*var\(--green\);/s);
+  assert.match(html, /\.row-status-dot\.warn\s*\{[^}]*background:\s*var\(--amber\);/s);
+  assert.match(html, /\.row-status-dot\.bad\s*\{[^}]*background:\s*var\(--red\);/s);
+  assert.match(html, /\.signal-row-value\.neutral\s*\{[^}]*color:\s*var\(--muted\);/s);
+  assert.match(html, /\.signal-row-value\.good\s*\{[^}]*color:\s*var\(--green-deep\);/s);
+  assert.match(html, /\.signal-row-value\.warn\s*\{[^}]*color:\s*var\(--amber\);/s);
+  assert.match(html, /\.signal-row-value\.bad\s*\{[^}]*color:\s*var\(--red\);/s);
+  assert.match(app, /node\.classList\.remove\("good", "warn", "bad", "neutral"\)/);
+});
+
 test("WebRTC 明细页的页头状态会绑定最终评估", () => {
   assert.match(html, /id="webrtc-panel-status"[^>]*>检测中</);
   assert.match(app, /function updateWebrtcPanel\(/);
