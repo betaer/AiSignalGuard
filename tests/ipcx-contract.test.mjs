@@ -142,6 +142,12 @@ test("重要结果完整换行显示，并覆盖桌面、平板与窄屏断点",
   assert.doesNotMatch(html, /\.signal-row-title small\s*\{[^}]*text-overflow:\s*ellipsis/s);
 });
 
+test("模块分段按钮保留足够的横向留白并统一圆角", () => {
+  assert.match(html, /\.module-tabs[^\{]*\{[^}]*gap: 10px;[^}]*padding: 7px;[^}]*border-radius: 16px;/s);
+  assert.match(html, /\.module-tab[^\{]*\{[^}]*padding: 0 22px;[^}]*border-radius: 13px;/s);
+  assert.match(html, /@media \(max-width: 680px\)[^]*?\.module-tab \{[^}]*padding: 0 13px;/s);
+});
+
 test("三类浏览器摘要同时可见且 JA3 / JA4 不伪造", () => {
   assert.equal(
     (html.match(/<article class="fingerprint-card" data-fingerprint-card=/g) || []).length,

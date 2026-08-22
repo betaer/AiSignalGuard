@@ -137,10 +137,10 @@
         top: calc(var(--header-height) + var(--safe-top) + 8px);
         z-index: 9;
         display: flex;
-        gap: 6px;
+        gap: 10px;
         width: 100%;
         margin-bottom: 17px;
-        padding: 5px;
+        padding: 7px;
         overflow-x: auto;
         border: 1px solid var(--line);
         border-radius: 16px;
@@ -155,9 +155,9 @@
         flex: 1 0 145px;
         min-height: 42px;
         align-content: center;
-        padding: 0 16px;
+        padding: 0 22px;
         border: 0;
-        border-radius: 11px;
+        border-radius: 13px;
         color: var(--muted);
         background: transparent;
         font-size: 14px;
@@ -462,7 +462,8 @@
         .eyebrow { margin-bottom: 9px; font-size: 9px; }
         h1 { font-size: 34px; }
         .intro p { font-size: 14px; }
-        .module-tab { flex-basis: 122px; padding: 0 11px; font-size: 12px; }
+        .module-tabs { gap: 8px; padding: 6px; }
+        .module-tab { flex-basis: 122px; padding: 0 13px; font-size: 12px; border-radius: 13px; }
         .module-tab small { font-size: 9px; }
         .score-layout { grid-template-columns: 116px minmax(0, 1fr); gap: 15px; padding: 22px 0 19px; }
         .score-ring { width: 112px; height: 112px; padding: 8px; }
@@ -524,8 +525,8 @@
         .page-shell { width: calc(100% - 20px); }
         .intro { margin-bottom: 17px; }
         h1 { font-size: clamp(30px, 9vw, 34px); }
-        .module-tabs { gap: 3px; padding: 4px; border-radius: 13px; }
-        .module-tab { flex: 1 1 0; min-width: 0; min-height: 40px; padding-inline: 4px; font-size: 11px; }
+        .module-tabs { gap: 6px; padding: 5px; border-radius: 16px; }
+        .module-tab { flex: 1 1 0; min-width: 0; min-height: 40px; padding-inline: 10px; font-size: 11px; border-radius: 13px; }
         .module-tab small { font-size: 8px; }
         .result-card { padding: 17px; border-radius: 18px; }
         .result-head { align-items: flex-start; }
