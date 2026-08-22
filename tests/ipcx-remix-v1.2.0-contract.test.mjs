@@ -778,7 +778,12 @@ test("构建静态清单发布版本化 HTML 与控制器且不重复", () => {
   assert.ok(manifest, "build/sites-vite-plugin.js 必须保留可审计的 STATIC_FILES 清单");
   const entries = [...manifest.matchAll(/["']([^"']+)["']/g)].map((match) => match[1]);
 
-  for (const file of ["index-ipcx-remix-v1.2.0.html", "ipcx-remix-v1.2.0.js"]) {
+  for (const file of [
+    "index-ipcx-remix-v1.2.0.html",
+    "ipcx-remix-v1.2.0.js",
+    "index-ipcx-remix-v1.3.0.html",
+    "ipcx-remix-v1.3.0.js",
+  ]) {
     assert.equal(entries.filter((entry) => entry === file).length, 1, `${file} 必须在构建清单中且不重复`);
   }
   for (const legacyFile of ["index-ipcx.html", "ipcxApp.js", "ipcxEvidence.js"]) {
@@ -794,7 +799,7 @@ test("package.json 注册 Remix 定向测试、完整回归和语法检查", () 
   assert.equal(packageJson.version, "1.1.0", "Remix 页面版本不得修改项目包版本");
   assert.equal(
     scripts["test:ipcx-remix"],
-    "node --test tests/ipcx-remix-v1.2.0-contract.test.mjs",
+    "node --test tests/ipcx-remix-v1.2.0-contract.test.mjs && npm run test:ipcx-remix-v1.3",
   );
   assert.equal(
     scripts["test:ipcx-remix-ui"],
@@ -808,4 +813,5 @@ test("package.json 注册 Remix 定向测试、完整回归和语法检查", () 
   assert.match(scripts["test:e2e"] || "", /npm run test:ipcx-remix-ui/);
   assert.match(scripts["test:e2e"] || "", /npm run test:ipcx-remix-semantics/);
   assert.match(scripts.check || "", /node --check ipcx-remix-v1\.2\.0\.js/);
+  assert.match(scripts.check || "", /node --check ipcx-remix-v1\.3\.0\.js/);
 });
