@@ -199,16 +199,16 @@
   ]);
 
   var STUN_NODES = immutableRegistry([
-    { id: "google-0", name: "Google 0", url: "stun:stun.l.google.com:19302" },
-    { id: "google-1", name: "Google 1", url: "stun:stun1.l.google.com:19302" },
-    { id: "google-2", name: "Google 2", url: "stun:stun2.l.google.com:19302" },
-    { id: "google-3", name: "Google 3", url: "stun:stun3.l.google.com:19302" },
-    { id: "google-4", name: "Google 4", url: "stun:stun4.l.google.com:19302" },
+    { id: "google", name: "Google", url: "stun:stun.l.google.com:19302" },
     { id: "cloudflare", name: "Cloudflare", url: "stun:stun.cloudflare.com:3478" },
     { id: "twilio", name: "Twilio", url: "stun:global.stun.twilio.com:3478" },
     { id: "metered", name: "Metered", url: "stun:stun.relay.metered.ca:80" },
-    { id: "nextcloud", name: "Nextcloud", url: "stun:stun.nextcloud.com:3478" },
+    { id: "nextcloud", name: "Nextcloud", url: "stun:stun.nextcloud.com:443" },
     { id: "bilibili", name: "Bilibili", url: "stun:stun.chat.bilibili.com:3478" },
+    { id: "linphone", name: "Linphone", url: "stun:stun.linphone.org:3478" },
+    { id: "stuntman", name: "Stuntman", url: "stun:stunserver2025.stunprotocol.org:3478" },
+    { id: "antisip", name: "Antisip", url: "stun:stun.antisip.com:3478" },
+    { id: "acrobits", name: "Acrobits", url: "stun:stun.acrobits.cz:3478" },
   ]);
 
   function nowMs() {

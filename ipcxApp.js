@@ -2,9 +2,13 @@
   "use strict";
 
   var evidenceApi = globalThis.AISGIpEvidence;
+  var semanticsApi = globalThis.AISGIpSemantics;
   var starPolicyApi = globalThis.AISGStarPromptPolicy;
   if (!evidenceApi) {
     throw new Error("IPCX 实时证据模块加载失败");
+  }
+  if (!semanticsApi) {
+    throw new Error("IPCX 状态语义模块加载失败");
   }
 
   var GITHUB_REPO = "betaer/AiSignalGuard";
@@ -229,17 +233,16 @@
 
   function conflictState(record, country, asn, organization) {
     if (!sourceUsable(record)) return { label: record.status, tone: sourceTone(record) };
-    var conflicts = [];
-    if (country && record.countryCode && record.countryCode !== country) conflicts.push("国家");
-    if (asn && record.asn && record.asn !== asn) conflicts.push("ASN");
-    if (
-      organization &&
-      record.organization &&
-      record.organization.toLowerCase() !== organization.toLowerCase()
-    ) conflicts.push("组织");
-    return conflicts.length
-      ? { label: conflicts.join(" / ") + "冲突", tone: "bad" }
-      : { label: "无明确冲突", tone: record.state === "partial" ? "warn" : "good" };
+    var comparison = semanticsApi.compareComparableFields(record, {
+      countryCode: country,
+      asn: asn,
+      organization: organization,
+    });
+    if (comparison.conflicts.length) {
+      return { label: comparison.conflicts.join(" / ") + "冲突", tone: "bad" };
+    }
+    if (!comparison.comparable) return { label: "字段不足", tone: "neutral" };
+    return { label: record.state === "partial" ? "已提供字段一致" : "一致", tone: record.state === "partial" ? "warn" : "good" };
   }
 
   function browserLanguageEvidence() {
@@ -457,7 +460,7 @@
   }
 
   function positionInfoTip(tip) {
-    if (!tip.open || window.innerWidth <= 480) return;
+    if (window.innerWidth <= 480) return;
     var summary = tip.querySelector("summary");
     var bubble = tip.querySelector(".info-tip-bubble");
     if (!summary || !bubble) return;
@@ -482,7 +485,13 @@
     if (tip.dataset.infoTipReady === "true") return;
     tip.dataset.infoTipReady = "true";
     tip.addEventListener("toggle", function () {
-      if (tip.open) requestAnimationFrame(function () { positionInfoTip(tip); });
+      requestAnimationFrame(function () { positionInfoTip(tip); });
+    });
+    tip.addEventListener("mouseenter", function () {
+      requestAnimationFrame(function () { positionInfoTip(tip); });
+    });
+    tip.addEventListener("focusin", function () {
+      requestAnimationFrame(function () { positionInfoTip(tip); });
     });
   }
 
@@ -607,8 +616,8 @@
     rowDefinitions.forEach(function (definition) {
       var row = document.querySelector('.signal-row[data-row-id="' + definition.id + '"]');
       if (!row) return;
-      row.open = Boolean(definition.evidenceSet);
-      row.dataset.defaultVisibility = definition.evidenceSet ? "expanded" : "summary";
+      row.open = false;
+      row.dataset.defaultVisibility = "summary";
 
       var detailGrid = row.querySelector(".row-detail-grid");
       if (!detailGrid || detailGrid.dataset.prepared === "true") return;
@@ -616,18 +625,25 @@
       var detailItems = Array.from(detailGrid.children).filter(function (child) {
         return child.classList.contains("row-detail-item");
       });
-      var supportingItems = detailItems.slice(1);
-      if (!supportingItems.length) return;
-
-      var explanation = document.createElement("details");
-      explanation.className = "row-explanation";
-      var summary = document.createElement("summary");
-      summary.textContent = "判读说明与建议";
-      var explanationGrid = document.createElement("div");
-      explanationGrid.className = "row-explanation-grid";
-      supportingItems.forEach(function (item) { explanationGrid.append(item); });
-      explanation.append(summary, explanationGrid);
-      detailGrid.after(explanation);
+      var resultItem = detailItems[0];
+      if (resultItem) {
+        resultItem.dataset.detailKind = "result";
+        resultItem.classList.add("row-detail-result");
+      }
+      var helpItems = detailItems.slice(1).map(function (item) {
+        var label = item.querySelector("span")?.textContent.trim() || "说明";
+        var copy = item.querySelector("p")?.textContent.trim() || "本轮没有补充说明。";
+        var help = document.createElement("details");
+        help.className = "row-help-tip";
+        help.dataset.helpKind = label === "建议" ? "advice" : "evidence";
+        var summary = document.createElement("summary");
+        summary.textContent = label;
+        var bubble = makeTextElement("span", "row-help-bubble", copy);
+        bubble.setAttribute("role", "note");
+        help.append(summary, bubble);
+        return help;
+      });
+      detailGrid.replaceChildren.apply(detailGrid, [resultItem].concat(helpItems).filter(Boolean));
     });
   }
 
@@ -658,6 +674,10 @@
     if (!data) return "不可用";
     if (!state.privacy || !/^[0-9a-f]{16,}$/i.test(data.value)) return data.value;
     return data.value.slice(0, 8) + "••••••••";
+  }
+
+  function toneLabel(tone) {
+    return tone === "good" ? "通过" : tone === "warn" ? "需核对" : tone === "bad" ? "冲突或失败" : "未检测";
   }
 
   function updateSensitiveValues() {
@@ -736,14 +756,19 @@
     var dot = row.querySelector(".row-status-dot");
     [value, dot].forEach(function (node) {
       if (!node) return;
-      node.classList.remove("good", "warn", "bad");
-      if (tone !== "neutral") node.classList.add(tone);
+      node.classList.remove("good", "warn", "bad", "neutral");
+      node.classList.add(tone);
     });
-    if (value) value.textContent = config.value;
-    var details = row.querySelectorAll(".row-detail-item");
-    var result = details[0] && details[0].querySelector("strong");
-    var evidence = details[1] && details[1].querySelector("p");
-    var advice = details[2] && details[2].querySelector("p");
+    if (value) {
+      value.textContent = config.value;
+      value.dataset.statusLabel = config.status || toneLabel(tone);
+      value.setAttribute("aria-label", (config.status || toneLabel(tone)) + "：" + config.value);
+    }
+    row.dataset.tone = tone;
+    row.dataset.statusLabel = config.status || toneLabel(tone);
+    var result = row.querySelector('[data-detail-kind="result"] strong');
+    var evidence = row.querySelector('.row-help-bubble[data-help-kind="evidence"]');
+    var advice = row.querySelector('.row-help-bubble[data-help-kind="advice"]');
     if (result && config.result) result.textContent = config.result;
     if (evidence && config.evidence) evidence.textContent = config.evidence;
     if (advice && config.advice) advice.textContent = config.advice;
@@ -753,6 +778,9 @@
     var intelSummary = evidenceApi.summarizeSources(state.ipIntel);
     var routeSummary = evidenceApi.summarizeSources(state.routes);
     var country = evidenceApi.computeCountryConsensus(state.ipIntel);
+    var countryMajority = semanticsApi.evaluateMajority(
+      Object.fromEntries(country.distribution.map(function (item) { return [item.value, item.votes]; })),
+    );
     var asn = evidenceApi.computeAsnConsensus(state.ipIntel);
     var organization = evidenceApi.computeOrganizationConsensus(state.ipIntel);
     var type = simpleConsensus(state.ipIntel, "networkType");
@@ -779,14 +807,16 @@
       return record.proxy === true || record.vpn === true || record.tor === true || record.hosting === true;
     });
     var countryConflict = state.ipIntel.filter(function (record) {
-      return sourceUsable(record) && country.value && record.countryCode && record.countryCode !== country.value;
+      return sourceUsable(record) && country.value && record.countryCode &&
+        semanticsApi.normalizeCountry(record.countryCode) !== semanticsApi.normalizeCountry(country.value);
     }).length;
     var asnConflict = state.ipIntel.filter(function (record) {
-      return sourceUsable(record) && asn.value && record.asn && record.asn !== asn.value;
+      return sourceUsable(record) && asn.value && record.asn &&
+        semanticsApi.normalizeAsn(record.asn) !== semanticsApi.normalizeAsn(asn.value);
     }).length;
     var organizationConflict = state.ipIntel.filter(function (record) {
       return sourceUsable(record) && organization.value && record.organization &&
-        record.organization.toLowerCase() !== organization.value.toLowerCase();
+        semanticsApi.normalizeOrganization(record.organization) !== semanticsApi.normalizeOrganization(organization.value);
     }).length;
     var conflictCount = countryConflict + asnConflict + organizationConflict;
     var dnsRecords = state.dns.records;
@@ -811,8 +841,9 @@
     });
     setRow("geo-cross-check", {
       value: country.value ? country.value + " · " + country.votes + " / 10 票" : "0 / 10 票",
-      tone: country.value ? (country.conflicts ? "warn" : "good") : "neutral",
-      result: country.value ? countryName(country.value) + "获得 " + country.votes + " 票" : "尚无可用国家票",
+      tone: country.value ? countryMajority.tone : "neutral",
+      status: country.value ? countryMajority.label : "证据不足",
+      result: country.value ? countryName(country.value) + "获得 " + country.votes + " 票，" + countryMajority.label : "尚无可用国家票",
       evidence: "固定列出 10 家地理来源；实际可投票 " + country.eligible + " 家，分歧 " + country.conflicts + " 家。",
       advice: "以国家级共识为主；超时、字段缺失和路径不同均不计票。",
     });
@@ -895,15 +926,19 @@
     });
     setRow("majority-region", {
       value: country.value ? country.value + " · " + country.votes + " / 10 票" : "0 / 10 票",
-      tone: country.value ? (country.conflicts ? "warn" : "good") : "neutral",
-      result: country.value ? countryName(country.value) + "为本轮主流地区" : "尚无主流地区",
+      tone: country.value ? countryMajority.tone : "neutral",
+      status: country.value ? countryMajority.label : "证据不足",
+      result: country.value ? countryName(country.value) + "为本轮主流地区（" + countryMajority.label + "）" : "尚无主流地区",
       evidence: "10 家全部列出；仅 " + country.eligible + " 家真实返回可投票国家字段。",
       advice: "来源失败与字段缺失不会被填成多数结果。",
     });
     setRow("conflict-check", {
       value: conflictCount + " 项明确冲突",
       tone: conflictCount ? "bad" : conflictFieldCount ? "good" : "neutral",
-      result: conflictFieldCount ? "国家 " + countryConflict + "、ASN " + asnConflict + "、组织 " + organizationConflict + " 项冲突" : "没有可用于冲突比较的真实字段",
+      status: conflictCount ? "明确冲突" : conflictFieldCount ? "通过" : "字段不足",
+      result: conflictCount
+        ? "国家 " + countryConflict + "、ASN " + asnConflict + "、组织 " + organizationConflict + " 项明确冲突"
+        : conflictFieldCount ? "可核对字段未发现明确冲突" : "没有可用于冲突比较的真实字段",
       evidence: "10 家来源逐行保留；本轮 " + conflictFieldCount + " 家至少提供国家、ASN 或组织字段。",
       advice: "字段缺失不视为冲突；明确分歧才需要进一步核对。",
     });
@@ -958,9 +993,12 @@
 
   function setToneText(node, text, tone) {
     if (!node) return;
+    tone = tone || "neutral";
     node.textContent = text;
-    node.classList.remove("good", "warn", "bad");
-    if (tone && tone !== "neutral") node.classList.add(tone);
+    node.classList.remove("good", "warn", "bad", "neutral");
+    node.classList.add(tone);
+    node.dataset.statusLabel = toneLabel(tone);
+    node.setAttribute("aria-label", toneLabel(tone) + "：" + text);
   }
 
   function updateGroupSummaries() {
@@ -973,6 +1011,9 @@
     var intel = evidenceApi.summarizeSources(state.ipIntel);
     var routes = evidenceApi.summarizeSources(state.routes);
     var country = evidenceApi.computeCountryConsensus(state.ipIntel);
+    var countryMajority = semanticsApi.evaluateMajority(
+      Object.fromEntries(country.distribution.map(function (item) { return [item.value, item.votes]; })),
+    );
     var asn = evidenceApi.computeAsnConsensus(state.ipIntel);
     var timezoneCountry = timezoneRegion(state.observations.timezone);
     var languageCountry = languageRegion(state.observations.languages[0]);
@@ -991,7 +1032,8 @@
     );
     var countryConflict = country.conflicts;
     var asnConflict = state.ipIntel.filter(function (record) {
-      return sourceUsable(record) && asn.value && record.asn && record.asn !== asn.value;
+      return sourceUsable(record) && asn.value && record.asn &&
+        semanticsApi.normalizeAsn(record.asn) !== semanticsApi.normalizeAsn(asn.value);
     }).length;
     var typeFieldCount = state.ipIntel.filter(function (record) {
       return sourceUsable(record) && Boolean(record.networkType);
@@ -1019,10 +1061,13 @@
     );
     var multiGroup = byTitle("多源互证");
     var sourceConflicts = countryConflict + asnConflict;
+    var multiSummary = countryMajority.tone === "good"
+      ? "主流结果一致" + (sourceConflicts ? " · 少数差异 " + sourceConflicts : "")
+      : sourceConflicts ? sourceConflicts + " 项来源分歧" : "多源未见明确分歧";
     setToneText(
       multiGroup?.querySelector(".signal-group-result"),
-      state.running ? "多源核对中" : sourceConflicts ? sourceConflicts + " 项来源分歧" : "多源未见明确分歧",
-      state.running ? "neutral" : sourceConflicts ? "warn" : intel.usable || routes.usable ? "good" : "neutral",
+      state.running ? "多源核对中" : multiSummary,
+      state.running ? "neutral" : sourceConflicts && countryMajority.tone !== "good" ? "warn" : intel.usable || routes.usable ? "good" : "neutral",
     );
 
     var subsection = function (label) {
@@ -1034,7 +1079,7 @@
     setToneText(subsection("语言"), !country.value ? "等待" : languageCountry && languageCountry !== country.value ? "不一致" : "未见冲突", !country.value ? "neutral" : languageCountry && languageCountry !== country.value ? "warn" : "good");
     setToneText(subsection("DNS"), state.dns.running ? "检测中" : state.dns.error ? "检测失败" : dnsMismatch ? "地区分歧" : state.dns.records.length ? "已取得结果" : "无结果", state.dns.running ? "neutral" : state.dns.error || dnsMismatch ? "warn" : state.dns.records.length ? "good" : "neutral");
     setToneText(subsection("WebRTC"), webrtc.label, webrtc.tone);
-    setToneText(subsection("地理交叉"), country.value ? country.votes + " / 10 票" : "等待", country.value ? country.conflicts ? "warn" : "good" : "neutral");
+    setToneText(subsection("地理交叉"), country.value ? country.votes + " / 10 票" : "等待", country.value ? countryMajority.tone : "neutral");
     setToneText(subsection("网络标签"), "有效 " + typeFieldCount + " / 10", typeFieldCount >= 6 ? "good" : typeFieldCount ? "warn" : "neutral");
   }
 

@@ -16,7 +16,7 @@ const mimeTypes = {
 
 const server = createServer(async (request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://localhost/").pathname);
-  const file = resolve(projectRoot, `.${pathname === "/" ? "/index-ipcx.html" : pathname}`);
+  const file = resolve(projectRoot, `.${pathname === "/" ? "/index-ipcx-v1.3.0.html" : pathname}`);
   if (!file.startsWith(`${projectRoot.replace(/\/$/, "")}${sep}`)) {
     response.writeHead(403).end();
     return;
@@ -34,7 +34,7 @@ const server = createServer(async (request, response) => {
 });
 
 await new Promise((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
-const baseUrl = `http://127.0.0.1:${server.address().port}/index-ipcx.html`;
+const baseUrl = `http://127.0.0.1:${server.address().port}/index-ipcx-v1.3.0.html`;
 let browser;
 
 try {
@@ -54,8 +54,13 @@ try {
   const page = await context.newPage();
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
-  const firstTip = page.locator(".metric-evidence .info-tip").first();
-  await firstTip.waitFor();
+  const starContinue = page.locator("#star-support-continue");
+  if (await starContinue.isVisible().catch(() => false)) await starContinue.click();
+  await page.locator('.signal-row[data-row-id="exit-ip-quality"] > summary').click();
+  const firstTip = page.locator('.signal-row[data-row-id="exit-ip-quality"] .metric-evidence .info-tip').first();
+  await firstTip.locator("summary").waitFor({ state: "visible" });
+  await firstTip.locator("summary").hover();
+  assert.ok(await firstTip.locator(".info-tip-bubble").boundingBox(), "桌面悬停信息按钮应直接显示气泡");
   await firstTip.locator("summary").click();
   await firstTip.locator("summary").focus();
   await firstTip.evaluate((node) => { window.__aisgFocusedTip = node; });
@@ -71,7 +76,7 @@ try {
   await page.waitForTimeout(900);
   const focusState = await page.evaluate(() => ({
     connected: window.__aisgFocusedTip?.isConnected === true,
-    sameNode: window.__aisgFocusedTip === document.querySelector(".metric-evidence .info-tip"),
+    sameNode: window.__aisgFocusedTip === document.querySelector('.signal-row[data-row-id="exit-ip-quality"] .metric-evidence .info-tip'),
     open: window.__aisgFocusedTip?.open === true,
     focused: document.activeElement === window.__aisgFocusedTip?.querySelector("summary"),
   }));
@@ -80,6 +85,8 @@ try {
     { connected: true, sameNode: true, open: true, focused: true },
     "实时来源更新不应关闭气泡、替换节点或夺走键盘焦点",
   );
+
+  await page.locator('.signal-row[data-row-id="exit-ip-quality"] > summary').click();
 
   for (const viewport of [
     { width: 320, height: 700 },
@@ -95,13 +102,13 @@ try {
         (node) => !node.hidden && getComputedStyle(node).display !== "none",
       ),
       openEvidence: Array.from(document.querySelectorAll(".signal-row")).filter((node) => node.open).length,
-      openExplanations: Array.from(document.querySelectorAll(".row-explanation")).filter((node) => node.open).length,
+      openHelpTips: Array.from(document.querySelectorAll(".row-help-tip")).filter((node) => node.open).length,
     }));
     assert.equal(layout.pageOverflow, 0, `${viewport.width}px 页面不应横向溢出`);
     assert.equal(layout.navOverflow, 0, `${viewport.width}px 模块导航不应横向溢出`);
     assert.equal(layout.panelsVisible, true, `${viewport.width}px 三个主模块应同时可见`);
-    assert.equal(layout.openEvidence, 18, `${viewport.width}px 有真实明细的二级项应默认展开`);
-    assert.equal(layout.openExplanations, 0, `${viewport.width}px 重复判读说明应默认收起`);
+    assert.equal(layout.openEvidence, 0, `${viewport.width}px 二级指标应默认收起`);
+    assert.equal(layout.openHelpTips, 0, `${viewport.width}px 说明气泡应默认收起`);
   }
 
   await page.setViewportSize({ width: 390, height: 844 });

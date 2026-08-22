@@ -135,7 +135,7 @@ test("serves the live IPCX page and all of its browser controllers", async () =>
   const worker = await loadWorker();
   const env = { ASSETS: mockAssets() };
   const htmlResponse = await worker.fetch(
-    new Request("https://ai-signal-guard.example/index-ipcx.html", {
+    new Request("https://ai-signal-guard.example/index-ipcx-v1.3.0.html", {
       headers: { accept: "text/html" },
     }),
     env,
@@ -145,8 +145,18 @@ test("serves the live IPCX page and all of its browser controllers", async () =>
   assert.equal(htmlResponse.status, 200);
   const html = await htmlResponse.text();
   assert.match(html, /src="starPromptPolicy\.js"/);
+  assert.match(html, /src="ipcxSemantics\.js"/);
   assert.match(html, /src="ipcxEvidence\.js"/);
   assert.match(html, /src="ipcxApp\.js"/);
+
+  const legacyResponse = await worker.fetch(
+    new Request("https://ai-signal-guard.example/index-ipcx.html", {
+      headers: { accept: "text/html" },
+    }),
+    env,
+    context(),
+  );
+  assert.match(await legacyResponse.text(), /index-ipcx-v1\.3\.0\.html/);
 
   for (const [pathname, marker] of [
     ["/starPromptPolicy.js", /AISGStarPromptPolicy/],

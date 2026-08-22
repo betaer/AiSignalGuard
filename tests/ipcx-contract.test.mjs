@@ -3,9 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const projectRoot = new URL("../", import.meta.url);
-const html = await readFile(new URL("index-ipcx.html", projectRoot), "utf8");
+const html = await readFile(new URL("index-ipcx-v1.3.0.html", projectRoot), "utf8");
 const app = await readFile(new URL("ipcxApp.js", projectRoot), "utf8");
-const source = `${html}\n${app}`;
+const semantics = await readFile(new URL("ipcxSemantics.js", projectRoot), "utf8");
+const source = `${html}\n${app}\n${semantics}`;
 
 test("IPCX 页面不再携带模拟网络结果", () => {
   assert.doesNotMatch(
@@ -110,11 +111,13 @@ test("实时结果改变页面高度时，模块锚点会自动校正且允许�
   assert.match(app, /"popstate"/);
 });
 
-test("有真实明细的二级指标默认展开，重复解释改为渐进披露", () => {
+test("一级分组默认展开，二级指标默认收起并使用紧凑解释气泡", () => {
   assert.match(app, /function prepareSignalRows\(/);
-  assert.match(app, /row\.open\s*=\s*Boolean\(definition\.evidenceSet\)/);
-  assert.match(app, /row-explanation/);
-  assert.match(app, /判读说明与建议/);
+  assert.match(app, /row\.open\s*=\s*false/);
+  assert.doesNotMatch(source, /row-explanation/);
+  assert.match(source, /row-help-tip/);
+  assert.match(source, /证据说明/);
+  assert.match(source, /建议/);
 });
 
 test("重要结果完整换行显示，并覆盖桌面、平板与窄屏断点", () => {
@@ -147,7 +150,7 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.match(app, /function makeInfoTip\(/);
   assert.match(app, /function positionInfoTip\(/);
   assert.match(app, /有效表示当前指标拥有可参与判断的字段/);
-  assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*30px;[^}]*height:\s*30px;/s);
+  assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s);
   assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*fixed;/s);
 });
 
