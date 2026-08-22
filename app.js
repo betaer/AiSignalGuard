@@ -7330,7 +7330,7 @@ import "./starPromptPolicy.js";
             '"><div class="fingerprint-key">' +
             escapeHtml(row.key) +
             (row.note
-              ? '<span class="fingerprint-help"><span class="fingerprint-help-trigger" tabindex="0" title="悬停查看说明" aria-label="查看 ' +
+              ? '<span class="fingerprint-help"><span class="fingerprint-help-trigger" tabindex="0" aria-label="查看 ' +
                 escapeHtml(row.key) +
                 ' 说明">i</span><span class="fingerprint-help-bubble tooltip-surface" role="tooltip">' +
                 highlightRiskText(row.note) +
