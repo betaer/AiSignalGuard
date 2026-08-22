@@ -499,7 +499,6 @@
     var tipRect = tip.getBoundingClientRect();
     bubble.style.left = Math.round(desiredLeft - tipRect.left) + "px";
     bubble.style.right = "auto";
-    if (container) container.classList.add("is-help-visible");
   }
 
   function setupRowHelpTip(tip) {
@@ -509,7 +508,7 @@
     var syncContainer = function () {
       if (!container) return;
       var visible = Array.from(container.querySelectorAll(".row-help-tip")).some(function (item) {
-        return item.open || item.matches(":hover") || item.matches(":focus-within");
+        return item.matches(":hover") || Boolean(item.querySelector("summary:focus-visible"));
       });
       container.classList.toggle("is-help-visible", visible);
     };
@@ -1187,6 +1186,22 @@
 
   function updateWebrtcPanel() {
     var assessment = webrtcAssessment();
+    var panelStatus = $("#webrtc-panel-status");
+    var panelTone = state.running
+      ? "neutral"
+      : !assessment.successes.length
+        ? "warn"
+        : assessment.tone;
+    var panelLabel = state.running
+      ? "检测中"
+      : !assessment.successes.length
+        ? "证据不足"
+        : assessment.tone === "good"
+          ? "正常"
+          : assessment.tone === "bad"
+            ? "发现分歧"
+            : "需核对";
+    setToneText(panelStatus, panelLabel, panelTone);
     setSensitiveValue($("#webrtc-http-ip"), state.observations.exitIp || state.publicIp.status);
     setSensitiveValue($("#webrtc-public-ip"), assessment.ips.length ? assessment.ips.join(" / ") : "未取得");
     $("#webrtc-node-consensus").textContent = assessment.successes.length + " / 10 响应 · " + assessment.ips.length + " 种候选";

@@ -61,6 +61,18 @@ try {
   await firstTip.locator("summary").waitFor({ state: "visible" });
   await firstTip.locator("summary").hover();
   assert.ok(await firstTip.locator(".info-tip-bubble").boundingBox(), "桌面悬停信息按钮应直接显示气泡");
+  await page.mouse.move(18, 18);
+  await page.waitForTimeout(180);
+  const hoverBubbleState = await firstTip.locator(".info-tip-bubble").evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { opacity: style.opacity, visibility: style.visibility, pointerEvents: style.pointerEvents };
+  });
+  assert.deepEqual(
+    hoverBubbleState,
+    { opacity: "0", visibility: "hidden", pointerEvents: "none" },
+    "鼠标移出信息按钮后气泡应立即隐藏",
+  );
+  await firstTip.locator("summary").hover();
   await firstTip.locator("summary").click();
   await firstTip.locator("summary").focus();
   await firstTip.evaluate((node) => { window.__aisgFocusedTip = node; });
@@ -74,6 +86,16 @@ try {
   );
 
   await page.waitForTimeout(900);
+  await page.waitForFunction(
+    () => document.querySelector("#webrtc-panel-status")?.textContent.trim() !== "检测中",
+    null,
+    { timeout: 6000 },
+  );
+  assert.notEqual(
+    await page.locator("#webrtc-panel-status").textContent(),
+    "检测中",
+    "WebRTC 检测结束后页头状态不能停留在检测中",
+  );
   const focusState = await page.evaluate(() => ({
     connected: window.__aisgFocusedTip?.isConnected === true,
     sameNode: window.__aisgFocusedTip === document.querySelector('.signal-row[data-row-id="exit-ip-quality"] .metric-evidence .info-tip'),
@@ -102,6 +124,17 @@ try {
     rowHelpBubble.x >= 0 && rowHelpBubble.y >= 0 &&
       rowHelpBubble.x + rowHelpBubble.width <= 390 && rowHelpBubble.y + rowHelpBubble.height <= 844,
     "移动端行内说明气泡不应被二级列表或视口裁切",
+  );
+  await page.mouse.move(18, 18);
+  await page.waitForTimeout(180);
+  const rowHoverState = await rowHelp.locator(".row-help-bubble").evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { opacity: style.opacity, visibility: style.visibility, pointerEvents: style.pointerEvents };
+  });
+  assert.deepEqual(
+    rowHoverState,
+    { opacity: "0", visibility: "hidden", pointerEvents: "none" },
+    "鼠标移出行内说明后气泡应立即隐藏",
   );
   await page.locator('.signal-row[data-row-id="position-consistency"] > summary').click();
 

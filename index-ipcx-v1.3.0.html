@@ -259,7 +259,7 @@
       .signal-subsection-status { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; font-weight: 900; }
       .signal-subsection-status.good { color: var(--green-deep); }
       .signal-subsection-status.warn { color: var(--amber); }
-      .signal-subsection-rows { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.88); }
+      .signal-subsection-rows { overflow: hidden; border: 1px solid var(--line); border-radius: 0; background: rgba(255, 255, 255, 0.88); }
       .signal-snapshot { margin-bottom: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(135deg, #fafffb, #f2f8f4); }
       .signal-snapshot-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
       .signal-snapshot-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; }
@@ -297,8 +297,8 @@
       .row-help-tip > summary::-webkit-details-marker { display: none; }
       .row-help-tip > summary:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.24); outline-offset: 2px; }
       .signal-subsection-rows.is-help-visible { overflow: visible; }
-      .row-help-bubble { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 30; display: block; width: min(270px, calc(100vw - 32px)); padding: 10px 11px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-size: 10px; font-weight: 500; line-height: 1.55; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 140ms ease, transform 140ms ease; visibility: hidden; white-space: normal; }
-      .row-help-tip:hover > .row-help-bubble, .row-help-tip:focus-within > .row-help-bubble, .row-help-tip[open] > .row-help-bubble { opacity: 1; pointer-events: auto; transform: translateY(0); visibility: visible; }
+      .row-help-bubble { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 30; display: block; width: min(270px, calc(100vw - 32px)); padding: 10px 11px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-size: 10px; font-weight: 500; line-height: 1.55; opacity: 0; pointer-events: none; transform: translateY(4px); transition: transform 140ms ease; visibility: hidden; white-space: normal; }
+      .row-help-tip:hover > .row-help-bubble, .row-help-tip > summary:focus-visible + .row-help-bubble { opacity: 1; pointer-events: auto; transform: translateY(0); visibility: visible; }
       .source-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
       .source-badge { padding: 4px 7px; border-radius: 7px; color: var(--muted); background: #edf4ef; font-family: var(--mono); font-size: 9px; }
       .metric-evidence { margin-top: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, 0.9); }
@@ -324,10 +324,9 @@
       .info-tip > summary { display: grid; width: 24px; height: 24px; place-items: center; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--green-deep); background: rgba(255, 255, 255, 0.84); cursor: help; font-family: var(--mono); font-size: 10px; font-weight: 900; line-height: 1; list-style: none; }
       .info-tip > summary::-webkit-details-marker { display: none; }
       .info-tip > summary:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.28); outline-offset: 2px; }
-      .info-tip-bubble { position: fixed; top: var(--info-tip-top, 12px); left: var(--info-tip-left, 12px); z-index: 30; width: min(270px, calc(100vw - 24px)); max-height: min(260px, calc(100dvh - 24px)); padding: 10px 11px; overflow: auto; border: 1px solid #c9d9ce; border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-family: var(--sans); font-size: 11px; font-weight: 500; line-height: 1.55; text-align: left; white-space: normal; }
+      .info-tip-bubble { position: fixed; top: var(--info-tip-top, 12px); left: var(--info-tip-left, 12px); z-index: 30; width: min(270px, calc(100vw - 24px)); max-height: min(260px, calc(100dvh - 24px)); padding: 10px 11px; overflow: auto; border: 1px solid #c9d9ce; border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-family: var(--sans); font-size: 11px; font-weight: 500; line-height: 1.55; text-align: left; opacity: 0; pointer-events: none; visibility: hidden; white-space: normal; }
       .info-tip-bubble::after { display: none; }
-      .info-tip:not([open]) > .info-tip-bubble { display: block; opacity: 0; pointer-events: none; visibility: hidden; }
-      .info-tip:hover > .info-tip-bubble, .info-tip:focus-within > .info-tip-bubble, .info-tip[open] > .info-tip-bubble { opacity: 1; pointer-events: auto; visibility: visible; }
+      .info-tip:hover > .info-tip-bubble, .info-tip > summary:focus-visible + .info-tip-bubble { opacity: 1; pointer-events: auto; visibility: visible; }
 
       .detail-panel { padding: 21px; border: 1px solid var(--line); border-radius: var(--radius-card); background: rgba(255, 255, 255, 0.78); box-shadow: var(--shadow-small); }
       .detail-panel + .detail-panel { margin-top: 15px; }
@@ -337,6 +336,7 @@
       .comparison-label { color: var(--muted); font-size: 12px; }
       .comparison-value { min-width: 0; overflow-wrap: anywhere; font-family: var(--mono); font-size: 12px; font-weight: 800; white-space: normal; }
       .mini-status { padding: 4px 7px; font-size: 10px; }
+      .mini-status.neutral { color: var(--blue); background: var(--blue-soft); }
       .mini-status.good { color: var(--green-deep); background: var(--green-soft); }
       .mini-status.warn { color: var(--amber); background: var(--amber-soft); }
       .mini-status.bad { color: var(--red); background: var(--red-soft); }
@@ -729,7 +729,7 @@
       </section>
 
       <section class="view-panel" id="webrtc-view" data-panel="webrtc" aria-labelledby="webrtc-title">
-        <div class="section-heading"><div><h2 id="webrtc-title">WebRTC 泄漏摘要</h2><p>把 HTTP 出口和浏览器候选地址放在一起比较</p></div><span class="mini-status">检测中</span></div>
+        <div class="section-heading"><div><h2 id="webrtc-title">WebRTC 泄漏摘要</h2><p>把 HTTP 出口和浏览器候选地址放在一起比较</p></div><span class="mini-status neutral" id="webrtc-panel-status">检测中</span></div>
         <div class="detail-panel">
           <p class="panel-note" id="webrtc-panel-note">正在通过 10 个独立 STUN 节点读取公网候选。</p>
           <div class="comparison">

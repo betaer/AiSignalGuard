@@ -152,12 +152,24 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.match(app, /有效表示当前指标拥有可参与判断的字段/);
   assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s);
   assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*fixed;/s);
+  assert.match(html, /\.info-tip:hover\s*>\s*\.info-tip-bubble/);
+  assert.match(html, /summary:focus-visible\s*\+\s*\.info-tip-bubble/);
+  assert.doesNotMatch(html, /\.info-tip\[open\]\s*>\s*\.info-tip-bubble/);
 });
 
 test("二级列表边界不露出空白圆角，行内说明气泡独立于列表裁切", () => {
-  assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;/s);
+  assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*0;/s);
   assert.match(html, /\.row-help-bubble\s*\{[^}]*position:\s*absolute;/s);
   assert.match(app, /function positionRowHelpTip\(/);
+  assert.match(html, /\.row-help-tip:hover\s*>\s*\.row-help-bubble/);
+  assert.match(html, /summary:focus-visible\s*\+\s*\.row-help-bubble/);
+  assert.doesNotMatch(html, /\.row-help-tip\[open\]\s*>\s*\.row-help-bubble/);
+});
+
+test("WebRTC 明细页的页头状态会绑定最终评估", () => {
+  assert.match(html, /id="webrtc-panel-status"[^>]*>检测中</);
+  assert.match(app, /function updateWebrtcPanel\(/);
+  assert.match(app, /webrtc-panel-status/);
 });
 
 test("实时证据更新复用现有 DOM，不打断气泡和键盘焦点", () => {
