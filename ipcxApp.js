@@ -460,7 +460,6 @@
   }
 
   function positionInfoTip(tip) {
-    if (window.innerWidth <= 480) return;
     var summary = tip.querySelector("summary");
     var bubble = tip.querySelector(".info-tip-bubble");
     if (!summary || !bubble) return;
@@ -469,18 +468,21 @@
     var viewportPadding = 12;
     var viewportWidth = window.visualViewport ? window.visualViewport.width : document.documentElement.clientWidth;
     var viewportHeight = window.visualViewport ? window.visualViewport.height : document.documentElement.clientHeight;
-    var left = Math.min(
+    var desiredLeft = Math.min(
       Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
       viewportWidth - bubbleRect.width - viewportPadding,
     );
-    var top = summaryRect.top - bubbleRect.height - 8;
-    if (top < viewportPadding) top = summaryRect.bottom + 8;
-    top = Math.min(
-      Math.max(viewportPadding, top),
+    var desiredTop = summaryRect.top - bubbleRect.height - 8;
+    if (desiredTop < viewportPadding) desiredTop = summaryRect.bottom + 8;
+    desiredTop = Math.min(
+      Math.max(viewportPadding, desiredTop),
       viewportHeight - bubbleRect.height - viewportPadding,
     );
-    bubble.style.setProperty("--info-tip-left", Math.round(left) + "px");
-    bubble.style.setProperty("--info-tip-top", Math.round(top) + "px");
+    var tipRect = tip.getBoundingClientRect();
+    bubble.style.setProperty("--info-tip-left", Math.round(desiredLeft - tipRect.left) + "px");
+    bubble.style.setProperty("--info-tip-top", Math.round(desiredTop - tipRect.top) + "px");
+    bubble.style.right = "auto";
+    bubble.style.bottom = "auto";
   }
 
   function positionRowHelpTip(tip) {
@@ -490,7 +492,6 @@
     var summaryRect = summary.getBoundingClientRect();
     var bubbleRect = bubble.getBoundingClientRect();
     var viewportPadding = 12;
-    var container = tip.closest(".signal-subsection-rows");
     var viewportWidth = window.visualViewport ? window.visualViewport.width : document.documentElement.clientWidth;
     var desiredLeft = Math.min(
       Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
@@ -505,13 +506,14 @@
     if (tip.dataset.rowHelpReady === "true") return;
     tip.dataset.rowHelpReady = "true";
     var summary = tip.querySelector("summary");
-    var container = tip.closest(".signal-subsection-rows");
-    var syncContainer = function () {
-      if (!container) return;
-      var visible = Array.from(container.querySelectorAll(".row-help-tip")).some(function (item) {
-        return item.matches(":hover") || Boolean(item.querySelector("summary:focus-visible"));
+    var syncContainers = function () {
+      var containers = [tip.closest(".signal-subsection-rows"), tip.closest(".signal-group")].filter(Boolean);
+      containers.forEach(function (container) {
+        var visible = Array.from(container.querySelectorAll(".row-help-tip")).some(function (item) {
+          return item.matches(":hover") || Boolean(item.querySelector("summary:focus-visible"));
+        });
+        container.classList.toggle("is-help-visible", visible);
       });
-      container.classList.toggle("is-help-visible", visible);
     };
     // 鼠标提示只由 hover 控制，避免原生 details 的第一次点击把提示固定成展开态。
     // 键盘仍保留原生 details 行为，方便键盘用户查看完整说明。
@@ -523,7 +525,7 @@
         event.preventDefault();
         tip.open = false;
         summary.blur();
-        syncContainer();
+        syncContainers();
       });
       summary.addEventListener("click", function (event) {
         if (!pointerActivation) return;
@@ -531,32 +533,46 @@
         event.preventDefault();
         tip.open = false;
         summary.blur();
-        syncContainer();
+        syncContainers();
       });
       summary.addEventListener("pointercancel", function () {
         pointerActivation = false;
       });
     }
     tip.addEventListener("toggle", function () {
-      syncContainer();
+      syncContainers();
       requestAnimationFrame(function () { positionRowHelpTip(tip); });
     });
     tip.addEventListener("mouseenter", function () {
-      syncContainer();
+      syncContainers();
       requestAnimationFrame(function () { positionRowHelpTip(tip); });
     });
-    tip.addEventListener("mouseleave", syncContainer);
+    tip.addEventListener("mouseleave", function () { requestAnimationFrame(syncContainers); });
     tip.addEventListener("focusin", function () {
-      syncContainer();
+      syncContainers();
       requestAnimationFrame(function () { positionRowHelpTip(tip); });
     });
-    tip.addEventListener("focusout", syncContainer);
+    tip.addEventListener("focusout", function () { requestAnimationFrame(syncContainers); });
   }
 
   function setupInfoTip(tip) {
     if (tip.dataset.infoTipReady === "true") return;
     tip.dataset.infoTipReady = "true";
     var summary = tip.querySelector("summary");
+    var syncContainers = function () {
+      var containers = [
+        tip.closest(".metric-evidence"),
+        tip.closest(".signal-subsection-rows"),
+        tip.closest(".signal-group"),
+        tip.closest(".result-card"),
+      ].filter(Boolean);
+      containers.forEach(function (container) {
+        var visible = Array.from(container.querySelectorAll(".info-tip")).some(function (item) {
+          return item.matches(":hover") || Boolean(item.querySelector("summary:focus-visible"));
+        });
+        container.classList.toggle("is-info-visible", visible);
+      });
+    };
     if (summary) {
       var pointerActivation = false;
       summary.addEventListener("pointerdown", function (event) {
@@ -565,6 +581,7 @@
         event.preventDefault();
         tip.open = false;
         summary.blur();
+        syncContainers();
       });
       summary.addEventListener("click", function (event) {
         if (!pointerActivation) return;
@@ -572,20 +589,26 @@
         event.preventDefault();
         tip.open = false;
         summary.blur();
+        syncContainers();
       });
       summary.addEventListener("pointercancel", function () {
         pointerActivation = false;
       });
     }
     tip.addEventListener("toggle", function () {
+      syncContainers();
       requestAnimationFrame(function () { positionInfoTip(tip); });
     });
     tip.addEventListener("mouseenter", function () {
+      syncContainers();
       requestAnimationFrame(function () { positionInfoTip(tip); });
     });
+    tip.addEventListener("mouseleave", function () { requestAnimationFrame(syncContainers); });
     tip.addEventListener("focusin", function () {
+      syncContainers();
       requestAnimationFrame(function () { positionInfoTip(tip); });
     });
+    tip.addEventListener("focusout", function () { requestAnimationFrame(syncContainers); });
   }
 
   function makeInfoTip(label, text) {

@@ -165,7 +165,8 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.match(app, /function positionInfoTip\(/);
   assert.match(app, /有效表示当前指标拥有可参与判断的字段/);
   assert.match(html, /\.info-tip > summary\s*\{[^}]*width:\s*20px;[^}]*height:\s*20px;/s);
-  assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*fixed;/s);
+  assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*absolute;/s);
+  assert.match(html, /\.metric-evidence\.is-info-visible\s*\{\s*overflow:\s*visible;/s);
   assert.match(app, /function setupInfoTip\(/);
   assert.match(app, /summary\.addEventListener\("pointerdown"/);
   assert.match(app, /event\.preventDefault\(\)/);
@@ -183,6 +184,7 @@ test("一级分组内容保持圆角，行内说明气泡独立于列表裁切",
   assert.match(html, /\.row-help-tip:hover\s*>\s*\.row-help-bubble/);
   assert.match(html, /summary:focus-visible\s*\+\s*\.row-help-bubble/);
   assert.doesNotMatch(html, /\.row-help-tip\[open\]\s*>\s*\.row-help-bubble/);
+  assert.match(app, /tip\.closest\("\.signal-group"\)/);
 });
 
 test("状态指示灯与状态文案共享四级颜色语义", () => {

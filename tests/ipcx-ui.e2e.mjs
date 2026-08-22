@@ -60,7 +60,34 @@ try {
   const firstTip = page.locator('.signal-row[data-row-id="exit-ip-quality"] .metric-evidence .info-tip').first();
   await firstTip.locator("summary").waitFor({ state: "visible" });
   await firstTip.locator("summary").hover();
-  assert.ok(await firstTip.locator(".info-tip-bubble").boundingBox(), "桌面悬停信息按钮应直接显示气泡");
+  const visibleInfoBubble = await firstTip.locator(".info-tip-bubble").evaluate((node) => {
+    const style = getComputedStyle(node);
+    const rect = node.getBoundingClientRect();
+    const clippingAncestors = [".metric-evidence", ".signal-subsection-rows", ".signal-group", ".result-card"]
+      .map((selector) => node.closest(selector))
+      .filter(Boolean)
+      .filter((ancestor) => getComputedStyle(ancestor).overflow !== "visible")
+      .map((ancestor) => ancestor.className);
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      opacity: style.opacity,
+      visibility: style.visibility,
+      pointerEvents: style.pointerEvents,
+      clippingAncestors,
+    };
+  });
+  assert.equal(visibleInfoBubble.opacity, "1", "桌面悬停信息按钮应直接显示气泡");
+  assert.equal(visibleInfoBubble.visibility, "visible", "桌面悬停信息按钮气泡应可见");
+  assert.equal(visibleInfoBubble.pointerEvents, "none", "气泡不应接管鼠标，以便移出按钮后立即隐藏");
+  assert.deepEqual(visibleInfoBubble.clippingAncestors, [], "信息气泡不应被父级圆角容器裁切");
+  assert.ok(
+    visibleInfoBubble.x >= 0 && visibleInfoBubble.y >= 0 &&
+      visibleInfoBubble.x + visibleInfoBubble.width <= 1200 && visibleInfoBubble.y + visibleInfoBubble.height <= 800,
+    "桌面悬停信息气泡应完整位于视口内",
+  );
   await page.mouse.move(18, 18);
   await page.waitForTimeout(180);
   const hoverBubbleState = await firstTip.locator(".info-tip-bubble").evaluate((node) => {
@@ -120,10 +147,26 @@ try {
   const rowHelpBubble = await rowHelp.locator(".row-help-bubble").evaluate((node) => {
     const style = getComputedStyle(node);
     const rect = node.getBoundingClientRect();
-    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, opacity: style.opacity, visibility: style.visibility };
+    const clippingAncestors = [".signal-subsection-rows", ".signal-group"]
+      .map((selector) => node.closest(selector))
+      .filter(Boolean)
+      .filter((ancestor) => getComputedStyle(ancestor).overflow !== "visible")
+      .map((ancestor) => ancestor.className);
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      opacity: style.opacity,
+      visibility: style.visibility,
+      pointerEvents: style.pointerEvents,
+      clippingAncestors,
+    };
   });
   assert.equal(rowHelpBubble.opacity, "1", "移动端悬停行内说明应直接显示气泡");
   assert.equal(rowHelpBubble.visibility, "visible", "移动端悬停行内说明应直接可见");
+  assert.equal(rowHelpBubble.pointerEvents, "none", "行内气泡不应接管鼠标事件");
+  assert.deepEqual(rowHelpBubble.clippingAncestors, [], "行内说明气泡不应被父级圆角容器裁切");
   assert.ok(
     rowHelpBubble.x >= 0 && rowHelpBubble.y >= 0 &&
       rowHelpBubble.x + rowHelpBubble.width <= 390 && rowHelpBubble.y + rowHelpBubble.height <= 844,
