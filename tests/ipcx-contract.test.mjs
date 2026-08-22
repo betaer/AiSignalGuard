@@ -171,8 +171,8 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.doesNotMatch(html, /\.info-tip\[open\]\s*>\s*\.info-tip-bubble/);
 });
 
-test("二级列表边界不露出空白圆角，行内说明气泡独立于列表裁切", () => {
-  assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*0;/s);
+test("一级分组内容保持圆角，行内说明气泡独立于列表裁切", () => {
+  assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;[^}]*border-radius:\s*16px;/s);
   assert.match(html, /\.row-help-bubble\s*\{[^}]*position:\s*absolute;/s);
   assert.match(app, /function positionRowHelpTip\(/);
   assert.match(app, /summary\.addEventListener\("pointerdown"/);
