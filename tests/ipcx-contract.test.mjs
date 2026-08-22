@@ -4,6 +4,7 @@ import test from "node:test";
 
 const projectRoot = new URL("../", import.meta.url);
 const html = await readFile(new URL("index-ipcx-v1.3.0.html", projectRoot), "utf8");
+const favicon = await readFile(new URL("favicon.svg", projectRoot), "utf8");
 const app = await readFile(new URL("ipcxApp.js", projectRoot), "utf8");
 const semantics = await readFile(new URL("ipcxSemantics.js", projectRoot), "utf8");
 const source = `${html}\n${app}\n${semantics}`;
@@ -47,6 +48,13 @@ test("IPCX 页面由统一的十源证据模块驱动", () => {
   assert.match(app, /IP_INTEL_SOURCES/);
   assert.match(app, /ROUTE_SOURCES/);
   assert.match(app, /STUN_NODES/);
+});
+
+test("IPCX 品牌标识与浏览器 favicon 使用锁 emoji", () => {
+  assert.match(html, /<link rel="icon" href="favicon\.svg\?v=20260823-lock"/);
+  assert.match(html, /<span class="brand-mark"[^>]*><img src="favicon\.svg\?v=20260823-lock"/);
+  assert.match(favicon, /🔐/);
+  assert.match(favicon, /Apple Color Emoji/);
 });
 
 test("所有二级详情的四边留白保持一致", () => {
