@@ -197,6 +197,12 @@ test("状态指示灯与状态文案共享四级颜色语义", () => {
   assert.match(app, /node\.classList\.remove\("good", "warn", "bad", "neutral"\)/);
 });
 
+test("二级行右侧状态使用统一对齐列", () => {
+  assert.match(html, /\.signal-row-summary\s*\{[^}]*grid-template-columns:\s*auto\s+minmax\(0, 1fr\)\s+minmax\(190px, 0\.3fr\)\s+18px;/s);
+  assert.match(html, /\.signal-row-value\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*flex-start;/s);
+  assert.match(html, /\.signal-row-chevron\s*\{[^}]*display:\s*inline-flex;[^}]*width:\s*18px;[^}]*height:\s*20px;/s);
+});
+
 test("WebRTC 明细页的页头状态会绑定最终评估", () => {
   assert.match(html, /id="webrtc-panel-status"[^>]*>检测中</);
   assert.match(app, /function updateWebrtcPanel\(/);
