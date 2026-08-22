@@ -154,6 +154,12 @@ test("低频术语使用键盘和触控均可操作的说明气泡", () => {
   assert.match(html, /\.info-tip-bubble\s*\{[^}]*position:\s*fixed;/s);
 });
 
+test("二级列表边界不露出空白圆角，行内说明气泡独立于列表裁切", () => {
+  assert.match(html, /\.signal-subsection-rows\s*\{[^}]*overflow:\s*hidden;/s);
+  assert.match(html, /\.row-help-bubble\s*\{[^}]*position:\s*absolute;/s);
+  assert.match(app, /function positionRowHelpTip\(/);
+});
+
 test("实时证据更新复用现有 DOM，不打断气泡和键盘焦点", () => {
   assert.match(app, /function updateEvidenceSection\(/);
   assert.doesNotMatch(app, /body\.querySelector\(":scope > \.metric-evidence"\)\?\.remove\(\)/);

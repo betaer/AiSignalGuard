@@ -467,18 +467,66 @@
     var summaryRect = summary.getBoundingClientRect();
     var bubbleRect = bubble.getBoundingClientRect();
     var viewportPadding = 12;
+    var viewportWidth = window.visualViewport ? window.visualViewport.width : document.documentElement.clientWidth;
+    var viewportHeight = window.visualViewport ? window.visualViewport.height : document.documentElement.clientHeight;
     var left = Math.min(
       Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
-      window.innerWidth - bubbleRect.width - viewportPadding,
+      viewportWidth - bubbleRect.width - viewportPadding,
     );
     var top = summaryRect.top - bubbleRect.height - 8;
     if (top < viewportPadding) top = summaryRect.bottom + 8;
     top = Math.min(
       Math.max(viewportPadding, top),
-      window.innerHeight - bubbleRect.height - viewportPadding,
+      viewportHeight - bubbleRect.height - viewportPadding,
     );
     bubble.style.setProperty("--info-tip-left", Math.round(left) + "px");
     bubble.style.setProperty("--info-tip-top", Math.round(top) + "px");
+  }
+
+  function positionRowHelpTip(tip) {
+    var summary = tip.querySelector("summary");
+    var bubble = tip.querySelector(".row-help-bubble");
+    if (!summary || !bubble) return;
+    var summaryRect = summary.getBoundingClientRect();
+    var bubbleRect = bubble.getBoundingClientRect();
+    var viewportPadding = 12;
+    var container = tip.closest(".signal-subsection-rows");
+    var viewportWidth = window.visualViewport ? window.visualViewport.width : document.documentElement.clientWidth;
+    var desiredLeft = Math.min(
+      Math.max(viewportPadding, summaryRect.right - bubbleRect.width),
+      viewportWidth - bubbleRect.width - viewportPadding,
+    );
+    var tipRect = tip.getBoundingClientRect();
+    bubble.style.left = Math.round(desiredLeft - tipRect.left) + "px";
+    bubble.style.right = "auto";
+    if (container) container.classList.add("is-help-visible");
+  }
+
+  function setupRowHelpTip(tip) {
+    if (tip.dataset.rowHelpReady === "true") return;
+    tip.dataset.rowHelpReady = "true";
+    var container = tip.closest(".signal-subsection-rows");
+    var syncContainer = function () {
+      if (!container) return;
+      var visible = Array.from(container.querySelectorAll(".row-help-tip")).some(function (item) {
+        return item.open || item.matches(":hover") || item.matches(":focus-within");
+      });
+      container.classList.toggle("is-help-visible", visible);
+    };
+    tip.addEventListener("toggle", function () {
+      syncContainer();
+      requestAnimationFrame(function () { positionRowHelpTip(tip); });
+    });
+    tip.addEventListener("mouseenter", function () {
+      syncContainer();
+      requestAnimationFrame(function () { positionRowHelpTip(tip); });
+    });
+    tip.addEventListener("mouseleave", syncContainer);
+    tip.addEventListener("focusin", function () {
+      syncContainer();
+      requestAnimationFrame(function () { positionRowHelpTip(tip); });
+    });
+    tip.addEventListener("focusout", syncContainer);
   }
 
   function setupInfoTip(tip) {
@@ -641,6 +689,7 @@
         var bubble = makeTextElement("span", "row-help-bubble", copy);
         bubble.setAttribute("role", "note");
         help.append(summary, bubble);
+        setupRowHelpTip(help);
         return help;
       });
       detailGrid.replaceChildren.apply(detailGrid, [resultItem].concat(helpItems).filter(Boolean));

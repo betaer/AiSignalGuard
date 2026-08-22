@@ -88,6 +88,23 @@ try {
 
   await page.locator('.signal-row[data-row-id="exit-ip-quality"] > summary').click();
 
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.signal-row[data-row-id="position-consistency"] > summary').click();
+  const rowHelp = page.locator('.signal-row[data-row-id="position-consistency"] .row-help-tip').first();
+  await rowHelp.scrollIntoViewIfNeeded();
+  await rowHelp.locator("summary").hover();
+  const rowHelpBubble = await rowHelp.locator(".row-help-bubble").evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  });
+  assert.ok(rowHelpBubble, "移动端行内说明气泡应可见");
+  assert.ok(
+    rowHelpBubble.x >= 0 && rowHelpBubble.y >= 0 &&
+      rowHelpBubble.x + rowHelpBubble.width <= 390 && rowHelpBubble.y + rowHelpBubble.height <= 844,
+    "移动端行内说明气泡不应被二级列表或视口裁切",
+  );
+  await page.locator('.signal-row[data-row-id="position-consistency"] > summary').click();
+
   for (const viewport of [
     { width: 320, height: 700 },
     { width: 390, height: 844 },

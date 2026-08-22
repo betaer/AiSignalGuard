@@ -259,7 +259,7 @@
       .signal-subsection-status { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; font-weight: 900; }
       .signal-subsection-status.good { color: var(--green-deep); }
       .signal-subsection-status.warn { color: var(--amber); }
-      .signal-subsection-rows { overflow: visible; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.88); }
+      .signal-subsection-rows { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.88); }
       .signal-snapshot { margin-bottom: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(135deg, #fafffb, #f2f8f4); }
       .signal-snapshot-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 13px; }
       .signal-snapshot-label { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10px; }
@@ -296,7 +296,8 @@
       .row-help-tip > summary { padding: 8px 11px; color: var(--muted); cursor: help; font-size: 9px; font-weight: 900; list-style: none; white-space: nowrap; }
       .row-help-tip > summary::-webkit-details-marker { display: none; }
       .row-help-tip > summary:focus-visible { outline: 3px solid rgba(21, 152, 104, 0.24); outline-offset: 2px; }
-      .row-help-bubble { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 20; display: block; width: min(270px, calc(100vw - 32px)); padding: 10px 11px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-size: 10px; font-weight: 500; line-height: 1.55; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 140ms ease, transform 140ms ease; visibility: hidden; white-space: normal; }
+      .signal-subsection-rows.is-help-visible { overflow: visible; }
+      .row-help-bubble { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 30; display: block; width: min(270px, calc(100vw - 32px)); padding: 10px 11px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--ink-2); background: rgba(255, 255, 255, 0.98); box-shadow: 0 14px 34px rgba(41, 70, 57, 0.18); font-size: 10px; font-weight: 500; line-height: 1.55; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 140ms ease, transform 140ms ease; visibility: hidden; white-space: normal; }
       .row-help-tip:hover > .row-help-bubble, .row-help-tip:focus-within > .row-help-bubble, .row-help-tip[open] > .row-help-bubble { opacity: 1; pointer-events: auto; transform: translateY(0); visibility: visible; }
       .source-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
       .source-badge { padding: 4px 7px; border-radius: 7px; color: var(--muted); background: #edf4ef; font-family: var(--mono); font-size: 9px; }
