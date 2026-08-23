@@ -1,4 +1,4 @@
-(function exposeIpcxSemantics(root) {
+(function exposeSignalGuardSemantics(root) {
   "use strict";
 
   function textValue(value) {

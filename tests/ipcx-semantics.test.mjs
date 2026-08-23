@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-await import("../ipcxSemantics.js");
+await import("../signalSemantics.js");
 const semantics = globalThis.AISGIpSemantics;
 
 test("组织名称归一化只消除标点和空白差异", () => {
@@ -52,7 +52,7 @@ test("地理投票 7 / 10 按有效票通过，城市不同不影响国家通过
 });
 
 test("STUN 注册表只保留一个 Google 节点并覆盖十家服务方", async () => {
-  await import("../ipcxEvidence.js");
+  await import("../networkEvidence.js");
   const providers = globalThis.AISGIpEvidence.STUN_NODES.map(({ name }) => name);
   assert.equal(providers.length, 10);
   assert.equal(providers.filter((name) => /^Google/.test(name)).length, 1);

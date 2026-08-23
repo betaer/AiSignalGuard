@@ -1,14 +1,14 @@
-(function bootstrapIpcxPage() {
+(function bootstrapSignalGuardPage() {
   "use strict";
 
   var evidenceApi = globalThis.AISGIpEvidence;
   var semanticsApi = globalThis.AISGIpSemantics;
   var starPolicyApi = globalThis.AISGStarPromptPolicy;
   if (!evidenceApi) {
-    throw new Error("IPCX 实时证据模块加载失败");
+    throw new Error("AI Signal Guard 实时证据模块加载失败");
   }
   if (!semanticsApi) {
-    throw new Error("IPCX 状态语义模块加载失败");
+    throw new Error("AI Signal Guard 状态语义模块加载失败");
   }
 
   var GITHUB_REPO = "betaer/AiSignalGuard";
@@ -144,7 +144,7 @@
   }
 
   function invariant(condition, message) {
-    if (!condition) throw new Error("[IPCX] " + message);
+    if (!condition) throw new Error("[AI Signal Guard] " + message);
   }
 
   function validatePageContract() {

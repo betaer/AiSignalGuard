@@ -16,7 +16,7 @@ const mimeTypes = {
 
 const server = createServer(async (request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://localhost/").pathname);
-  const file = resolve(projectRoot, `.${pathname === "/" ? "/index-ipcx-v1.3.0.html" : pathname}`);
+  const file = resolve(projectRoot, `.${pathname === "/" ? "/index-ipcx-v1.5.0.html" : pathname}`);
   if (!file.startsWith(`${projectRoot.replace(/\/$/, "")}${sep}`)) {
     response.writeHead(403).end();
     return;
@@ -34,7 +34,7 @@ const server = createServer(async (request, response) => {
 });
 
 await new Promise((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
-const baseUrl = `http://127.0.0.1:${server.address().port}/index-ipcx-v1.3.0.html`;
+const baseUrl = `http://127.0.0.1:${server.address().port}/index-ipcx-v1.5.0.html`;
 let browser;
 
 try {

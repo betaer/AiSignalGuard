@@ -135,7 +135,7 @@ test("serves the live IPCX page and all of its browser controllers", async () =>
   const worker = await loadWorker();
   const env = { ASSETS: mockAssets() };
   const htmlResponse = await worker.fetch(
-    new Request("https://ai-signal-guard.example/index-ipcx-v1.3.0.html", {
+    new Request("https://ai-signal-guard.example/index-ipcx-v1.5.0.html", {
       headers: { accept: "text/html" },
     }),
     env,
@@ -145,9 +145,9 @@ test("serves the live IPCX page and all of its browser controllers", async () =>
   assert.equal(htmlResponse.status, 200);
   const html = await htmlResponse.text();
   assert.match(html, /src="starPromptPolicy\.js"/);
-  assert.match(html, /src="ipcxSemantics\.js"/);
-  assert.match(html, /src="ipcxEvidence\.js"/);
-  assert.match(html, /src="ipcxApp\.js"/);
+  assert.match(html, /src="signalSemantics\.js\?v=1\.5\.0"/);
+  assert.match(html, /src="networkEvidence\.js\?v=1\.5\.0"/);
+  assert.match(html, /src="signalGuardApp\.js\?v=1\.5\.0"/);
 
   const legacyResponse = await worker.fetch(
     new Request("https://ai-signal-guard.example/index-ipcx.html", {
@@ -156,12 +156,12 @@ test("serves the live IPCX page and all of its browser controllers", async () =>
     env,
     context(),
   );
-  assert.match(await legacyResponse.text(), /index-ipcx-v1\.3\.0\.html/);
+  assert.match(await legacyResponse.text(), /index-ipcx-v1\.5\.0\.html/);
 
   for (const [pathname, marker] of [
     ["/starPromptPolicy.js", /AISGStarPromptPolicy/],
-    ["/ipcxEvidence.js", /AISGIpEvidence/],
-    ["/ipcxApp.js", /runLiveDetection/],
+    ["/networkEvidence.js", /AISGIpEvidence/],
+    ["/signalGuardApp.js", /runLiveDetection/],
   ]) {
     const response = await worker.fetch(
       new Request(`https://ai-signal-guard.example${pathname}`),
@@ -195,7 +195,7 @@ test("serves the versioned IPCX Remix page without aliasing missing versions", a
   const html = await htmlResponse.text();
   assert.match(html, /data-remix-version="1\.2\.0"/);
   assert.match(html, /src="starPromptPolicy\.js"/);
-  assert.match(html, /src="ipcxEvidence\.js"/);
+  assert.match(html, /src="networkEvidence\.js"/);
   assert.match(html, /src="ipcx-remix-v1\.2\.0\.js"/);
 
   const controllerResponse = await worker.fetch(

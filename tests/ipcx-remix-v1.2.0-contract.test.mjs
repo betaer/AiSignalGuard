@@ -528,7 +528,7 @@ test("实时证据脚本按策略、证据、Remix 控制器的顺序加载", ()
     .filter(Boolean);
   const requiredScripts = [
     "starPromptPolicy.js",
-    "ipcxEvidence.js",
+    "networkEvidence.js",
     "ipcx-remix-v1.2.0.js",
   ];
 
@@ -538,9 +538,9 @@ test("实时证据脚本按策略、证据、Remix 控制器的顺序加载", ()
   assert.ok(
     requiredScripts.every((script, index) =>
       index === 0 || scripts.indexOf(requiredScripts[index - 1]) < scripts.indexOf(script)),
-    "脚本顺序必须是 starPromptPolicy → ipcxEvidence → Remix 控制器",
+    "脚本顺序必须是 starPromptPolicy → networkEvidence → Remix 控制器",
   );
-  assert.equal(scripts.includes("ipcxApp.js"), false, "Remix 不得回退加载旧控制器");
+  assert.equal(scripts.includes("signalGuardApp.js"), false, "Remix 不得误加载正式页控制器");
 });
 
 test("隐私说明区分自有服务器与浏览器第三方请求，复制内容服从遮罩", () => {
@@ -786,8 +786,8 @@ test("构建静态清单发布版本化 HTML 与控制器且不重复", () => {
   ]) {
     assert.equal(entries.filter((entry) => entry === file).length, 1, `${file} 必须在构建清单中且不重复`);
   }
-  for (const legacyFile of ["index-ipcx.html", "ipcxApp.js", "ipcxEvidence.js"]) {
-    assert.ok(entries.includes(legacyFile), `构建注册不得删除原有 ${legacyFile}`);
+  for (const sharedFile of ["index-ipcx.html", "signalGuardApp.js", "networkEvidence.js"]) {
+    assert.ok(entries.includes(sharedFile), `构建注册不得遗漏共享文件 ${sharedFile}`);
   }
 });
 

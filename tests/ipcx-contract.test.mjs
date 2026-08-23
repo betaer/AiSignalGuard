@@ -3,10 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const projectRoot = new URL("../", import.meta.url);
-const html = await readFile(new URL("index-ipcx-v1.3.0.html", projectRoot), "utf8");
+const html = await readFile(new URL("index-ipcx-v1.5.0.html", projectRoot), "utf8");
 const favicon = await readFile(new URL("favicon.svg", projectRoot), "utf8");
-const app = await readFile(new URL("ipcxApp.js", projectRoot), "utf8");
-const semantics = await readFile(new URL("ipcxSemantics.js", projectRoot), "utf8");
+const app = await readFile(new URL("signalGuardApp.js", projectRoot), "utf8");
+const semantics = await readFile(new URL("signalSemantics.js", projectRoot), "utf8");
 const source = `${html}\n${app}\n${semantics}`;
 
 test("IPCX 页面不再携带模拟网络结果", () => {
@@ -26,7 +26,7 @@ test("IPCX 页面不再携带模拟网络结果", () => {
 });
 
 test("IPCX 页面由统一的十源证据模块驱动", () => {
-  assert.match(html, /<script\s+src="ipcxEvidence\.js"><\/script>/);
+  assert.match(html, /<script\s+src="networkEvidence\.js\?v=1\.5\.0"><\/script>/);
 
   for (const [rowId, evidenceSet] of [
     ["asn-organization", "asnOrganization"],

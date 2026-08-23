@@ -6,9 +6,9 @@ await import("../starPromptPolicy.js");
 
 const policyApi = globalThis.AISGStarPromptPolicy;
 const [ipcxHtml, appSource, ipcxAppSource] = await Promise.all([
-  readFile(new URL("../index-ipcx-v1.3.0.html", import.meta.url), "utf8"),
+  readFile(new URL("../index-ipcx-v1.5.0.html", import.meta.url), "utf8"),
   readFile(new URL("../app.js", import.meta.url), "utf8"),
-  readFile(new URL("../ipcxApp.js", import.meta.url), "utf8"),
+  readFile(new URL("../signalGuardApp.js", import.meta.url), "utf8"),
 ]);
 
 function createStorage(initial = {}) {
