@@ -119,7 +119,11 @@ test("实时结果改变页面高度时，模块锚点会自动校正且允许�
   assert.match(app, /"popstate"/);
 });
 
-test("一级分组默认展开，二级指标默认收起并使用紧凑解释气泡", () => {
+test("四个一级分组与二级指标默认收起，并使用紧凑解释气泡", () => {
+  assert.equal((html.match(/<details class="signal-group">/g) || []).length, 4);
+  assert.doesNotMatch(html, /<details class="signal-group"\s+open>/);
+  assert.match(html, /一级分组默认收起，点击查看关键结果与真实来源/);
+  assert.doesNotMatch(html, /关键结果与真实来源默认展开/);
   assert.match(app, /function prepareSignalRows\(/);
   assert.match(app, /row\.open\s*=\s*false/);
   assert.doesNotMatch(source, /row-explanation/);

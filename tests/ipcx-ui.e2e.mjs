@@ -61,6 +61,15 @@ try {
     null,
     { timeout: 10000 },
   );
+  const primaryGroups = page.locator(".signal-group");
+  assert.equal(await primaryGroups.count(), 4, "关键状态应包含四个一级分组");
+  assert.deepEqual(
+    await primaryGroups.evaluateAll((nodes) => nodes.map((node) => node.open)),
+    [false, false, false, false],
+    "四个一级分组在首屏应全部默认收起",
+  );
+  await primaryGroups.first().locator(":scope > summary").click();
+  assert.equal(await primaryGroups.first().evaluate((node) => node.open), true, "一级分组点击后应正常展开");
   await page.locator('.signal-row[data-row-id="exit-ip-quality"] > summary').click();
   const firstTip = page.locator('.signal-row[data-row-id="exit-ip-quality"] .metric-evidence .info-tip').first();
   const tooltipLayer = page.locator("#hover-tooltip-layer");

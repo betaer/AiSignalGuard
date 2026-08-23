@@ -617,9 +617,9 @@
       </section>
 
       <section class="view-panel" id="overview-view" data-panel="overview" aria-labelledby="overview-title">
-        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>关键结果与真实来源默认展开，判读说明按需查看</p></div></div>
+        <div class="section-heading"><div><h2 id="overview-title">关键状态</h2><p>一级分组默认收起，点击查看关键结果与真实来源</p></div></div>
         <div class="signal-stack">
-          <details class="signal-group" open>
+          <details class="signal-group">
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg></span>
               <span class="signal-group-heading"><span class="signal-group-title">出口 IP</span><span class="signal-group-note">风控第一顺位 · 网络归属与环境一致性</span></span>
@@ -650,7 +650,7 @@
             </div>
           </details>
 
-          <details class="signal-group" open>
+          <details class="signal-group">
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h3l2-5 3 10 3-8 2 3h5"></path></svg></span>
               <span class="signal-group-heading"><span class="signal-group-title">身份信号</span><span class="signal-group-note">浏览器语言、时区与设备渲染</span></span>
@@ -675,7 +675,7 @@
             </div>
           </details>
 
-          <details class="signal-group" open>
+          <details class="signal-group">
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 16 0"></path><path d="M7 12a5 5 0 0 1 10 0"></path><circle cx="12" cy="12" r="1.5"></circle></svg></span>
               <span class="signal-group-heading"><span class="signal-group-title">网络泄漏</span><span class="signal-group-note">WebRTC 与 DNS 是否暴露另一条路径</span></span>
@@ -700,7 +700,7 @@
             </div>
           </details>
 
-          <details class="signal-group" open>
+          <details class="signal-group">
             <summary class="signal-group-summary">
               <span class="signal-group-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="18" cy="18" r="2"></circle><path d="m8 11 8-4M8 13l8 4"></path></svg></span>
               <span class="signal-group-heading"><span class="signal-group-title">多源互证</span><span class="signal-group-note">地理情报、网络标签与最终判断</span></span>
