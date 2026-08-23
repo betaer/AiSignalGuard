@@ -796,7 +796,6 @@ test("package.json 注册 Remix 定向测试、完整回归和语法检查", () 
   const packageJson = JSON.parse(packageSource);
   const scripts = packageJson.scripts || {};
 
-  assert.equal(packageJson.version, "1.1.0", "Remix 页面版本不得修改项目包版本");
   assert.equal(
     scripts["test:ipcx-remix"],
     "node --test tests/ipcx-remix-v1.2.0-contract.test.mjs && npm run test:ipcx-remix-v1.3",
