@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import { access, readFile } from "node:fs/promises";
+import test from "node:test";
+
+const projectRoot = new URL("../", import.meta.url);
+const publicRoot = "https://betaer.github.io/AiSignalGuard/";
+const files = {
+  latest: new URL("index.html", projectRoot),
+  v1: new URL("v1/index.html", projectRoot),
+  v2: new URL("v2/index.html", projectRoot),
+};
+
+const [latestHtml, v1Html, v2Html] = await Promise.all(
+  Object.values(files).map((file) => readFile(file, "utf8")),
+);
+const packageJson = JSON.parse(await readFile(new URL("package.json", projectRoot), "utf8"));
+
+function normalizeRelativeReferences(html, pathname) {
+  const base = new URL(pathname, "https://version.test");
+  return html.replace(/\b(src|href)="([^"]+)"/g, (match, attribute, value) => {
+    if (/^(?:[a-z]+:|\/\/|#|data:)/i.test(value)) {
+      return match;
+    }
+    const normalized = new URL(value, base);
+    return `${attribute}="${normalized.pathname}${normalized.search}${normalized.hash}"`;
+  });
+}
+
+test("根入口、v1 与 v2 固定入口完整且不保留冗余平铺归档", async () => {
+  await Promise.all(Object.values(files).map((file) => access(file)));
+  for (const alias of ["index-v1.0.html", "index-v2.0.html", "index-ipcx-v2.0.html"]) {
+    await assert.rejects(access(new URL(alias, projectRoot)), { code: "ENOENT" }, alias);
+  }
+});
+
+test("根入口直接呈现 v2，且与 v2 固定入口保持同一份页面能力", () => {
+  assert.equal(packageJson.version, "2.0.0");
+  assert.match(latestHtml, /<html[^>]+data-version="2\.0\.0"/);
+  assert.match(v2Html, /<html[^>]+data-version="2\.0\.0"/);
+  assert.equal(
+    normalizeRelativeReferences(latestHtml, "/"),
+    normalizeRelativeReferences(v2Html, "/v2/"),
+  );
+  assert.doesNotMatch(latestHtml, /http-equiv="refresh"|location\.(?:assign|replace)\s*\(/i);
+});
+
+test("v1 固定入口保留旧版并从子目录正确引用根资源", () => {
+  assert.match(v1Html, /<html[^>]+data-version="1\.0\.0"/);
+  assert.match(v1Html, /href="\.\.\/styles\.min\.css\?v=/);
+  assert.match(v1Html, /src="\.\.\/app\.min\.js\?v=/);
+  assert.match(v1Html, /src="\.\.\/assets\/merged_ai_logo\.svg\?v=/);
+});
+
+test("三个入口的规范地址和分享预览都统一指向唯一公开根地址", () => {
+  for (const [name, html] of [["latest", latestHtml], ["v1", v1Html], ["v2", v2Html]]) {
+    assert.ok(html.includes(`<link rel="canonical" href="${publicRoot}">`), name);
+    assert.ok(html.includes(`<meta property="og:url" content="${publicRoot}">`), name);
+  }
+  assert.ok(latestHtml.includes(`PROJECT_URL = "${publicRoot}"`));
+  assert.ok(v2Html.includes(`PROJECT_URL = "${publicRoot}"`));
+});
+
+test("最新版去除旧品牌词和多余截图分享文案", () => {
+  const forbidden = /本站|ip\.cx|ipcx|适合手机截图分享/i;
+  assert.doesNotMatch(latestHtml, forbidden);
+  assert.doesNotMatch(v2Html, forbidden);
+});

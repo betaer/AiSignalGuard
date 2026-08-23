@@ -19,12 +19,14 @@ const STATIC_FILES = [
   "favicon.svg",
   "assets",
   "demo",
+  "v1",
+  "v2",
 ];
 
 const LEGACY_SUMMARY_URL =
   /"https:\/\/betaer\.github\.io\/AiSignalGuard\/"/g;
 const RUNTIME_SUMMARY_URL =
-  'new URL(".", window.location.href).href';
+  'new URL("/", window.location.href).href';
 
 async function exists(path) {
   try {

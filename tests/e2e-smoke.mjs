@@ -7672,7 +7672,8 @@ async function main() {
 
   const server = createServer(async (req, res) => {
     let pathname = decodeURIComponent(new URL(req.url, "http://localhost/").pathname);
-    if (pathname === "/") pathname = "/index.html";
+    // 本套历史 E2E 验证的是 v1 身份分析页；正式根入口已在 v2 契约与浏览器回归中验证。
+    if (pathname === "/") pathname = "/v1/index.html";
     const file = resolve(projectRoot, `.${pathname}`);
     if (!file.startsWith(`${projectRoot.replace(/\/$/, "")}${sep}`)) {
       res.writeHead(403).end();

@@ -8,6 +8,16 @@ AI Signal Guard 是一个纯静态的数字身份匹配分析工具。它比较�
 
 在线体验：[https://betaer.github.io/AiSignalGuard/](https://betaer.github.io/AiSignalGuard/)
 
+固定版本入口：
+
+| 入口 | 地址 | 用途 |
+|---|---|---|
+| 最新正式版 | [项目根地址](https://betaer.github.io/AiSignalGuard/) | 直接显示当前最新版，当前对应 v2 |
+| v1 归档 | [v1/](https://betaer.github.io/AiSignalGuard/v1/) | 永久保留旧版入口 |
+| v2 归档 | [v2/](https://betaer.github.io/AiSignalGuard/v2/) | 永久保留 v2 固定入口 |
+
+三个入口的分享摘要、规范地址和复制报告统一指向项目根地址，避免同一网站对外出现多个分享链接。
+
 [![GitHub stars](https://img.shields.io/github/stars/betaer/AiSignalGuard.svg?style=social)](https://github.com/betaer/AiSignalGuard) ⭐ Star for AI Signal Guard / 请给本项目点个赞！
 
 [反馈问题](https://github.com/betaer/AiSignalGuard/issues/new/choose)
@@ -123,7 +133,15 @@ npm run test:connectivity-live
 
 ## 部署
 
-项目根目录直接提供 `index.html`，GitHub Pages 使用 `main` 分支根目录发布即可。公开仓库只需要保留产品运行相关文件。
+项目根目录直接提供最新正式版 `index.html`，GitHub Pages 使用 `main` 分支根目录发布即可。历史版本使用目录归档：
+
+```text
+index.html       # 最新正式版，当前对应 v2
+v1/index.html    # v1 固定入口
+v2/index.html    # v2 固定入口
+```
+
+不再额外维护 `index-v1.0.html`、`index-v2.0.html` 之类的平铺副本。发布提交使用 annotated tag 标记，并建立同名 GitHub Release；GitHub 会自动提供源码 ZIP / TAR。静态站点不使用 GitHub Packages，也不维护长期 `v1` / `v2` 分支，避免多个版本分支之间的修复漂移。
 
 ## 能力边界
 

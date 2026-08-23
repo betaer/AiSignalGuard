@@ -27,8 +27,8 @@ function mockAssets() {
     async fetch(request) {
       const url = new URL(request.url);
       let pathname = decodeURIComponent(url.pathname);
-      if (pathname === "/") {
-        pathname = "/index.html";
+      if (pathname.endsWith("/")) {
+        pathname += "index.html";
       }
 
       const file = resolve(clientRoot, `.${pathname}`);
@@ -85,6 +85,27 @@ test("serves the product homepage and rewrites share metadata to its Sites origi
   assert.doesNotMatch(html, /betaer\.github\.io\/aisignalguard/i);
 });
 
+test("serves fixed v1 and v2 directories while keeping one public share root", async () => {
+  const worker = await loadWorker();
+  const env = { ASSETS: mockAssets() };
+
+  for (const [pathname, version] of [["/v1/", "1.0.0"], ["/v2/", "2.0.0"]]) {
+    const response = await worker.fetch(
+      new Request(`https://ai-signal-guard.example${pathname}`, {
+        headers: { accept: "text/html" },
+      }),
+      env,
+      context(),
+    );
+    assert.equal(response.status, 200, pathname);
+    const html = await response.text();
+    assert.match(html, new RegExp(`data-version="${version.replaceAll(".", "\\.")}"`), pathname);
+    assert.match(html, /<link rel="canonical" href="https:\/\/ai-signal-guard\.example\/">/, pathname);
+    assert.match(html, /<meta property="og:url" content="https:\/\/ai-signal-guard\.example\/">/, pathname);
+    assert.doesNotMatch(html, /betaer\.github\.io\/aisignalguard/i, pathname);
+  }
+});
+
 test("serves the browser bundle through the assets binding", async () => {
   const worker = await loadWorker();
   const response = await worker.fetch(
@@ -100,7 +121,7 @@ test("serves the browser bundle through the assets binding", async () => {
   );
   const javascript = await response.text();
   assert.ok(javascript.length > 50_000);
-  assert.match(javascript, /window\.location\.href/);
+  assert.match(javascript, /new URL\("\/",\s*window\.location\.href\)\.href/);
   assert.doesNotMatch(javascript, /betaer\.github\.io\/aisignalguard/i);
 });
 
