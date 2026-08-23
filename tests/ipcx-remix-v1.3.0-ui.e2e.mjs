@@ -54,6 +54,28 @@ try {
   assert.equal(await page.locator('[data-remix-view="overview"]').isVisible(), true, "主页总览应可见");
   assert.equal(await page.locator("[data-core-result-ref]").count(), 19, "主页应显示 19 项核心结果");
   assert.ok((await page.locator("#overview-results-status").textContent()).includes("19"), "主页应显示结算计数");
+  const desktopResultLayout = await page.evaluate(() => {
+    const section = document.querySelector(".overview-result-index");
+    const heading = section?.querySelector(":scope > .section-heading");
+    const groups = [...(section?.querySelectorAll(":scope > .result-index-group") || [])];
+    const headingStyle = heading ? getComputedStyle(heading) : null;
+    const groupRects = groups.map((group) => group.getBoundingClientRect());
+    return {
+      headingGridColumn: headingStyle?.gridColumn || "",
+      headingWidth: heading?.getBoundingClientRect().width || 0,
+      sectionWidth: section?.getBoundingClientRect().width || 0,
+      firstRowTop: groupRects[0]?.top || 0,
+      secondGroupTop: groupRects[1]?.top || 0,
+      thirdGroupTop: groupRects[2]?.top || 0,
+      fourthGroupTop: groupRects[3]?.top || 0,
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  assert.equal(desktopResultLayout.headingGridColumn, "1 / -1", "桌面结果标题必须横跨结果索引整行");
+  assert.equal(desktopResultLayout.headingWidth, desktopResultLayout.sectionWidth, "桌面结果标题不得只占左侧一列");
+  assert.equal(desktopResultLayout.firstRowTop, desktopResultLayout.secondGroupTop, "第一行两个结果组应对齐");
+  assert.equal(desktopResultLayout.thirdGroupTop, desktopResultLayout.fourthGroupTop, "第二行两个结果组应对齐");
+  assert.equal(desktopResultLayout.pageOverflow, 0, "桌面结果布局不应产生横向溢出");
 
   const tools = ["ip", "dns", "stun", "cdn", "split", "multi", "latency"];
   const allowedStates = new Set(["success", "warning", "failed", "skipped", "requires-server"]);

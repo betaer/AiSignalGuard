@@ -722,6 +722,8 @@
       .overview-result-index {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+      /* 标题属于结果索引的整行，不应占用左侧首个结果列。 */
+      .overview-result-index > .section-heading { grid-column: 1 / -1; }
       .result-index-group {
         min-width: 0;
         padding: 14px;
