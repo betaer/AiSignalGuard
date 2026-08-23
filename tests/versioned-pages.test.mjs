@@ -65,3 +65,17 @@ test("最新版去除旧品牌词和多余截图分享文案", () => {
   assert.doesNotMatch(latestHtml, forbidden);
   assert.doesNotMatch(v2Html, forbidden);
 });
+
+test("最新版 GitHub Star 徽标固定显示 999+ 且不再请求真实计数", () => {
+  for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
+    assert.match(html, /id="github-shortcut"[^>]+data-star-state="fixed"/);
+    assert.match(html, /id="github-shortcut"[^>]+aria-label="打开 GitHub 仓库，999\+ Star"/);
+    assert.match(html, /id="star-count"[^>]*>999\+<\/span>/);
+    assert.match(html, /id="github-label"[^>]*>GitHub · 999\+<\/span>/);
+    assert.doesNotMatch(
+      html,
+      /api\.github\.com\/repos\/|GITHUB_REPO|STAR_CACHE_KEY|STAR_CACHE_TTL_MS|normalizeStarCount|renderStarCount|loadStars\s*\(|stargazers_count/,
+      name,
+    );
+  }
+});
