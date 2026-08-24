@@ -124,19 +124,24 @@ test("最新版首次检测与重测共用 12 小时 Star 闸门", () => {
 
 test("最新版标题、首屏说明与社交搜索元数据统一使用正式品牌表达", () => {
   for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
-    assert.match(html, /<title>AI Signal Guard · 实时网络与浏览器隐私检测<\/title>/, name);
+    assert.match(html, /<title>AI Signal Guard · 浏览器端 AI 网络与环境信号检测<\/title>/, name);
     assert.doesNotMatch(html, /<title>[^<]*v2\.0|(?:og:title|twitter:title)" content="[^"]*v2\.0/, name);
     assert.match(html, /<span class="brand-note">实时网络检测<\/span>/, name);
-    assert.match(html, /<section class="intro"[\s\S]*?<p>浏览器端AI网络与身份信号检测<\/p>/, name);
+    assert.match(html, /<h1 id="demo-title">浏览器端 AI 网络与<span>环境信号检测<\/span><\/h1>/, name);
+    assert.match(html, /<p class="intro-value">核对出口 IP、DNS、WebRTC、时区、语言、浏览器环境与 AI 服务路径，快速发现泄漏、冲突和异常信号。<\/p>/, name);
+    assert.match(html, /<p class="intro-scenario">适用于 Claude、ChatGPT、Gemini 等 AI 服务的网络排障、环境一致性核对与访问前预检。<\/p>/, name);
+    assert.match(html, /<span class="signal-group-title">环境信号<\/span>/, name);
+    assert.match(html, /网络参考分基于本轮可观察信号生成，不代表平台账号状态、封号概率或平台内部风控结论。/, name);
     assert.match(html, /<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">/, name);
-    assert.match(html, /<meta property="og:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png">/, name);
+    assert.match(html, /<meta property="og:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png\?v=20260825-environment">/, name);
     assert.match(html, /<meta property="og:image:width" content="1774">/, name);
     assert.match(html, /<meta property="og:image:height" content="887">/, name);
     assert.match(html, /<meta name="twitter:card" content="summary_large_image">/, name);
-    assert.match(html, /<meta name="twitter:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png">/, name);
-    assert.match(html, /"image": "https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png"/, name);
+    assert.match(html, /<meta name="twitter:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png\?v=20260825-environment">/, name);
+    assert.match(html, /"image": "https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png\?v=20260825-environment"/, name);
     assert.match(html, /<script type="application\/ld\+json">[\s\S]*?"@type": "WebSite"[\s\S]*?"@type": "SoftwareApplication"[\s\S]*?"featureList": \[[\s\S]*?"@type": "BreadcrumbList"/, name);
     assert.match(html, /<link rel="sitemap" type="application\/xml" href="https:\/\/betaer\.github\.io\/sitemap\.xml">/, name);
+    assert.doesNotMatch(html, /Trust Score|8-source IP|浏览器端AI网络与身份信号检测/, name);
   }
 });
 

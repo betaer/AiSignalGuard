@@ -2,13 +2,19 @@
 
 [简体中文](../README.md) · [English](readme-en.md)
 
-A browser-based network and digital identity signal diagnostic tool that cross-checks **IP, DNS, WebRTC, browser-environment, and AI-service connectivity evidence** while keeping facts, inferences, failures, and unknown states distinct.
+## Browser-side AI network and environment signal checks
+
+Cross-check exit IP, DNS, WebRTC, timezone, language, browser environment, and AI-service paths to quickly surface leaks, conflicts, and anomalous signals.
+
+Designed for network troubleshooting, environment-consistency checks, and preflight testing before using AI services such as Claude, ChatGPT, and Gemini.
 
 [Run the diagnostic](https://betaer.github.io/AiSignalGuard/) · [Report an issue](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [View source](https://github.com/betaer/AiSignalGuard)
 
 [![AI Signal Guard social preview](https://raw.githubusercontent.com/betaer/AiSignalGuard/main/tuiguang/social-preview.png)](https://github.com/betaer/AiSignalGuard/blob/main/tuiguang/social-preview.png)
 
-AI Signal Guard does not determine a visitor's real nationality, occupation, or personal identity, and it does not promise account access or platform-risk avoidance. It answers a narrower question: **which signals are visible to different network endpoints, whether those signals agree, and whether the available evidence is sufficient.**
+AI Signal Guard does not determine a visitor's real nationality, occupation, or personal identity, and it does not promise account access or platform-risk avoidance. It answers a narrower question: **which network and environment signals are visible to different endpoints, whether those signals agree, and whether the available evidence is sufficient.**
+
+> The network reference score is based on signals observable in the current run. It does not represent platform-account status, ban probability, or an internal platform risk-control decision.
 
 ## Core advantages
 
@@ -29,7 +35,6 @@ AI Signal Guard does not determine a visitor's real nationality, occupation, or 
 | Browser fingerprint surface | Canvas, local summaries, screen, platform, logical processors, memory estimate, WebAudio | Shows what the current browser exposes or can calculate |
 | Service connectivity | AI, content, commerce, developer, global, and China-focused sites | Determines whether this browser request path obtained a response |
 | AI path and status | Endpoint-side country/node labels and official status APIs | Separates path issues from publicly reported platform incidents |
-| Identity profiles | Dynamic weights, confidence, coverage, and critical-difference caps | Compares the environment with a selected digital-use profile |
 | Reports and sharing | Redacted Markdown diagnostics and short summaries | Supports manual review or user-controlled sharing with an AI assistant |
 
 ## Multi-source evidence architecture
@@ -63,17 +68,13 @@ Coverage means “the share of real sources that returned fields usable for the 
 
 IP providers use different schemas for country, region, ASN, organization, and proxy classifications. The project maintains provider-specific adapters and then converts responses into a common record. A field absent from one source is not guessed from unrelated fields.
 
-### Identity-match model
+### Network reference score and coverage
 
-Specific profiles use profile-dependent weights instead of averaging every check:
+- The network reference score combines observable IP, route, DNS, WebRTC, and environment differences to help prioritize follow-up checks.
+- Coverage counts only fields that were actually returned and usable for the current metric; it is not loading progress and does not turn timeouts or failures into positive evidence.
+- When core evidence is insufficient, the product avoids pseudo-precise conclusions. Source conflicts remain visible and link back to their details.
 
-- evidence status is adjusted by confidence;
-- each signal contributes according to its profile weight;
-- coverage counts only weights backed by usable evidence;
-- insufficient core signals prevent a mature score;
-- critical mismatches can cap the final score so minor positive signals cannot hide a major contradiction.
-
-The generic digital-environment analysis does not assume a profession or region, so it avoids a pseudo-precise profile percentage and focuses on consistency and evidence conclusions.
+The network reference score is based on signals observable in the current run. It does not represent platform-account status, ban probability, or an internal platform risk-control decision.
 
 ## Diagnostic semantics
 
@@ -120,7 +121,7 @@ Third-party services have their own logging, privacy, and availability boundarie
 - IPv6 values retain only a limited prefix, not the full address.
 - DNS, WebRTC, and AI-path addresses pass through the same redaction layer.
 - Raw mDNS, Canvas, and WebAudio identifiers are omitted.
-- Share summaries contain profile, coverage, and key positive/negative reasons only.
+- Share summaries contain coverage, major anomalies or conflicts, and follow-up suggestions only.
 
 The user chooses where to paste the report. The page does not automatically open an AI service, send the report, or create an external session.
 
@@ -143,9 +144,9 @@ The user chooses where to paste the report. The page does not automatically open
 ## Quick start
 
 1. Open [https://betaer.github.io/AiSignalGuard/](https://betaer.github.io/AiSignalGuard/).
-2. Within six seconds, choose AI user, content creator, or cross-border commerce; generic analysis is also available.
-3. Confirm the run and wait for IP, DNS, WebRTC, route, connectivity, and browser evidence.
-4. Read coverage, positive and negative reasons, and unknowns before expanding source-level evidence.
+2. On the first visit, choose to Star the project or select “test first” to continue. Refreshes and reruns within 12 hours do not repeat the prompt.
+3. Wait for IP, DNS, WebRTC, route, AI-service path, and browser-environment evidence to complete in stages.
+4. Read the network reference score, coverage, and anomaly notices before expanding source-level evidence.
 5. When needed, copy the redacted Markdown report and paste it manually into a destination you trust.
 
 ## Versioned entry points
@@ -190,10 +191,10 @@ The suite covers identity profiles, source registries, `voteEligible` semantics,
 
 ```text
 .
-├── index.html / app.js            # Current production page and main logic
+├── index.html                     # Current production page and inline diagnostics
 ├── networkEvidence.js             # IP, route, WebRTC/STUN sources and normalization
-├── identityProfiles.js            # Target profiles and weights
-├── identityAnalysis.js            # Confidence, coverage, score, and explanations
+├── identityProfiles.js            # Retained experimental profile configuration
+├── identityAnalysis.js            # Retained experimental profile analysis
 ├── signalSemantics.js             # Signal states and semantic boundaries
 ├── signalGuardApp.js              # IPCX application controller
 ├── v1/ / v2/                      # Fixed version entry points
@@ -212,6 +213,6 @@ The suite covers identity profiles, source registries, `voteEligible` semantics,
 
 ## Boundaries and licensing
 
-- All scores, risk labels, and identity matches are diagnostic heuristics, not internal platform-risk decisions.
+- The network reference score and risk labels are diagnostic heuristics, not platform-account status, ban probability, or internal platform-risk decisions.
 - Third-party endpoints can change, rate-limit, conflict, or become unavailable. The page preserves failure evidence where possible but cannot guarantee external-source availability.
 - The repository currently has no open-source license. Publicly readable source does not by itself grant permission to copy, modify, or redistribute it.
