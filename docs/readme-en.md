@@ -6,7 +6,7 @@ A browser-based network and digital identity signal diagnostic tool that cross-c
 
 [Run the diagnostic](https://betaer.github.io/AiSignalGuard/) · [Report an issue](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [View source](https://github.com/betaer/AiSignalGuard)
 
-![AI Signal Guard social preview](../assets/social-preview.png)
+![AI Signal Guard social preview](../tuiguang/social-preview.png)
 
 AI Signal Guard does not determine a visitor's real nationality, occupation, or personal identity, and it does not promise account access or platform-risk avoidance. It answers a narrower question: **which signals are visible to different network endpoints, whether those signals agree, and whether the available evidence is sufficient.**
 
