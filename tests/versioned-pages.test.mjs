@@ -135,7 +135,25 @@ test("最新版标题、首屏说明与社交搜索元数据统一使用正式�
     assert.match(html, /<meta name="twitter:card" content="summary_large_image">/, name);
     assert.match(html, /<meta name="twitter:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png">/, name);
     assert.match(html, /"image": "https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png"/, name);
-    assert.match(html, /<script type="application\/ld\+json">[\s\S]*?"@type": "WebApplication"[\s\S]*?"featureList": \[/, name);
+    assert.match(html, /<script type="application\/ld\+json">[\s\S]*?"@type": "WebSite"[\s\S]*?"@type": "SoftwareApplication"[\s\S]*?"featureList": \[[\s\S]*?"@type": "BreadcrumbList"/, name);
+    assert.match(html, /<link rel="sitemap" type="application\/xml" href="https:\/\/betaer\.github\.io\/sitemap\.xml">/, name);
+  }
+});
+
+test("最新版结构化数据可解析并复用根站 WebSite 实体", () => {
+  for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
+    const payload = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
+    assert.ok(payload, `${name}: 缺少 JSON-LD`);
+    const data = JSON.parse(payload);
+    const graph = data["@graph"];
+    assert.ok(Array.isArray(graph), `${name}: JSON-LD 应使用 @graph`);
+    const website = graph.find((entry) => entry["@type"] === "WebSite");
+    const application = graph.find((entry) => entry["@type"] === "SoftwareApplication");
+    const breadcrumb = graph.find((entry) => entry["@type"] === "BreadcrumbList");
+    assert.equal(website.url, "https://betaer.github.io/", name);
+    assert.equal(application.url, publicRoot, name);
+    assert.equal(application.isPartOf["@id"], "https://betaer.github.io/#website", name);
+    assert.equal(breadcrumb.itemListElement.length, 2, name);
   }
 });
 

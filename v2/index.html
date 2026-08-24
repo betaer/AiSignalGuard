@@ -14,6 +14,7 @@
     <meta name="author" content="betaer">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="canonical" href="https://betaer.github.io/AiSignalGuard/">
+    <link rel="sitemap" type="application/xml" href="https://betaer.github.io/sitemap.xml">
     <meta property="og:site_name" content="AI Signal Guard">
     <meta property="og:locale" content="zh_CN">
     <meta property="og:title" content="AI Signal Guard · 实时网络与浏览器隐私检测">
@@ -36,29 +37,67 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "AI Signal Guard",
-        "url": "https://betaer.github.io/AiSignalGuard/",
-        "image": "https://betaer.github.io/AiSignalGuard/tuiguang/social-preview.png",
-        "applicationCategory": "SecurityApplication",
-        "operatingSystem": "Any",
-        "browserRequirements": "Requires JavaScript and a modern web browser",
-        "inLanguage": "zh-CN",
-        "isAccessibleForFree": true,
-        "description": "免费检测公网 IPv4/IPv6、DNS 泄漏、WebRTC、浏览器与 WebAudio 指纹、路由归属及 AI 服务连通性，并逐项展示真实来源、失败与超时。",
-        "featureList": [
-          "公网 IPv4 与 IPv6 双栈检测",
-          "DNS 与 WebRTC 泄漏检测",
-          "浏览器与 WebAudio 指纹检测",
-          "IP 情报与路由归属多源核对",
-          "AI 服务连通性检测"
-        ],
-        "author": {
-          "@type": "Person",
-          "name": "betaer",
-          "url": "https://github.com/betaer"
-        },
-        "sameAs": "https://github.com/betaer/AiSignalGuard"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://betaer.github.io/#website",
+            "url": "https://betaer.github.io/",
+            "name": "betaer 项目主页",
+            "alternateName": "betaer Projects",
+            "description": "betaer 的公开项目与浏览器端工具集合。",
+            "inLanguage": ["zh-CN", "en"],
+            "publisher": { "@id": "https://betaer.github.io/#author" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://betaer.github.io/#author",
+            "name": "betaer",
+            "url": "https://github.com/betaer"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://betaer.github.io/AiSignalGuard/#application",
+            "name": "AI Signal Guard",
+            "url": "https://betaer.github.io/AiSignalGuard/",
+            "image": "https://betaer.github.io/AiSignalGuard/tuiguang/social-preview.png",
+            "applicationCategory": "SecurityApplication",
+            "operatingSystem": "Web",
+            "browserRequirements": "需要支持 JavaScript 的现代浏览器",
+            "softwareVersion": "2.0.0",
+            "inLanguage": ["zh-CN", "en"],
+            "isAccessibleForFree": true,
+            "description": "免费检测公网 IPv4/IPv6、DNS 泄漏、WebRTC、浏览器与 WebAudio 指纹、路由归属及 AI 服务连通性，并逐项展示真实来源、失败与超时。",
+            "featureList": [
+              "公网 IPv4 与 IPv6 双栈检测",
+              "DNS 与 WebRTC 泄漏检测",
+              "浏览器与 WebAudio 指纹检测",
+              "IP 情报与路由归属多源核对",
+              "AI 服务连通性检测"
+            ],
+            "isPartOf": { "@id": "https://betaer.github.io/#website" },
+            "author": { "@id": "https://betaer.github.io/#author" },
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "sameAs": "https://github.com/betaer/AiSignalGuard"
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://betaer.github.io/AiSignalGuard/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "项目主页",
+                "item": "https://betaer.github.io/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "AI Signal Guard",
+                "item": "https://betaer.github.io/AiSignalGuard/"
+              }
+            ]
+          }
+        ]
       }
     </script>
     <style>
