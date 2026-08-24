@@ -54,6 +54,14 @@ async function createContext() {
       return;
     }
     externalRequests.push(url.href);
+    if (url.hostname === "github.com") {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/html; charset=utf-8",
+        body: "<!doctype html><title>GitHub repository</title>",
+      });
+      return;
+    }
     await route.abort("failed");
   });
   return { context, externalRequests };
@@ -92,6 +100,16 @@ async function assertInitialGate(pathname) {
     await page.waitForFunction(() => document.querySelector("#floating-recheck")?.disabled === true);
     await page.waitForFunction(() => document.querySelectorAll("#audio-fingerprint-runs > li").length > 0);
     assert.ok(externalRequests.length > requestsBeforeRefresh, `${pathname} 12 小时内刷新应直接检测`);
+
+    if (pathname === "/") {
+      await page.waitForFunction(() => document.querySelector("#floating-recheck")?.disabled === false, null, { timeout: 15000 });
+      const requestsBeforeRecheck = externalRequests.length;
+      await page.locator("#floating-recheck").click();
+      await page.waitForFunction(() => document.querySelector("#floating-recheck")?.disabled === true);
+      assert.equal(await dialog.isVisible(), false, "12 小时内点击右下角重测不应再次弹窗");
+      assert.equal(await page.locator("#recheck-loading").isVisible(), true, "重测应显示当前检测进度");
+      assert.ok(externalRequests.length > requestsBeforeRecheck, "重测应立即启动新一轮检测");
+    }
   } finally {
     await context.close();
   }

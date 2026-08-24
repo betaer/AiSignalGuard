@@ -104,3 +104,17 @@ test("最新版首次检测与重测共用 12 小时 Star 闸门", () => {
     assert.doesNotMatch(html, /pendingRecheck/);
   }
 });
+
+test("最新版标题、首屏说明与社交搜索元数据统一使用正式品牌表达", () => {
+  for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
+    assert.match(html, /<title>AI Signal Guard · 实时网络与浏览器隐私检测<\/title>/, name);
+    assert.doesNotMatch(html, /<title>[^<]*v2\.0|(?:og:title|twitter:title)" content="[^"]*v2\.0/, name);
+    assert.match(html, /<span class="brand-note">实时网络检测<\/span>/, name);
+    assert.match(html, /<section class="intro"[\s\S]*?<p>浏览器端AI网络与身份信号检测<\/p>/, name);
+    assert.match(html, /<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">/, name);
+    assert.match(html, /<meta property="og:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/assets\/og\.png\?v=20260824">/, name);
+    assert.match(html, /<meta name="twitter:card" content="summary_large_image">/, name);
+    assert.match(html, /<meta name="twitter:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/assets\/og\.png\?v=20260824">/, name);
+    assert.match(html, /<script type="application\/ld\+json">[\s\S]*?"@type": "WebApplication"[\s\S]*?"featureList": \[/, name);
+  }
+});

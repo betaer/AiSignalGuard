@@ -5,23 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#eef2f0">
     <link rel="icon" href="favicon.svg?v=20260823-lock" type="image/svg+xml">
-    <title>AI Signal Guard v2.0 · 实时网络检测</title>
-    <meta name="description" content="AI Signal Guard 实时检测公网地址、DNS、WebRTC、浏览器指纹与 AI 服务连接信号，帮助识别网络暴露和环境一致性。">
+    <title>AI Signal Guard · 实时网络与浏览器隐私检测</title>
+    <meta name="description" content="AI Signal Guard 免费检测公网 IPv4/IPv6、DNS 泄漏、WebRTC、浏览器与 WebAudio 指纹、路由归属及 AI 服务连通性，并逐项展示真实来源、失败与超时。">
+    <meta name="keywords" content="IP 检测,IPv4,IPv6,DNS 泄漏,WebRTC 泄漏,浏览器指纹,WebAudio 指纹,网络隐私,AI 服务连通性">
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+    <meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1">
+    <meta name="application-name" content="AI Signal Guard">
+    <meta name="author" content="betaer">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="canonical" href="https://betaer.github.io/AiSignalGuard/">
-    <meta property="og:title" content="AI Signal Guard v2.0 · 实时网络检测">
-    <meta property="og:description" content="实时检测公网地址、DNS、WebRTC、浏览器指纹与 AI 服务连接信号。">
+    <meta property="og:site_name" content="AI Signal Guard">
+    <meta property="og:locale" content="zh_CN">
+    <meta property="og:title" content="AI Signal Guard · 实时网络与浏览器隐私检测">
+    <meta property="og:description" content="一次检查公网 IPv4/IPv6、DNS、WebRTC、浏览器指纹与 AI 服务连通性；真实来源、失败与超时均如实展示。">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://betaer.github.io/AiSignalGuard/">
-    <meta property="og:image" content="https://betaer.github.io/AiSignalGuard/assets/og.png">
+    <meta property="og:image" content="https://betaer.github.io/AiSignalGuard/assets/og.png?v=20260824">
+    <meta property="og:image:secure_url" content="https://betaer.github.io/AiSignalGuard/assets/og.png?v=20260824">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:image:alt" content="AI Signal Guard 实时网络检测">
+    <meta property="og:image:alt" content="AI Signal Guard 实时网络与浏览器隐私检测封面">
     <meta property="og:image:width" content="1280">
     <meta property="og:image:height" content="640">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="AI Signal Guard v2.0 · 实时网络检测">
-    <meta name="twitter:description" content="实时检测公网地址、DNS、WebRTC、浏览器指纹与 AI 服务连接信号。">
-    <meta name="twitter:image" content="https://betaer.github.io/AiSignalGuard/assets/og.png">
-    <meta name="twitter:image:alt" content="AI Signal Guard 实时网络检测">
+    <meta name="twitter:domain" content="betaer.github.io">
+    <meta name="twitter:url" content="https://betaer.github.io/AiSignalGuard/">
+    <meta name="twitter:title" content="AI Signal Guard · 实时网络与浏览器隐私检测">
+    <meta name="twitter:description" content="检测双栈公网 IP、DNS、WebRTC、浏览器指纹与 AI 服务连通性，并展示每项真实来源。">
+    <meta name="twitter:image" content="https://betaer.github.io/AiSignalGuard/assets/og.png?v=20260824">
+    <meta name="twitter:image:alt" content="AI Signal Guard 实时网络与浏览器隐私检测封面">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AI Signal Guard",
+        "url": "https://betaer.github.io/AiSignalGuard/",
+        "image": "https://betaer.github.io/AiSignalGuard/assets/og.png?v=20260824",
+        "applicationCategory": "SecurityApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript and a modern web browser",
+        "inLanguage": "zh-CN",
+        "isAccessibleForFree": true,
+        "description": "免费检测公网 IPv4/IPv6、DNS 泄漏、WebRTC、浏览器与 WebAudio 指纹、路由归属及 AI 服务连通性，并逐项展示真实来源、失败与超时。",
+        "featureList": [
+          "公网 IPv4 与 IPv6 双栈检测",
+          "DNS 与 WebRTC 泄漏检测",
+          "浏览器与 WebAudio 指纹检测",
+          "IP 情报与路由归属多源核对",
+          "AI 服务连通性检测"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "betaer",
+          "url": "https://github.com/betaer"
+        },
+        "sameAs": "https://github.com/betaer/AiSignalGuard"
+      }
+    </script>
     <style>
       :root {
         --bg: #eef2f0;
@@ -409,15 +448,13 @@
       .fingerprint-boundary-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
       .fingerprint-boundary-list li { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink-2); background: var(--surface-soft); font-size: 11px; line-height: 1.65; }
       .fingerprint-boundary-list strong { display: block; margin-bottom: 2px; color: var(--ink); font-size: 11px; }
-      .fingerprint-tls-card { margin-top: 10px; }
       .evidence-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin: 15px 0 0; padding: 0; list-style: none; }
       .evidence-list li { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink-2); background: var(--surface-soft); font-size: 12px; }
       .evidence-list strong { display: block; margin-bottom: 2px; color: var(--ink); font-size: 11px; }
       .privacy-callout { display: flex; align-items: flex-start; gap: 11px; margin-top: 15px; padding: 13px 15px; border: 1px solid #cfe2d5; border-radius: 13px; color: var(--green-deep); background: var(--green-soft); font-size: 12px; }
       .privacy-callout b { display: block; margin-bottom: 2px; }
 
-      .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; color: var(--muted); font-size: 11px; }
-      .site-footer a { color: var(--ink-2); font-weight: 800; text-decoration: none; }
+      .site-footer { margin-top: 32px; color: var(--muted); font-size: 11px; }
       .floating-tool-dock { position: fixed; right: calc(18px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 12; display: flex; flex-direction: column; gap: 9px; transition: opacity 200ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1); }
       .floating-tool-button { position: relative; display: grid; flex: 0 0 48px; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(92, 133, 101, 0.42); border-radius: 50%; color: var(--green-deep); background: rgba(247, 251, 244, 0.96); box-shadow: 0 12px 28px rgba(41, 70, 57, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.82); cursor: pointer; text-decoration: none; backdrop-filter: blur(14px); transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease; }
       .floating-tool-button:hover { border-color: rgba(72, 123, 84, 0.66); background: #edf6ec; box-shadow: 0 15px 32px rgba(41, 70, 57, 0.21), inset 0 1px 0 rgba(255, 255, 255, 0.9); transform: translateY(-2px); }
@@ -581,8 +618,7 @@
         .audio-fingerprint-runs li { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
         .audio-fingerprint-run-meta { grid-column: 1 / -1; padding-left: 0; white-space: normal; }
         .evidence-list { grid-template-columns: 1fr; }
-        .site-footer { display: block; padding-bottom: 32px; }
-        .site-footer span { display: block; margin-bottom: 6px; }
+        .site-footer { padding-bottom: 32px; }
         .recheck-loading { padding: 14px; }
         .recheck-loading-panel { padding: 29px 20px 24px; border-radius: 20px; }
         .recheck-loading-orbit { width: 82px; height: 82px; margin-bottom: 19px; }
@@ -648,7 +684,7 @@
     <header class="demo-header">
       <a class="brand" href="./" aria-label="返回 AI Signal Guard 首页">
         <span class="brand-mark" aria-hidden="true"><img src="favicon.svg?v=20260823-lock" alt=""></span>
-        <span class="brand-copy"><span class="brand-name">AI Signal Guard</span><span class="brand-note">实时检测卡</span></span>
+        <span class="brand-copy"><span class="brand-name">AI Signal Guard</span><span class="brand-note">实时网络检测</span></span>
       </a>
     </header>
 
@@ -656,7 +692,7 @@
       <section class="intro" aria-labelledby="demo-title">
         <p class="eyebrow">AI SIGNAL GUARD / LIVE DIAGNOSTICS</p>
         <h1 id="demo-title">先给结论，<span>再看证据。</span></h1>
-        <p>兼顾桌面核对、手机截图与对外分享。关键结果和真实来源直接展示，失败、缺失与超时也会原样保留。</p>
+        <p>浏览器端AI网络与身份信号检测</p>
       </section>
 
       <nav class="module-tabs" aria-label="检测模块">
@@ -825,28 +861,28 @@
       <section class="view-panel" id="fingerprint-view" data-panel="fingerprint" aria-labelledby="fingerprint-title">
         <div class="section-heading"><div><h2 id="fingerprint-title">浏览器指纹检测</h2><p>先看防护总结，再按需运行 WebAudio 音频指纹自测</p></div><span class="mini-status neutral" id="fingerprint-panel-status">本地计算</span></div>
         <div class="detail-panel fingerprint-top-summary" data-fingerprint-top-summary aria-label="浏览器指纹防护总结">
-          <p class="panel-note" id="fingerprint-panel-note">静态环境摘要已在本地生成；WebAudio 自动检测准备中。</p>
+          <p class="panel-note" id="fingerprint-panel-note">等待开始检测；尚未读取本地浏览器与 WebAudio 信号。</p>
           <div class="comparison">
-            <div class="comparison-row"><span class="comparison-label">环境摘要</span><strong class="comparison-value" id="fingerprint-environment-summary">正在计算本地摘要</strong><span class="mini-status neutral" id="fingerprint-environment-status">本地</span></div>
-            <div class="comparison-row"><span class="comparison-label">WebAudio 暴露</span><strong class="comparison-value" id="audio-fingerprint-summary">准备自动检测</strong><span class="mini-status neutral" id="audio-fingerprint-summary-status">准备中</span></div>
+            <div class="comparison-row"><span class="comparison-label">环境摘要</span><strong class="comparison-value" id="fingerprint-environment-summary">等待开始检测</strong><span class="mini-status neutral" id="fingerprint-environment-status">未开始</span></div>
+            <div class="comparison-row"><span class="comparison-label">WebAudio 暴露</span><strong class="comparison-value" id="audio-fingerprint-summary">等待开始检测</strong><span class="mini-status neutral" id="audio-fingerprint-summary-status">未开始</span></div>
             <div class="comparison-row"><span class="comparison-label">隐私边界</span><strong class="comparison-value">离线渲染 · 不连接扬声器 · 不申请麦克风</strong><span class="mini-status good">仅本地</span></div>
           </div>
         </div>
 
         <div class="fingerprint-primary-stack" aria-label="浏览器指纹检测一级栏目">
           <details class="fingerprint-primary-section" data-fingerprint-primary="webaudio">
-            <summary class="fingerprint-primary-summary"><span class="fingerprint-primary-index" aria-hidden="true">🫆</span><span class="fingerprint-primary-title"><strong>WebAudio 音频指纹</strong><small>类 AliExpress 静默音频处理 · 自动本地防护自测</small></span><span class="fingerprint-primary-count" id="audio-fingerprint-count">准备中</span><span class="fingerprint-primary-chevron" aria-hidden="true">›</span></summary>
+            <summary class="fingerprint-primary-summary"><span class="fingerprint-primary-index" aria-hidden="true">🫆</span><span class="fingerprint-primary-title"><strong>WebAudio 音频指纹</strong><small>类 AliExpress 静默音频处理 · 自动本地防护自测</small></span><span class="fingerprint-primary-count" id="audio-fingerprint-count">未开始</span><span class="fingerprint-primary-chevron" aria-hidden="true">›</span></summary>
             <div class="fingerprint-primary-body">
               <div class="audio-fingerprint-action">
-                <div class="audio-fingerprint-action-copy"><strong>页面加载后自动检测，也可以随时重新运行</strong><span>使用 OfflineAudioContext 连续离线渲染 3 轮；不会连接真实音频设备，也不会申请麦克风权限。</span></div>
-                <button class="audio-fingerprint-run" id="audio-fingerprint-run" type="button">重新运行音频指纹检测</button>
+                <div class="audio-fingerprint-action-copy"><strong>确认开始检测后自动运行，也可以随时重新运行</strong><span>使用 OfflineAudioContext 连续离线渲染 3 轮；不会连接真实音频设备，也不会申请麦克风权限。</span></div>
+                <button class="audio-fingerprint-run" id="audio-fingerprint-run" type="button">开始音频指纹检测</button>
               </div>
-              <span class="visually-hidden" id="audio-fingerprint-announcement" role="status" aria-live="polite" aria-atomic="true">WebAudio 音频指纹准备自动检测</span>
+              <span class="visually-hidden" id="audio-fingerprint-announcement" role="status" aria-live="polite" aria-atomic="true">WebAudio 音频指纹尚未开始</span>
               <div class="audio-fingerprint-facts" id="audio-fingerprint-facts" aria-busy="false" aria-label="WebAudio 音频指纹检测结果">
                 <div class="audio-fingerprint-fact"><span>API 状态</span><strong id="audio-fingerprint-api">等待检测</strong></div>
                 <div class="audio-fingerprint-fact"><span>执行方式</span><strong id="audio-fingerprint-mode">离线渲染 · 不输出声音</strong></div>
-                <div class="audio-fingerprint-fact"><span>三轮一致性</span><strong id="audio-fingerprint-consistency">准备自动检测</strong></div>
-                <div class="audio-fingerprint-fact"><span>防护观察</span><strong id="audio-fingerprint-result">可用不等于正在被跟踪</strong></div>
+                <div class="audio-fingerprint-fact"><span>三轮一致性</span><strong id="audio-fingerprint-consistency">等待检测</strong></div>
+                <div class="audio-fingerprint-fact"><span>防护观察</span><strong id="audio-fingerprint-result">用户确认后在本地运行</strong></div>
               </div>
               <ul class="audio-fingerprint-runs" id="audio-fingerprint-runs" aria-label="WebAudio 三轮检测证据"></ul>
               <div class="audio-fingerprint-comparison-note"><strong>相同摘要不等于同一用户</strong>Chrome、游客模式与其他 Chromium 浏览器在同一设备和操作系统上可能产生相同结果；这里比较的是当前音频计算图输出，不是浏览器实例或用户身份。</div>
@@ -860,46 +896,42 @@
               <div class="fingerprint-grid" aria-label="浏览器本地摘要">
                 <article class="fingerprint-card" data-fingerprint-card="v3">
                   <div class="fingerprint-card-head"><span class="fingerprint-card-label" data-fingerprint-label="v3">LOCAL STABLE HASH</span><button class="copy-mini" type="button" data-copy-fingerprint="v3" aria-label="复制本地稳定摘要">⧉</button></div>
-                  <code data-fingerprint-value="v3">计算中…</code>
+                  <code data-fingerprint-value="v3">等待检测</code>
                   <p data-fingerprint-description="v3">使用当前浏览器本地稳定信号生成摘要，并与官方 Visitor ID 区分展示。</p>
                 </article>
                 <article class="fingerprint-card" data-fingerprint-card="v2">
                   <div class="fingerprint-card-head"><span class="fingerprint-card-label" data-fingerprint-label="v2">LOCAL BROAD HASH</span><button class="copy-mini" type="button" data-copy-fingerprint="v2" aria-label="复制本地宽域摘要">⧉</button></div>
-                  <code data-fingerprint-value="v2">计算中…</code>
+                  <code data-fingerprint-value="v2">等待检测</code>
                   <p data-fingerprint-description="v2">使用更宽的本地浏览器信号生成一次性摘要，并与官方算法明确区分。</p>
                 </article>
               </div>
               <ul class="evidence-list" id="fingerprint-evidence">
-                <li><strong>平台</strong>正在读取</li>
-                <li><strong>屏幕</strong>正在读取</li>
-                <li><strong>CPU / 内存提示</strong>正在读取</li>
-                <li><strong>Canvas / WebGL</strong>正在读取</li>
-                <li><strong>字体接口</strong>正在读取</li>
+                <li><strong>平台</strong>等待检测</li>
+                <li><strong>屏幕</strong>等待检测</li>
+                <li><strong>CPU / 内存提示</strong>等待检测</li>
+                <li><strong>Canvas / WebGL</strong>等待检测</li>
+                <li><strong>字体接口</strong>等待检测</li>
               </ul>
               <div class="privacy-callout"><span aria-hidden="true">i</span><div><b>完整摘要默认折叠</b>页面不会绘制 Canvas 像素指纹，也不会读取未屏蔽的 WebGL 渲染器名称。</div></div>
             </div>
           </details>
 
           <details class="fingerprint-primary-section" data-fingerprint-primary="boundaries">
-            <summary class="fingerprint-primary-summary"><span class="fingerprint-primary-index" aria-hidden="true">i</span><span class="fingerprint-primary-title"><strong>检测边界与建议</strong><small>结果解释、不可读取项与安全限制</small></span><span class="fingerprint-primary-count">4 项</span><span class="fingerprint-primary-chevron" aria-hidden="true">›</span></summary>
+            <summary class="fingerprint-primary-summary"><span class="fingerprint-primary-index" aria-hidden="true">i</span><span class="fingerprint-primary-title"><strong>检测边界与建议</strong><small>结果解释、不可读取项与安全限制</small></span><span class="fingerprint-primary-count">5 项</span><span class="fingerprint-primary-chevron" aria-hidden="true">›</span></summary>
             <div class="fingerprint-primary-body">
               <ul class="fingerprint-boundary-list">
                 <li><strong>不监控其他网站</strong>普通网页受同源隔离限制，无法判断 AliExpress 或其他标签页是否正在调用 WebAudio。</li>
                 <li><strong>不建立实时音频通道</strong>检测仅使用 OfflineAudioContext，不创建实时 AudioContext，不连接扬声器或蓝牙输出。</li>
                 <li><strong>不保留原始音频数据</strong>离线样本只在当前检测内存中参与比较，页面仅展示会话内短摘要，复制报告不会包含音频摘要。</li>
                 <li><strong>稳定不等于唯一</strong>结果只能说明当前页面内是否观察到稳定输出，不能证明跨站、跨会话或跨设备可链接。</li>
+                <li><strong>JA3 / JA4 不可直接读取</strong>普通网页脚本无法访问 TLS ClientHello，因此本页不会生成或伪造 JA3 / JA4 值。</li>
               </ul>
-              <article class="fingerprint-card fingerprint-tls-card" data-fingerprint-card="tls">
-                <div class="fingerprint-card-head"><span class="fingerprint-card-label" data-fingerprint-label="tls">JA3 / JA4</span></div>
-                <code data-fingerprint-value="tls">浏览器端不可读取</code>
-                <p data-fingerprint-description="tls">普通网页脚本无法直接读取 TLS ClientHello，因此不生成或伪造 JA3 / JA4 值。</p>
-              </article>
             </div>
           </details>
         </div>
       </section>
 
-      <footer class="site-footer"><span>实时结果不写入服务器 · 第三方来源可能看到本轮目标 IP</span><a href="./">返回正式首页 →</a></footer>
+      <footer class="site-footer"><span>实时结果不写入服务器 · 第三方来源可能看到本轮目标 IP</span></footer>
     </main>
 
     <div class="floating-tool-dock" data-floating-tools role="toolbar" aria-label="快捷工具">
@@ -2379,12 +2411,7 @@
   );
 
   var timezone = "未知";
-  try {
-    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "未知";
-  } catch (error) {}
-  var languages = Array.isArray(navigator.languages) && navigator.languages.length
-    ? navigator.languages.slice()
-    : [navigator.language || "未知"];
+  var languages = ["未知"];
 
   var AUDIO_FINGERPRINT_RUNS = 3;
   var AUDIO_FINGERPRINT_TIMEOUT_MS = 4500;
@@ -2404,13 +2431,27 @@
     };
   }
 
+  function pendingLocalSignals() {
+    return {
+      platform: "等待检测",
+      userAgent: "等待检测",
+      screen: "等待检测",
+      hardwareConcurrency: null,
+      deviceMemory: null,
+      colorDepth: null,
+      canvasAvailable: null,
+      webglAvailable: null,
+      fontApiAvailable: null,
+    };
+  }
+
   var state = {
     privacy: false,
     running: false,
     runCount: 0,
     runId: 0,
     runController: null,
-    pendingRecheck: false,
+    pendingDetection: null,
     completedAt: null,
     publicIps: {
       state: "pending",
@@ -2438,12 +2479,12 @@
     fingerprints: {
       v3: {
         label: "LOCAL STABLE HASH",
-        value: "计算中…",
+        value: "等待检测",
         description: "本页未加载 FingerprintJS v3+ SDK；这里显示由当前浏览器本地稳定信号生成的摘要，并与官方 Visitor ID 区分展示。",
       },
       v2: {
         label: "LOCAL BROAD HASH",
-        value: "计算中…",
+        value: "等待检测",
         description: "本页未加载 FingerprintJS2；这里使用更宽的本地浏览器信号生成一次性摘要，并明确与官方算法区分。",
       },
       tls: {
@@ -2454,13 +2495,13 @@
     },
     audioFingerprint: {
       state: "idle",
-      result: "准备自动检测",
-      detail: "页面加载后将在本地离线运行",
+      result: "等待开始检测",
+      detail: "用户确认后将在本地离线运行",
       tone: "neutral",
       runs: [],
       durationMs: null,
     },
-    localSignals: collectLocalSignals(),
+    localSignals: pendingLocalSignals(),
   };
 
   function familyKeys() { return ["ipv4", "ipv6"]; }
@@ -2552,6 +2593,19 @@
       webglAvailable: webglAvailable,
       fontApiAvailable: fontApiAvailable,
     };
+  }
+
+  function refreshLocalEnvironmentSignals() {
+    timezone = "未知";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "未知";
+    } catch (error) {}
+    languages = Array.isArray(navigator.languages) && navigator.languages.length
+      ? navigator.languages.slice()
+      : [navigator.language || "未知"];
+    state.observations.timezone = timezone;
+    state.observations.languages = languages.slice();
+    state.localSignals = collectLocalSignals();
   }
 
   function invariant(condition, message) {
@@ -3337,7 +3391,7 @@
   }
 
   function browserLabel() {
-    var ua = navigator.userAgent || "";
+    var ua = state.localSignals.userAgent || "";
     var browser = /Edg\//.test(ua) ? "Edge" : /Chrome\//.test(ua) ? "Chrome" : /Firefox\//.test(ua) ? "Firefox" : /Safari\//.test(ua) ? "Safari" : "浏览器";
     return browser + " · " + state.localSignals.platform;
   }
@@ -3872,7 +3926,7 @@
     var waitingForRelease = pendingAudioFingerprintRenders > 0 && !running;
     var completedRuns = audio.runs.length;
     var apiText = OfflineAudio ? "OfflineAudioContext 可用" : "OfflineAudioContext 不可用";
-    var consistencyText = "准备自动检测";
+    var consistencyText = "等待检测";
     if (running) consistencyText = completedRuns + " / " + AUDIO_FINGERPRINT_RUNS + " 轮完成";
     if (audio.state === "stable") consistencyText = AUDIO_FINGERPRINT_RUNS + " / " + AUDIO_FINGERPRINT_RUNS + " 输出一致";
     if (audio.state === "disturbed") consistencyText = audio.uniqueResults + " / " + AUDIO_FINGERPRINT_RUNS + " 种会话内结果";
@@ -3895,17 +3949,17 @@
     }
     $("#audio-fingerprint-facts").setAttribute("aria-busy", String(running || waitingForRelease));
 
-    var countText = "准备中";
+    var countText = "未开始";
     if (running) countText = completedRuns + " / " + AUDIO_FINGERPRINT_RUNS;
     if (audio.state === "stable" || audio.state === "disturbed") countText = AUDIO_FINGERPRINT_RUNS + " 轮";
     if (audio.state === "restricted") countText = "受限";
     if (audio.state === "uncertain") countText = "不确定";
     $("#audio-fingerprint-count").textContent = countText;
 
-    setMiniStatusNode($("#audio-fingerprint-summary-status"), running ? "检测中" : (audio.state === "idle" ? "准备中" : audio.result), running ? "neutral" : audio.tone);
-    setMiniStatusNode($("#fingerprint-panel-status"), running ? "检测中" : (audio.state === "idle" ? "本地计算" : audio.result), running ? "neutral" : audio.tone);
+    setMiniStatusNode($("#audio-fingerprint-summary-status"), running ? "检测中" : (audio.state === "idle" ? "未开始" : audio.result), running ? "neutral" : audio.tone);
+    setMiniStatusNode($("#fingerprint-panel-status"), running ? "检测中" : (audio.state === "idle" ? "未开始" : audio.result), running ? "neutral" : audio.tone);
 
-    var panelNote = "静态环境摘要已在本地生成；WebAudio 自动检测准备中。";
+    var panelNote = "等待开始检测；尚未读取本地浏览器与 WebAudio 信号。";
     if (running) panelNote = "正在执行第 " + Math.min(completedRuns + 1, AUDIO_FINGERPRINT_RUNS) + " / " + AUDIO_FINGERPRINT_RUNS + " 轮离线音频渲染。";
     if (audio.state === "stable") panelNote = "三轮离线音频输出一致；本页观察到稳定结果，但这不等同于跨站可追踪。";
     if (audio.state === "disturbed") panelNote = "三轮离线音频输出存在差异；可能来自浏览器防护，也可能是正常计算波动。";
@@ -3917,7 +3971,7 @@
     var announcement = $("#audio-fingerprint-announcement");
     if (running) announcement.textContent = "WebAudio 音频指纹检测中，已完成 " + completedRuns + " / " + AUDIO_FINGERPRINT_RUNS + " 轮";
     else if (waitingForRelease) announcement.textContent = "离线音频渲染仍在释放，请稍候";
-    else announcement.textContent = "WebAudio 音频指纹检测结果：" + (audio.state === "idle" ? "准备自动检测" : audio.result + "；" + consistencyText);
+    else announcement.textContent = "WebAudio 音频指纹检测结果：" + (audio.state === "idle" ? "尚未开始" : audio.result + "；" + consistencyText);
 
     var runList = $("#audio-fingerprint-runs");
     runList.replaceChildren();
@@ -4177,6 +4231,13 @@
       state.fingerprints.v2.value = "计算失败";
     }
     updateFingerprintView();
+  }
+
+  function startLocalDetections() {
+    refreshLocalEnvironmentSignals();
+    updateFingerprintView();
+    runAudioFingerprintTest();
+    computeFingerprints();
   }
 
   function fetchWithTimeout(url, options) {
@@ -4474,6 +4535,12 @@
     $("#floating-recheck-label").textContent = label;
   }
 
+  function runInitialDetection() {
+    if (state.running) return;
+    startLocalDetections();
+    runLiveDetection();
+  }
+
   async function runRecheck() {
     if (state.running) return;
     state.runCount += 1;
@@ -4484,6 +4551,7 @@
     renderLoadingStage(0);
     requestAnimationFrame(function () { overlay.classList.add("is-visible"); });
     window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+    startLocalDetections();
     var minimumReveal = new Promise(function (resolve) { setTimeout(resolve, reducedMotion ? 100 : 1500); });
     var completed = await runLiveDetection({
       onPhase: function (phase) { renderLoadingStage(phase); },
@@ -4501,34 +4569,46 @@
   }
 
   function closeStarSupportDialog() {
-    state.pendingRecheck = false;
+    state.pendingDetection = null;
     var dialog = $("#star-support-dialog");
     if (dialog.open) dialog.close();
+  }
+
+  function startRequestedDetection(kind) {
+    if (kind === "initial") {
+      runInitialDetection();
+      return;
+    }
+    if (kind === "recheck") runRecheck();
   }
 
   function continueStarSupport() {
-    var shouldContinue = state.pendingRecheck;
-    state.pendingRecheck = false;
+    var kind = state.pendingDetection;
+    state.pendingDetection = null;
     var dialog = $("#star-support-dialog");
     if (dialog.open) dialog.close();
-    if (shouldContinue) runRecheck();
+    startRequestedDetection(kind);
   }
 
-  function requestRecheck() {
-    if (state.running) return;
+  function requestDetection(kind) {
+    if (!kind || (kind === "recheck" && state.running)) return;
     if (!starPromptPolicy.shouldPrompt()) {
-      runRecheck();
+      startRequestedDetection(kind);
       return;
     }
     var dialog = $("#star-support-dialog");
     if (!dialog || typeof dialog.showModal !== "function") {
-      runRecheck();
+      startRequestedDetection(kind);
       return;
     }
     if (dialog.open) return;
-    state.pendingRecheck = true;
+    state.pendingDetection = kind;
     starPromptPolicy.remember();
     dialog.showModal();
+  }
+
+  function requestRecheck() {
+    requestDetection("recheck");
   }
 
   var backTopScheduled = false;
@@ -4638,13 +4718,9 @@
   $$(".info-tip").forEach(setupInfoTip);
   updateBackToTopVisibility();
   updateSectionNavigation();
-  updateFingerprintView();
-  updateAudioFingerprintView();
-  runAudioFingerprintTest();
-  computeFingerprints();
   render();
-  runLiveDetection();
   alignSectionFromLocationHash();
+  requestDetection("initial");
 })();
 
     </script>
