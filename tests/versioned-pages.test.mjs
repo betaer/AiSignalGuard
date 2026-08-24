@@ -79,3 +79,28 @@ test("最新版 GitHub Star 徽标固定显示 999+ 且不再请求真实计数"
     );
   }
 });
+
+test("最新版页脚不再自返，JA3 / JA4 统一为第 5 条边界说明", () => {
+  for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
+    assert.doesNotMatch(html, /返回正式首页|\.site-footer a|\.fingerprint-tls-card/);
+    assert.match(html, /data-fingerprint-primary="boundaries"[\s\S]*?fingerprint-primary-count">5 项</);
+    assert.match(
+      html,
+      /<li><strong>JA3 \/ JA4 不可直接读取<\/strong>普通网页脚本无法访问 TLS ClientHello，因此本页不会生成或伪造 JA3 \/ JA4 值。<\/li>/,
+      name,
+    );
+    assert.doesNotMatch(html, /<article[^>]+data-fingerprint-card="tls"/);
+  }
+});
+
+test("最新版首次检测与重测共用 12 小时 Star 闸门", () => {
+  for (const html of [latestHtml, v2Html]) {
+    assert.match(html, /pendingDetection:\s*null/);
+    assert.match(html, /function requestDetection\(kind\)/);
+    assert.match(html, /requestDetection\("initial"\)/);
+    assert.match(html, /requestDetection\("recheck"\)/);
+    assert.match(html, /if \(kind === "initial"\)[\s\S]*runInitialDetection\(\)/);
+    assert.match(html, /if \(kind === "recheck"\)[\s\S]*runRecheck\(\)/);
+    assert.doesNotMatch(html, /pendingRecheck/);
+  }
+});
