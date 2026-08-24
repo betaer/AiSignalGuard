@@ -8,9 +8,7 @@
 
 适用于 Claude、ChatGPT、Gemini 等 AI 服务的网络排障、环境一致性核对与访问前预检。
 
-[在线检测](https://betaer.github.io/AiSignalGuard/) · [提交问题](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [查看源码](https://github.com/betaer/AiSignalGuard)
-
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.AiSignalGuard)](https://github.com/betaer/AiSignalGuard)
+[在线检测](https://betaer.github.io/AiSignalGuard/) · [提交问题](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [查看源码](https://github.com/betaer/AiSignalGuard) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.AiSignalGuard)](https://github.com/betaer/AiSignalGuard)
 
 [![AI Signal Guard 社交预览](https://raw.githubusercontent.com/betaer/AiSignalGuard/main/tuiguang/social-preview.png)](https://github.com/betaer/AiSignalGuard/blob/main/tuiguang/social-preview.png)
 
