@@ -91,9 +91,15 @@ test("最新版 GitHub Star 徽标固定显示 999+ 且不再请求真实计数"
   }
 });
 
-test("最新版页脚不再自返，JA3 / JA4 统一为第 5 条边界说明", () => {
+test("最新版页脚链接密码生成器且不再自返，JA3 / JA4 统一为第 5 条边界说明", () => {
   for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
-    assert.doesNotMatch(html, /返回正式首页|\.site-footer a|\.fingerprint-tls-card/);
+    assert.doesNotMatch(html, /返回正式首页|\.fingerprint-tls-card/);
+    assert.match(
+      html,
+      /href="https:\/\/betaer\.github\.io\/password-generator\/" title="Password Generator"[^>]*>密码生成器<\/a>/,
+      name,
+    );
+    assert.doesNotMatch(html, /<footer class="site-footer">[\s\S]*?href="https:\/\/betaer\.github\.io\/AiSignalGuard\/"/);
     assert.match(html, /data-fingerprint-primary="boundaries"[\s\S]*?fingerprint-primary-count">5 项</);
     assert.match(
       html,
