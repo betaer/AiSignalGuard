@@ -19,6 +19,8 @@ const STATIC_FILES = [
   "favicon.svg",
   "assets",
   "demo",
+  "tuiguang/social-preview.png",
+  "tuiguang/xiaohongshu-cover.png",
   "v1",
   "v2",
 ];

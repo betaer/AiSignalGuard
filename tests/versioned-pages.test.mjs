@@ -9,6 +9,8 @@ const files = {
   v1: new URL("v1/index.html", projectRoot),
   v2: new URL("v2/index.html", projectRoot),
 };
+const socialPreview = new URL("tuiguang/social-preview.png", projectRoot);
+const xiaohongshuCover = new URL("tuiguang/xiaohongshu-cover.png", projectRoot);
 
 const [latestHtml, v1Html, v2Html] = await Promise.all(
   Object.values(files).map((file) => readFile(file, "utf8")),
@@ -24,6 +26,15 @@ function normalizeRelativeReferences(html, pathname) {
     const normalized = new URL(value, base);
     return `${attribute}="${normalized.pathname}${normalized.search}${normalized.hash}"`;
   });
+}
+
+async function readPngDimensions(file) {
+  const png = await readFile(file);
+  assert.equal(png.subarray(1, 4).toString("ascii"), "PNG");
+  return {
+    width: png.readUInt32BE(16),
+    height: png.readUInt32BE(20),
+  };
 }
 
 test("根入口、v1 与 v2 固定入口完整且不保留冗余平铺归档", async () => {
@@ -112,9 +123,27 @@ test("最新版标题、首屏说明与社交搜索元数据统一使用正式�
     assert.match(html, /<span class="brand-note">实时网络检测<\/span>/, name);
     assert.match(html, /<section class="intro"[\s\S]*?<p>浏览器端AI网络与身份信号检测<\/p>/, name);
     assert.match(html, /<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">/, name);
-    assert.match(html, /<meta property="og:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/assets\/og\.png\?v=20260824">/, name);
+    assert.match(html, /<meta property="og:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png">/, name);
+    assert.match(html, /<meta property="og:image:width" content="1774">/, name);
+    assert.match(html, /<meta property="og:image:height" content="887">/, name);
     assert.match(html, /<meta name="twitter:card" content="summary_large_image">/, name);
-    assert.match(html, /<meta name="twitter:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/assets\/og\.png\?v=20260824">/, name);
+    assert.match(html, /<meta name="twitter:image" content="https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png">/, name);
+    assert.match(html, /"image": "https:\/\/betaer\.github\.io\/AiSignalGuard\/tuiguang\/social-preview\.png"/, name);
     assert.match(html, /<script type="application\/ld\+json">[\s\S]*?"@type": "WebApplication"[\s\S]*?"featureList": \[/, name);
   }
+});
+
+test("推广图片存在且尺寸符合社交平台使用比例", async () => {
+  const [previewSize, xiaohongshuSize] = await Promise.all([
+    readPngDimensions(socialPreview),
+    readPngDimensions(xiaohongshuCover),
+  ]);
+  assert.deepEqual(previewSize, { width: 1774, height: 887 });
+  assert.equal(previewSize.width / previewSize.height, 2, "X/Twitter 封面应为 2:1");
+  assert.ok(xiaohongshuSize.width >= 1080, "小红书封面宽度应至少为 1080px");
+  assert.ok(xiaohongshuSize.height >= 1440, "小红书封面高度应至少为 1440px");
+  assert.ok(
+    Math.abs(xiaohongshuSize.width / xiaohongshuSize.height - 3 / 4) < 0.003,
+    "小红书封面应接近 3:4 竖版比例",
+  );
 });

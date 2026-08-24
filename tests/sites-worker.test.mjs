@@ -81,8 +81,30 @@ test("serves the product homepage and rewrites share metadata to its Sites origi
 
   const html = await response.text();
   assert.match(html, /<title>AI Signal Guard/);
-  assert.match(html, /https:\/\/ai-signal-guard\.example\/assets\//);
+  assert.match(
+    html,
+    /https:\/\/ai-signal-guard\.example\/tuiguang\/social-preview\.png/,
+  );
   assert.doesNotMatch(html, /betaer\.github\.io\/aisignalguard/i);
+});
+
+test("serves the social preview and Xiaohongshu cover as public PNG assets", async () => {
+  const worker = await loadWorker();
+  const env = { ASSETS: mockAssets() };
+
+  for (const pathname of [
+    "/tuiguang/social-preview.png",
+    "/tuiguang/xiaohongshu-cover.png",
+  ]) {
+    const response = await worker.fetch(
+      new Request(`https://ai-signal-guard.example${pathname}`),
+      env,
+      context(),
+    );
+    assert.equal(response.status, 200, pathname);
+    assert.equal(response.headers.get("content-type"), "image/png", pathname);
+    assert.ok((await response.arrayBuffer()).byteLength > 100_000, pathname);
+  }
 });
 
 test("serves fixed v1 and v2 directories while keeping one public share root", async () => {
