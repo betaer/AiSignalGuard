@@ -8,9 +8,7 @@ Cross-check exit IP, DNS, WebRTC, timezone, language, browser environment, and A
 
 Designed for network troubleshooting, environment-consistency checks, and preflight testing before using AI services such as Claude, ChatGPT, and Gemini.
 
-[Run the diagnostic](https://betaer.github.io/AiSignalGuard/) · [Report an issue](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [View source](https://github.com/betaer/AiSignalGuard)
-
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.AiSignalGuard)](https://github.com/betaer/AiSignalGuard)
+[Run the diagnostic](https://betaer.github.io/AiSignalGuard/) · [Report an issue](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [View source](https://github.com/betaer/AiSignalGuard) · [![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.AiSignalGuard)](https://github.com/betaer/AiSignalGuard)
 
 [![AI Signal Guard social preview](https://raw.githubusercontent.com/betaer/AiSignalGuard/main/tuiguang/social-preview.png)](https://github.com/betaer/AiSignalGuard/blob/main/tuiguang/social-preview.png)
 
