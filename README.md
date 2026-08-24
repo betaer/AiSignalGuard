@@ -6,7 +6,7 @@
 
 [在线检测](https://betaer.github.io/AiSignalGuard/) · [提交问题](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [查看源码](https://github.com/betaer/AiSignalGuard)
 
-![AI Signal Guard 社交预览](tuiguang/social-preview.png)
+[![AI Signal Guard 社交预览](https://raw.githubusercontent.com/betaer/AiSignalGuard/main/tuiguang/social-preview.png)](https://github.com/betaer/AiSignalGuard/blob/main/tuiguang/social-preview.png)
 
 AI Signal Guard 不判断访问者的真实国籍、职业或个人身份，也不承诺账号解锁或规避平台风控。它回答的是：**当前浏览器向不同网络端点暴露了哪些信号，这些信号是否一致，以及证据是否足够。**
 
