@@ -10,6 +10,8 @@ Designed for network troubleshooting, environment-consistency checks, and prefli
 
 [Run the diagnostic](https://betaer.github.io/AiSignalGuard/) · [Report an issue](https://github.com/betaer/AiSignalGuard/issues/new/choose) · [View source](https://github.com/betaer/AiSignalGuard)
 
+[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=betaer.AiSignalGuard)](https://github.com/betaer/AiSignalGuard)
+
 [![AI Signal Guard social preview](https://raw.githubusercontent.com/betaer/AiSignalGuard/main/tuiguang/social-preview.png)](https://github.com/betaer/AiSignalGuard/blob/main/tuiguang/social-preview.png)
 
 AI Signal Guard does not determine a visitor's real nationality, occupation, or personal identity, and it does not promise account access or platform-risk avoidance. It answers a narrower question: **which network and environment signals are visible to different endpoints, whether those signals agree, and whether the available evidence is sufficient.**
