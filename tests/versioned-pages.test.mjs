@@ -91,17 +91,19 @@ test("最新版 GitHub Star 徽标固定显示 999+ 且不再请求真实计数"
   }
 });
 
-test("最新版在 GitHub 下方提供响应式 X 主页入口", () => {
+test("最新版 X 入口默认只显示图标并在悬停时说明作者账号", () => {
   for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
     assert.match(
       html,
       /id="github-shortcut"[\s\S]*?<a class="floating-tool-button floating-x-button" id="x-shortcut" href="https:\/\/x\.com\/Betaer" target="_blank" rel="noopener noreferrer"/,
       name,
     );
-    assert.match(html, /id="x-shortcut"[^>]+aria-label="在新窗口打开 Betaer 的 X 主页"[^>]+title="打开 Betaer 的 X 主页"/, name);
-    assert.match(html, /class="floating-tool-icon floating-x-icon"[\s\S]*?<span class="floating-tool-label">X<\/span>/, name);
+    assert.match(html, /id="x-shortcut"[^>]+aria-label="在新窗口打开作者 X @Betaer 主页"[^>]+title="作者 X @Betaer"/, name);
+    assert.match(html, /class="floating-tool-icon floating-x-icon"[\s\S]*?<span class="floating-tool-label">作者 X @Betaer<\/span>/, name);
     assert.match(html, /\.floating-x-icon\s*\{[^}]*fill:\s*currentColor;[^}]*stroke:\s*none;/, name);
-    assert.match(html, /\.floating-x-button \.floating-tool-label\s*\{[^}]*opacity:\s*1;/, name);
+    assert.doesNotMatch(html, /\.floating-x-button \.floating-tool-label\s*\{[^}]*opacity:\s*1;/, name);
+    assert.match(html, /\.floating-tool-label\s*\{[^}]*opacity:\s*0;/, name);
+    assert.match(html, /\.floating-tool-button:hover \.floating-tool-label,[^{}]+\{[^}]*opacity:\s*1;/, name);
     assert.match(html, /@media \(max-width:\s*680px\)[\s\S]*?\.floating-tool-label\s*\{\s*display:\s*none;\s*\}/, name);
     assert.match(
       html,

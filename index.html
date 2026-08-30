@@ -521,7 +521,6 @@
       .floating-privacy-button[data-privacy-active="true"] .floating-privacy-icon-off { display: block; }
       .floating-github-button { font-variant-numeric: tabular-nums; }
       .floating-x-icon { fill: currentColor; stroke: none; stroke-width: 0; }
-      .floating-x-button .floating-tool-label { transform: translate(0, -50%); opacity: 1; }
       .floating-star-badge { position: absolute; top: -6px; right: -5px; display: inline-grid; min-width: 22px; height: 22px; place-items: center; padding: 0 4px; border: 2px solid var(--bg); border-radius: 999px; color: white; background: #405535; box-shadow: 0 3px 8px rgba(31, 48, 25, 0.22); font-family: var(--mono); font-size: 9px; font-weight: 800; line-height: 1; }
       .floating-github-button[data-star-state="loading"] .floating-star-badge, .floating-github-button[data-star-state="fallback"] .floating-star-badge { background: #697064; }
       .floating-tool-label { position: absolute; right: calc(100% + 10px); top: 50%; min-width: max-content; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink-2); background: rgba(255, 255, 255, 0.96); box-shadow: var(--shadow-small); font-size: 10px; font-weight: 800; line-height: 1; transform: translate(5px, -50%); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 160ms ease; }
@@ -1037,11 +1036,11 @@
         <span class="floating-star-badge" id="star-count" aria-hidden="true">999+</span>
         <span class="floating-tool-label" id="github-label">GitHub · 999+</span>
       </a>
-      <a class="floating-tool-button floating-x-button" id="x-shortcut" href="https://x.com/Betaer" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开 Betaer 的 X 主页" title="打开 Betaer 的 X 主页">
+      <a class="floating-tool-button floating-x-button" id="x-shortcut" href="https://x.com/Betaer" target="_blank" rel="noopener noreferrer" aria-label="在新窗口打开作者 X @Betaer 主页" title="作者 X @Betaer">
         <svg class="floating-tool-icon floating-x-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24">
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817-5.967 6.817H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"></path>
         </svg>
-        <span class="floating-tool-label">X</span>
+        <span class="floating-tool-label">作者 X @Betaer</span>
       </a>
     </div>
     <span class="visually-hidden" id="floating-action-status" aria-live="polite"></span>
