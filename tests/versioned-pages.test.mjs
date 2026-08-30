@@ -95,7 +95,7 @@ test("最新版 X 入口默认只显示图标并在悬停时说明作者账号",
   for (const [name, html] of [["latest", latestHtml], ["v2", v2Html]]) {
     assert.match(
       html,
-      /id="github-shortcut"[\s\S]*?<a class="floating-tool-button floating-x-button" id="x-shortcut" href="https:\/\/x\.com\/Betaer" target="_blank" rel="noopener noreferrer"/,
+      /id="github-shortcut"[\s\S]*?<a class="floating-tool-button floating-x-button" id="x-shortcut" href="https:\/\/x\.com\/intent\/user\?screen_name=betaer" target="_blank" rel="noopener noreferrer"/,
       name,
     );
     assert.match(html, /id="x-shortcut"[^>]+aria-label="在新窗口打开作者 X @Betaer 主页"[^>]+title="作者 X @Betaer"/, name);

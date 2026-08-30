@@ -24,7 +24,7 @@
 - Modify: `index.html`
 - Modify: `v2/index.html`
 
-- [ ] **Step 1: 在两份新版页面的 GitHub 按钮之后加入 `#x-shortcut`，链接到 `https://x.com/Betaer` 并设置 `target="_blank" rel="noopener noreferrer"`。**
+- [ ] **Step 1: 在两份新版页面的 GitHub 按钮之后加入 `#x-shortcut`，链接到 `https://x.com/intent/user?screen_name=betaer` 并设置 `target="_blank" rel="noopener noreferrer"`。**
 - [ ] **Step 2: 保留 `.floating-x-icon`，删除 X 标签的强制常驻样式，并把统一悬停文案改为“作者 X @Betaer”。**
 - [ ] **Step 3: 在移动端隐藏悬停文案，并保留 `360px` 窄屏七项按钮布局。**
 
