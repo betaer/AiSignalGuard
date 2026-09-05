@@ -163,6 +163,60 @@
     return root.AISGIpSemantics.compareComparableFields(record, baseline);
   }
 
+  // Organization strings are descriptive labels, not proof of a different network.
+  // All consumers use this assessment so weak votes cannot become top-level conflicts.
+  function assessIntel(families) {
+    var conflicts = [], organizationDifferences = [], missing = [];
+    var assessments = families.map(function (family) {
+      var country = consensus(family.intel, "countryCode");
+      var asn = consensus(family.intel, "asn");
+      var organization = consensus(family.intel, "organization");
+      var label = family.family === "ipv6" ? "IPv6" : "IPv4";
+      if (!country.strong) missing.push(label + " 国家未形成可靠共识");
+      if (!asn.strong) missing.push(label + " ASN 未形成可靠共识");
+      if (organization.conflicts) organizationDifferences.push(label + " 组织名称存在差异，仅作标签参考，不据此认定网络冲突");
+      var records = family.intel.map(function (record) {
+        var comparison = compareIntel(record, { countryCode: country.value, asn: asn.value });
+        var fields = [];
+        if (record.voteEligible && record.countryCode && country.value) fields.push("国家");
+        if (record.voteEligible && record.asn && asn.value) fields.push("ASN");
+        if (comparison.conflicts.length) conflicts.push({ record: record, family: family.family, fields: comparison.conflicts });
+        var orgNote = record.organization && organization.conflicts ? "；组织名称仅作参考" : "";
+        return {
+          record: record, conflicts: comparison.conflicts, comparable: comparison.comparable,
+          label: comparison.conflicts.length ? comparison.conflicts.join(" / ") + "冲突" : fields.length ? fields.join(" / ") + "一致" + orgNote : "国家 / ASN 待核对" + orgNote,
+          tone: comparison.conflicts.length ? "bad" : !fields.length || orgNote ? "neutral" : "good",
+        };
+      });
+      return { family: family.family, country: country, asn: asn, organization: organization, records: records };
+    });
+    return { families: assessments, conflicts: conflicts, organizationDifferences: organizationDifferences, missing: missing };
+  }
+
+  function assessEnvironment(families, timezone, language) {
+    var timezoneRegions = timezoneCountries(timezone), languageCountry = languageRegion(language);
+    var timezoneChecks = [], languageChecks = [];
+    families.forEach(function (family) {
+      var country = consensus(family.intel, "countryCode");
+      var timezoneKnown = country.strong && timezoneRegions.length > 0;
+      var languageKnown = country.strong && Boolean(languageCountry);
+      timezoneChecks.push({ family: family.family, known: timezoneKnown, mismatch: timezoneKnown && !timezoneRegions.includes(country.value) });
+      languageChecks.push({ family: family.family, known: languageKnown, mismatch: languageKnown && languageCountry !== country.value });
+    });
+    return { timezone: timezoneChecks, language: languageChecks };
+  }
+
+  function assessRisk(families) {
+    var flags = [["proxy", "Proxy"], ["vpn", "VPN"], ["tor", "Tor"], ["hosting", "Hosting"]];
+    return families.map(function (family) {
+      var checks = flags.map(function (field) {
+        var eligible = family.intel.filter(function (record) { return record.voteEligible && typeof record[field[0]] === "boolean"; });
+        return { label: field[1], known: eligible.length > 0, flagged: eligible.some(function (record) { return record[field[0]] === true; }) };
+      });
+      return { family: family.family, checks: checks, missing: checks.filter(function (item) { return !item.known; }).map(function (item) { return item.label; }) };
+    });
+  }
+
   function assessDns(dns, families) {
     var records = dns.records.filter(function (record) { return normalizeIp(record.observedIp); });
     var countries = families.map(function (family) { return family.country.value; }).filter(Boolean);
@@ -262,7 +316,6 @@
     var dnsMissing = dnsAssessment.missing;
     var routeAssessment = assessRoutes(families);
     var riskRecords = intel.filter(function (record) { return record.voteEligible && [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return value === true; }); });
-    var riskKnown = intel.some(function (record) { return record.voteEligible && [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return typeof value === "boolean"; }); });
     var ai = input.aiServices || [];
     var aiMismatch = ai.some(function (record) {
       if (record.state === "restricted" || record.state === "http_error") return true;
@@ -271,10 +324,86 @@
       var family = families.find(function (item) { return item.family === ipFamily(ip); });
       return !family || !family.addresses.includes(ip) || Boolean(record.countryCode && family.country.value && record.countryCode !== family.country.value);
     });
-    var aiMissing = ai.length !== 3 || ai.some(function (record) { return !["path_available", "reachable"].includes(record.state); });
+    var aiMissing = ai.length !== 3 || ai.some(function (record) { return !["path_available", "reachable", "restricted", "http_error"].includes(record.state); });
     var aiCoverage = ai.reduce(function (sum, record) { return sum + (["path_available", "reachable", "restricted", "http_error"].includes(record.state) ? 1 : record.state === "unverified" ? 0.5 : 0); }, 0) / 3;
     var coverage = Math.round((families.length ? 10 : 0) + 25 * usable(intel) / slots + 20 * usable(routes) / slots + 20 * webrtc.stunResponses.filter(function (record) { return record.gatheringComplete !== false; }).length / 20 + (dnsRecords.length ? dnsMissing ? 7.5 : 15 : 0) + 10 * aiCoverage);
-    var scoreAvailable = families.length > 0 && families.every(function (family) { return family.country.strong && usable(family.intel) >= 3 && usable(family.routes) >= 1; }) && !routeAssessment.missingFamilies.length && webrtc.stunResponses.length > 0 && !webrtc.missingFamilies.length && !webrtc.unverified.length && !webrtc.incomplete.length && !dnsMissing && coverage >= 60;
+    var intelAssessment = assessIntel(families);
+    var dimensions = [], missingReasons = intelAssessment.missing.slice(), scoreBlockers = [];
+    function check(known, passed, missingReason) {
+      if (!known && missingReason) missingReasons.push(missingReason);
+      return { known: Boolean(known), passed: Boolean(passed) };
+    }
+    function dimension(id, label, weight, checks) {
+      var unit = weight / Math.max(1, checks.length);
+      var assessed = checks.filter(function (item) { return item.known; }).length * unit;
+      var earned = checks.filter(function (item) { return item.known && item.passed; }).length * unit;
+      dimensions.push({ id: id, label: label, weight: weight, assessedWeight: assessed, earnedWeight: earned, state: !assessed ? "unknown" : earned < assessed ? "review" : assessed < weight ? "partial" : "matched" });
+    }
+    var countryValues = intelAssessment.families.map(function (family) { return family.country.value; }).filter(Boolean);
+    var asnValues = intelAssessment.families.map(function (family) { return family.asn.value; }).filter(Boolean);
+    var crossCountry = new Set(countryValues).size > 1;
+    var crossAsn = new Set(asnValues).size > 1;
+    dimension("network", "IP 归属", 20, intelAssessment.families.flatMap(function (family) {
+      var label = family.family === "ipv6" ? "IPv6" : "IPv4";
+      var multipleExits = webrtc.httpDisagreements.includes(family.family);
+      return [
+        check(family.country.strong || multipleExits, !family.country.conflicts && !crossCountry && !multipleExits, label + " 国家未形成可靠共识"),
+        check(family.asn.strong || multipleExits, !family.asn.conflicts && !crossAsn && !multipleExits, label + " ASN 未形成可靠共识"),
+      ];
+    }));
+    dimension("routes", "路由归属", 15, families.map(function (family) {
+      var result = assessRoutes([family]);
+      return check(!result.missingFamilies.length || result.needsReview, !result.needsReview, family.family.toUpperCase().replace("IPV", "IPv") + " 路由起源缺少可核对证据");
+    }));
+    dimension("webrtc", "WebRTC", 25, families.map(function (family) {
+      var candidates = webrtc.byFamily[family.family];
+      var conflict = webrtc.conflicts.some(function (record) { return ipFamily(record.observedIp) === family.family; });
+      // A conflict already observed remains adverse evidence even when gathering times out.
+      var complete = candidates.some(function (record) { return record.gatheringComplete !== false; });
+      return check(conflict || complete, !conflict, (family.family === "ipv6" ? "IPv6" : "IPv4") + " WebRTC 未取得完整可核对候选");
+    }));
+    if (webrtc.unverified.length) missingReasons.push("部分 WebRTC 候选缺少同地址族 HTTP 基准");
+    if (webrtc.incomplete.length) missingReasons.push("部分 WebRTC 候选收集未完整结束，已观察到的分歧仍保留");
+    if (!webrtc.stunResponses.length) missingReasons.push("STUN 服务器响应未确认");
+    // Preserve the share comparable to known exit countries, without pretending the
+    // other address family or an unknown resolver country has also been checked.
+    if (dnsMissing) missingReasons.push("DNS 解析器或部分出口地区证据不足");
+    dimension("dns", "DNS 地区", 10, families.flatMap(function (family) {
+      return dnsRecords.map(function (record) {
+        var known = Boolean(family.country.value && record.countryCode && (dns.state === "success" || dnsMismatch));
+        return check(known, countryValues.includes(record.countryCode));
+      });
+    }));
+    var risk = assessRisk(families);
+    dimension("risk", "来源风险标签", 10, risk.flatMap(function (family) {
+      if (family.missing.length) missingReasons.push((family.family === "ipv6" ? "IPv6" : "IPv4") + " 风险标签未取得：" + family.missing.join(" / "));
+      return family.checks.map(function (item) { return check(item.known, !item.flagged); });
+    }));
+    var environment = assessEnvironment(families, input.timezone, input.language);
+    var timezoneMismatch = environment.timezone.some(function (item) { return item.mismatch; });
+    var languageMismatch = environment.language.some(function (item) { return item.mismatch; });
+    dimension("timezone", "时区一致性", 5, environment.timezone.map(function (item) {
+      return check(item.known, !item.mismatch, (item.family === "ipv6" ? "IPv6" : "IPv4") + " 时区与出口地区尚不可核对");
+    }));
+    dimension("language", "语言地区", 5, environment.language.map(function (item) {
+      return check(item.known, !item.mismatch, (item.family === "ipv6" ? "IPv6" : "IPv4") + " 语言地区与出口尚不可核对");
+    }));
+    dimension("ai", "AI 服务路径", 10, AI_SERVICES.map(function (service) {
+      var record = ai.find(function (item) { return item.id === service.id; });
+      var known = record && ["path_available", "reachable", "restricted", "http_error"].includes(record.state);
+      var ip = record && normalizeIp(record.observedIp);
+      var family = ip && families.find(function (item) { return item.family === ipFamily(ip); });
+      var mismatch = record && (["restricted", "http_error"].includes(record.state) || ip && (!family || !family.addresses.includes(ip) || record.countryCode && family.country.value && record.countryCode !== family.country.value));
+      return check(known, !mismatch, service.name + " 响应不可核对");
+    }));
+    if (!families.length) missingReasons.unshift("未取得 HTTP 公网出口，无法按地址族核对");
+    if (dnsMissing && dnsMismatch) missingReasons.push("部分 DNS 地区仍未知，已确认地区分歧不被忽略");
+    var assessedWeight = dimensions.reduce(function (sum, item) { return sum + item.assessedWeight; }, 0);
+    var earnedWeight = dimensions.reduce(function (sum, item) { return sum + item.earnedWeight; }, 0);
+    var reliableBaseline = families.some(function (family, index) { return normalizeIp(family.ip) && intelAssessment.families[index].country.strong && usable(family.intel) >= 3; });
+    if (!reliableBaseline) scoreBlockers.push("缺少 HTTP 出口及可靠国家共识（至少 3 个可用情报来源）");
+    if (assessedWeight < 40) scoreBlockers.push("可核对权重不足 40 / 100，暂不评分");
+    var scoreAvailable = scoreBlockers.length === 0;
     var reasons = [];
     if (webrtc.conflicts.length) reasons.push("WebRTC 候选与同族 HTTP 出口不同");
     if (dnsMismatch) reasons.push("DNS 解析器地区与已知出口不同");
@@ -282,15 +411,22 @@
     if (routeAssessment.invalid.length) reasons.push("路由响应与查询 IP、前缀或 ASN 不匹配");
     if (routeAssessment.multiOrigin.length) reasons.push("路由返回多个起源 ASN，需核对多起源公告");
     if (riskRecords.length) reasons.push("来源返回明确代理或机房标签");
-    if (input.fieldConflicts) reasons.push("IP 情报来源存在字段分歧");
-    if (input.timezoneMismatch) reasons.push("时区与出口地区不同");
-    if (input.languageMismatch) reasons.push("语言地区与出口不同");
-    if (input.crossCountryMismatch || input.crossAsnMismatch) reasons.push("双栈归属存在差异");
+    if (intelAssessment.conflicts.length) reasons.push("IP 情报存在国家 / ASN 明确冲突");
+    if (timezoneMismatch) reasons.push("时区与出口地区不同");
+    if (languageMismatch) reasons.push("语言地区与出口不同");
+    if (crossCountry || crossAsn) reasons.push("双栈归属存在差异");
     if (webrtc.httpDisagreements.length) reasons.push("同族 HTTP 回显返回多个出口");
     if (aiMismatch) reasons.push("AI 服务返回受限状态或不同路径");
-    var missing = !scoreAvailable || dnsMissing || !riskKnown || aiMissing;
-    var penalties = (webrtc.conflicts.length ? 25 : 0) + (dnsMismatch ? 10 : 0) + (riskRecords.length ? 10 : 0) + (input.fieldConflicts ? 8 : 0) + (input.timezoneMismatch ? 5 : 0) + (input.languageMismatch ? 5 : 0) + (input.crossCountryMismatch ? 12 : 0) + (input.crossAsnMismatch ? 5 : 0) + (webrtc.httpDisagreements.length ? 8 : 0) + (aiMismatch ? 10 : 0);
-    return { coverage: Math.min(100, coverage), score: scoreAvailable ? Math.max(0, coverage - penalties - (routeAssessment.needsReview ? 10 : 0)) : null, reasons: reasons, routes: routeAssessment, dnsMissing: dnsMissing, dnsMismatch: dnsMismatch, riskRecords: riskRecords, aiMissing: aiMissing, needsReview: reasons.length > 0 || webrtc.unverified.length > 0, evidenceMissing: missing };
+    missingReasons = Array.from(new Set(missingReasons));
+    var missing = !scoreAvailable || missingReasons.length > 0;
+    return {
+      coverage: Math.min(100, coverage), score: scoreAvailable ? Math.round(100 * earnedWeight / assessedWeight) : null,
+      scoreState: !scoreAvailable ? "unavailable" : missing ? "partial" : "complete", scoreBlockers: scoreBlockers,
+      assessedWeight: assessedWeight, earnedWeight: earnedWeight, dimensions: dimensions, missingReasons: missingReasons,
+      reasons: reasons, notes: intelAssessment.organizationDifferences, intel: intelAssessment, routes: routeAssessment,
+      dnsMissing: dnsMissing, dnsMismatch: dnsMismatch, riskRecords: riskRecords, risk: risk, environment: environment, aiMissing: aiMissing, aiMismatch: aiMismatch,
+      needsReview: reasons.length > 0 || webrtc.unverified.length > 0, evidenceMissing: missing,
+    };
   }
 
   var AI_SERVICES = Object.freeze([
@@ -331,5 +467,5 @@
     }
   }
 
-  root.AISGV2Core = Object.freeze({ normalizeIp: normalizeIp, ipFamily: ipFamily, uniqueIps: uniqueIps, maskSensitiveText: maskSensitiveText, maskDigest: maskDigest, request: request, consensus: consensus, timezoneCountries: timezoneCountries, languageRegion: languageRegion, candidateIps: candidateIps, isPublicCandidate: isPublicCandidate, compareIntel: compareIntel, assessDns: assessDns, assessRoutes: assessRoutes, createConfirmationPolicy: createConfirmationPolicy, assessWebrtc: assessWebrtc, assessOverview: assessOverview, AI_SERVICES: AI_SERVICES, probeAiService: probeAiService });
+  root.AISGV2Core = Object.freeze({ normalizeIp: normalizeIp, ipFamily: ipFamily, uniqueIps: uniqueIps, maskSensitiveText: maskSensitiveText, maskDigest: maskDigest, request: request, consensus: consensus, timezoneCountries: timezoneCountries, languageRegion: languageRegion, candidateIps: candidateIps, isPublicCandidate: isPublicCandidate, compareIntel: compareIntel, assessIntel: assessIntel, assessEnvironment: assessEnvironment, assessRisk: assessRisk, assessDns: assessDns, assessRoutes: assessRoutes, createConfirmationPolicy: createConfirmationPolicy, assessWebrtc: assessWebrtc, assessOverview: assessOverview, AI_SERVICES: AI_SERVICES, probeAiService: probeAiService });
 })(globalThis);

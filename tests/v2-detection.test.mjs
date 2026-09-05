@@ -20,8 +20,186 @@ function overviewInput() {
     webrtc: core.assessWebrtc(Array.from({ length: 20 }, (_, i) => good(`node-${i}`)), { ipv4: [ip], ipv6: [] }),
     dns: { state: "success", records: [{ observedIp: "198.51.100.1", countryCode: "US" }] },
     aiServices: core.AI_SERVICES.map(service => ({ ...service, state: "reachable" })),
+    timezone: "America/New_York", language: "en-US",
   };
 }
+
+function dualInput() {
+  const input = overviewInput();
+  input.families.push({ ...input.families[0], family: "ipv6", ip: ipv6, addresses: [ipv6] });
+  input.webrtc = core.assessWebrtc(Array.from({ length: 20 }, (_, i) => ({ ...good(`node-${i}`), observedIps: [ip, ipv6] })), { ipv4: [ip], ipv6: [ipv6] });
+  return input;
+}
+
+test("真实双栈场景：IPv6 无候选仍给部分证据参考分，未知权重不算通过", () => {
+  const input = dualInput();
+  input.webrtc = core.assessWebrtc(Array.from({ length: 16 }, () => good()), { ipv4: [ip], ipv6: [ipv6] });
+  input.language = "zh-TW";
+  const result = core.assessOverview(input);
+  assert.equal(result.scoreState, "partial");
+  assert.equal(result.assessedWeight, 87.5);
+  assert.equal(result.score, 94);
+  assert.equal(result.dimensions.find(item => item.id === "webrtc").assessedWeight, 12.5);
+  assert.match(result.missingReasons.join("；"), /IPv6.*WebRTC/);
+  assert.ok(result.reasons.some(text => text.includes("语言")));
+  assert.ok(result.evidenceMissing);
+});
+
+test("评分和来源覆盖率分开；DNS 失败、少量节点与组织标签差异不一票否决", () => {
+  const input = overviewInput();
+  input.webrtc = core.assessWebrtc([good()], { ipv4: [ip], ipv6: [] });
+  input.dns = { state: "network_error", records: [] };
+  input.families[0].routes = input.families[0].routes.slice(0, 1);
+  input.families[0].intel = input.families[0].intel.slice(0, 3);
+  const result = core.assessOverview(input);
+  assert.ok(result.coverage < 60);
+  assert.equal(result.score, 100);
+  assert.equal(result.scoreState, "partial");
+  assert.equal(result.assessedWeight, 90);
+  assert.match(result.missingReasons.join("；"), /DNS/);
+});
+
+test("完全缺失、基础共识不足或可核对权重太少时不伪造评分", () => {
+  const input = overviewInput();
+  input.families[0].intel = [good()];
+  input.families[0].country = core.consensus(input.families[0].intel, "countryCode");
+  let result = core.assessOverview(input);
+  assert.equal(result.score, null);
+  assert.match(result.scoreBlockers.join("；"), /可靠.*共识/);
+  input.families[0].intel = Array.from({ length: 3 }, () => ({ ...good(), asn: null, proxy: null, vpn: null, hosting: null, tor: null }));
+  input.families[0].country = core.consensus(input.families[0].intel, "countryCode");
+  input.families[0].routes = [];
+  input.webrtc = core.assessWebrtc([], { ipv4: [ip], ipv6: [] });
+  input.dns = { state: "network_error", records: [] };
+  input.aiServices = [];
+  input.timezone = "Etc/UTC";
+  input.language = "en";
+  result = core.assessOverview(input);
+  assert.equal(result.scoreState, "unavailable");
+  assert.match(result.scoreBlockers.join("；"), /40/);
+  assert.equal(result.assessedWeight, 10);
+});
+
+test("组织名称差异与国家 ASN 明确冲突共用判断，未知字段不能标成全字段一致", () => {
+  const input = overviewInput();
+  const names = ["Linode", "Akamai Connected Cloud", "Akamai Connected Cloud", "Linode LLC", "Akamai (Linode)", "Akamai Technologies Inc."];
+  input.families[0].intel = names.map((organization, i) => ({ ...good(`org-${i}`), organization }));
+  const fieldAssessment = core.assessIntel(input.families);
+  assert.equal(fieldAssessment.conflicts.length, 0);
+  assert.equal(fieldAssessment.organizationDifferences.length, 1);
+  assert.match(fieldAssessment.families[0].records[0].label, /国家.*ASN.*一致/);
+  assert.match(fieldAssessment.families[0].records[0].label, /组织.*参考/);
+  const result = core.assessOverview(input);
+  assert.equal(result.score, 100);
+  assert.equal(result.needsReview, false);
+  assert.match(result.notes.join("；"), /组织名称/);
+  assert.ok(!result.reasons.some(text => text.includes("字段分歧")));
+  input.families[0].intel.push({ ...good("conflict"), countryCode: "CA", asn: "AS64599" });
+  const conflicted = core.assessOverview(input);
+  assert.equal(conflicted.intel.conflicts.length, 1);
+  assert.ok(conflicted.score < result.score);
+  assert.ok(conflicted.reasons.some(text => text.includes("国家 / ASN")));
+});
+
+test("部分收集仍保留已观察到的冲突；未知 WebRTC、AI 和缺失风险逐项解释", () => {
+  const input = dualInput();
+  input.webrtc = core.assessWebrtc([{ ...good(), gatheringComplete: false, observedIps: ["203.0.113.99"] }], { ipv4: [ip], ipv6: [ipv6] });
+  input.families.forEach(family => { family.intel = family.intel.map(record => ({ ...record, proxy: null, vpn: null, hosting: null, tor: null })); });
+  input.aiServices[2].state = "unverified";
+  const result = core.assessOverview(input);
+  const rtc = result.dimensions.find(item => item.id === "webrtc");
+  assert.equal(rtc.earnedWeight, 0);
+  assert.equal(rtc.assessedWeight, 12.5);
+  assert.ok(result.score < 100);
+  assert.match(result.reasons.join("；"), /WebRTC/);
+  for (const term of [/IPv6.*WebRTC/, /收集未完整/, /风险标签/, /Gemini/]) assert.match(result.missingReasons.join("；"), term);
+});
+
+test("只取得一个否定风险标签，不能把其余未知标签算通过", () => {
+  const input = overviewInput();
+  input.families[0].intel = input.families[0].intel.map(record => ({ ...record, vpn: null, tor: null, hosting: null }));
+  const result = core.assessOverview(input);
+  const risk = result.dimensions.find(item => item.id === "risk");
+  assert.equal(risk.assessedWeight, 2.5);
+  assert.equal(risk.state, "partial");
+  assert.match(result.missingReasons.join("；"), /VPN.*Tor.*Hosting/);
+  assert.equal(result.scoreState, "partial");
+});
+
+test("时区和语言按全部 HTTP 地址族核对，不能只取主地址族", () => {
+  const input = dualInput();
+  input.families[1].intel = input.families[1].intel.map(record => ({ ...record, countryCode: "JP" }));
+  input.families[1].country = core.consensus(input.families[1].intel, "countryCode");
+  const result = core.assessOverview(input);
+  assert.deepEqual(result.environment.timezone.map(check => check.mismatch), [false, true]);
+  assert.deepEqual(result.environment.language.map(check => check.mismatch), [false, true]);
+  assert.equal(result.dimensions.find(item => item.id === "timezone").earnedWeight, 2.5);
+  assert.equal(result.dimensions.find(item => item.id === "language").earnedWeight, 2.5);
+});
+
+test("同族 HTTP 多出口是独立的已知分歧，不因该族情报弱共识而排除", () => {
+  const input = dualInput();
+  input.families[1].intel = [];
+  input.families[1].country = core.consensus([], "countryCode");
+  input.families[1].addresses = [ipv6, "2001:db8::2"];
+  input.webrtc = core.assessWebrtc([good()], { ipv4: [ip], ipv6: input.families[1].addresses });
+  const result = core.assessOverview(input);
+  assert.ok(result.score < 100);
+  assert.equal(result.dimensions.find(item => item.id === "network").state, "review");
+  assert.match(result.missingReasons.join("；"), /IPv6 国家/);
+});
+
+test("已读到 AI HTTP 拒绝不是未知，评分和服务摘要应共用已知受限状态", () => {
+  const input = overviewInput();
+  input.aiServices[0].state = "restricted";
+  const result = core.assessOverview(input);
+  assert.equal(result.aiMissing, false);
+  assert.equal(result.aiMismatch, true);
+  assert.equal(result.scoreState, "complete");
+  assert.equal(result.dimensions.find(item => item.id === "ai").state, "review");
+});
+
+test("实测部分接口超时：DNS 与已知出口可核对的部分不被另一族缺失整项抹掉", () => {
+  const input = dualInput();
+  input.families[0].intel = [];
+  input.families[0].country = core.consensus([], "countryCode");
+  input.families[1].intel = input.families[1].intel.map(record => ({ ...record, vpn: null, tor: null, hosting: null }));
+  input.webrtc = core.assessWebrtc([good()], { ipv4: [ip], ipv6: [ipv6] });
+  input.aiServices = core.AI_SERVICES.map(service => ({ ...service, state: "timeout" }));
+  input.timezone = "Asia/Taipei";
+  input.language = "zh-TW";
+  const result = core.assessOverview(input);
+  assert.equal(result.dimensions.find(item => item.id === "dns").assessedWeight, 5);
+  assert.equal(result.assessedWeight, 41.25);
+  assert.equal(result.score, 88);
+  assert.equal(result.scoreState, "partial");
+  assert.match(result.missingReasons.join("；"), /DNS/);
+});
+
+test("DNS 按已知比例计分，双栈异地匹配任一已知国家，不借缺失补全", () => {
+  for (const { countries, resolvers, weight, earned } of [
+    { countries: ["US", "CA"], resolvers: ["CA"], weight: 10, earned: 10 },
+    { countries: ["US", "CA"], resolvers: ["US", null], weight: 5, earned: 5 },
+    { countries: [null, "CA"], resolvers: ["CA", null], weight: 2.5, earned: 2.5 },
+    { countries: ["US", "CA"], resolvers: ["CA", "JP"], weight: 10, earned: 5 },
+    { countries: [null, "CA"], resolvers: ["JP"], weight: 5, earned: 0 },
+    { countries: [null, null], resolvers: ["US"], weight: 0, earned: 0 },
+    { countries: ["US", "CA"], resolvers: [null], weight: 0, earned: 0 },
+    { countries: ["US", "CA"], resolvers: [], weight: 0, earned: 0 },
+  ]) {
+    const input = dualInput();
+    input.families.forEach((family, i) => {
+      family.intel = family.intel.map(record => ({ ...record, countryCode: countries[i] }));
+      family.country = core.consensus(family.intel, "countryCode");
+    });
+    input.dns.records = resolvers.map((countryCode, i) => ({ observedIp: `198.51.100.${i + 1}`, countryCode }));
+    const result = core.assessOverview(input);
+    const dns = result.dimensions.find(item => item.id === "dns");
+    assert.equal(dns.assessedWeight, weight, JSON.stringify({ countries, resolvers }));
+    assert.equal(dns.earnedWeight, earned);
+    if (weight < 10) assert.match(result.missingReasons.join("；"), /DNS/);
+  }
+});
 
 test("新版将等价 IPv6、混合 IPv4 写法统一，并拒绝伪地址", () => {
   assert.equal(core.normalizeIp("2001:0db8:0000:0000:0000:0000:0000:0001"), ipv6);
@@ -84,7 +262,7 @@ test("总览纳入 DNS 异常、代理标记与无法判定的 AI 响应", () =>
   assert.ok(mismatch.needsReview);
   assert.ok(mismatch.score < initial.score);
   baseline.dns = { state: "network_error", records: [] };
-  assert.equal(core.assessOverview(baseline).score, null);
+  assert.equal(core.assessOverview(baseline).scoreState, "partial");
   assert.equal(core.assessOverview(baseline).evidenceMissing, true);
   const risk = overviewInput();
   risk.families[0].intel[0].proxy = true;
@@ -216,7 +394,7 @@ test("路由缺失与非法前缀不计有效，多起源的共同 ASN 不误报
   assert.equal(announced.prefix, "2001:db8::/32");
   const input = overviewInput();
   input.families[0].routes = [announced];
-  assert.equal(core.assessOverview(input).score, null, "ASN 附属资料不能替代目标 IP 的路由起源");
+  assert.equal(core.assessOverview(input).dimensions.find(item => item.id === "routes").assessedWeight, 0, "ASN 附属资料不能替代目标 IP 的路由起源，但不阻断其他维度评分");
   input.families[0].routes = [{ ...good(), asns: ["AS64599", "AS64501"] }, { ...good("second"), asns: ["AS64501"] }];
   assert.equal(core.assessRoutes(input.families).conflicts.length, 0);
   input.families[0].routes[1].asns = ["AS64588"];
@@ -330,7 +508,7 @@ test("地址、弱共识与缺失字段的边界保持中性", () => {
   assert.equal(core.assessWebrtc([good()], { ipv4: [ip, "203.0.113.43"], ipv6: [] }).httpDisagreements.length, 1);
   const sparse = overviewInput();
   sparse.dns.records[0].countryCode = null;
-  assert.equal(core.assessOverview(sparse).score, null);
+  assert.equal(core.assessOverview(sparse).dimensions.find(item => item.id === "dns").assessedWeight, 0);
   const mismatch = overviewInput();
   mismatch.aiServices[0] = { state: "path_available", observedIp: ipv6, countryCode: "CA" };
   assert.equal(core.assessOverview(mismatch).needsReview, true);

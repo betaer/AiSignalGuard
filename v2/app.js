@@ -316,7 +316,7 @@
     if (record.asn) fields.push("ASN");
     if (record.organization) fields.push("组织");
     if (record.networkType) fields.push("类型");
-    if (record.proxy !== null || record.hosting !== null) fields.push("风险");
+    if ([record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return typeof value === "boolean"; })) fields.push("风险");
     return fields.length ? fields.join(" / ") : "无可用字段";
   }
 
@@ -350,20 +350,6 @@
       return right.votes - left.votes || left.value.localeCompare(right.value);
     });
     return ranked[0] || { value: null, votes: 0 };
-  }
-
-  function conflictState(record, country, asn, organization) {
-    if (!sourceUsable(record)) return { label: record.status, tone: sourceTone(record) };
-    var comparison = core.compareIntel(record, {
-      countryCode: country,
-      asn: asn,
-      organization: organization,
-    });
-    if (comparison.conflicts.length) {
-      return { label: comparison.conflicts.join(" / ") + "冲突", tone: "bad" };
-    }
-    if (!comparison.comparable) return { label: "字段不足", tone: "neutral" };
-    return { label: record.state === "partial" ? "已提供字段一致" : "一致", tone: record.state === "partial" ? "warn" : "good" };
   }
 
   function browserLanguageEvidence() {
@@ -417,6 +403,9 @@
 
   function buildEvidenceCatalog() {
     var analyses = activeAnalyses();
+    var fieldComparisons = new Map(core.assessIntel(analyses).families.flatMap(function (family) {
+      return family.records.map(function (item) { return [family.family + "/" + item.record.id, item]; });
+    }));
     var primary = familyAnalysis(primaryFamily());
     var country = primary.country;
     var asn = primary.asn;
@@ -488,7 +477,7 @@
         record,
         "Proxy：" + boolLabel(record.proxy) + " · VPN：" + boolLabel(record.vpn) +
           " · Tor：" + boolLabel(record.tor) + " · Hosting：" + boolLabel(record.hosting),
-        { usable: [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return value !== null; }) },
+        { usable: [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return typeof value === "boolean"; }) },
       );
     });
     var typeRows = intel.map(function (record) {
@@ -506,8 +495,7 @@
       );
     });
     var conflictRows = intel.map(function (record) {
-      var analysis = familyAnalysis(record.family);
-      var conflict = conflictState(record, analysis.country.value, analysis.asn.value, analysis.organization.value);
+      var conflict = sourceUsable(record) ? fieldComparisons.get(record.family + "/" + record.id) : { label: record.status, tone: sourceTone(record) };
       var item = toEvidenceItem(
         record,
         "国家：" + (record.countryCode || "缺失") + " · ASN：" + (record.asn || "缺失") +
@@ -536,7 +524,7 @@
       return toEvidenceItem(
         record,
         core.candidateIps(record).join(" / ") || record.detail || "未返回公网候选",
-        { meta: (node ? node.url : "STUN") + " · " + latencyLabel(record) + " · " + candidateTypeSummary(record), sensitive: core.candidateIps(record).length ? "ip" : null, usable: core.candidateIps(record).length > 0 },
+        { meta: (node ? node.url : "STUN") + " · " + candidateTypeSummary(record), sensitive: core.candidateIps(record).length ? "ip" : null, usable: core.candidateIps(record).length > 0 },
       );
     });
     var webrtcRows = webrtcLeak.map(function (record) {
@@ -544,7 +532,7 @@
       return toEvidenceItem(
         record,
         core.candidateIps(record).join(" / ") || record.detail || "未返回公网候选",
-        { meta: (node ? node.url : "WebRTC") + " · " + latencyLabel(record) + " · " + candidateTypeSummary(record), sensitive: core.candidateIps(record).length ? "ip" : null, usable: core.candidateIps(record).length > 0 },
+        { meta: (node ? node.url : "WebRTC") + " · " + candidateTypeSummary(record), sensitive: core.candidateIps(record).length ? "ip" : null, usable: core.candidateIps(record).length > 0 },
       );
     });
     var emojiRows = [{
@@ -920,7 +908,7 @@
   }
 
   function toneLabel(tone) {
-    return tone === "good" ? "通过" : tone === "warn" ? "需核对" : tone === "bad" ? "冲突或失败" : "未检测";
+    return tone === "good" ? "通过" : tone === "warn" ? "需核对" : tone === "bad" ? "冲突或失败" : !state.runId ? "未检测" : state.running ? "检测中" : "未核对";
   }
 
   function updateSensitiveValues() {
@@ -953,15 +941,6 @@
     }
   }
 
-  function timezoneMismatchFor(country) {
-    var countries = core.timezoneCountries(state.observations.timezone);
-    return Boolean(country && countries.length && !countries.includes(country));
-  }
-
-  function languageRegion(language) {
-    return core.languageRegion(language);
-  }
-
   function assessWebrtcRecords(records) {
     return core.assessWebrtc(records, state.observations.exitIps);
   }
@@ -973,7 +952,7 @@
   function setRow(rowId, config) {
     var row = document.querySelector('.signal-row[data-row-id="' + rowId + '"]');
     if (!row) return;
-    var tone = config.tone || "neutral";
+    var tone = config.tone || row.dataset.tone || "neutral";
     var value = row.querySelector(".signal-row-value");
     var dot = row.querySelector(".row-status-dot");
     [value, dot].forEach(function (node) {
@@ -982,10 +961,12 @@
       node.classList.add(tone);
     });
     if (value) {
-      value.textContent = config.value;
-      if (value.matches('[data-sensitive="ip"]')) value.dataset.sensitiveValue = config.value;
+      // Partial row updates preserve the existing value, including its raw privacy value.
+      var rawValue = config.value == null ? value.dataset.sensitiveValue || value.textContent || "未取得" : String(config.value);
+      value.textContent = rawValue;
+      if (value.matches('[data-sensitive="ip"]')) value.dataset.sensitiveValue = rawValue;
       value.dataset.statusLabel = config.status || toneLabel(tone);
-      value.setAttribute("aria-label", (config.status || toneLabel(tone)) + "：" + config.value);
+      value.setAttribute("aria-label", (config.status || toneLabel(tone)) + "：" + rawValue);
       if (value.matches('[data-sensitive="ip"]')) value.dataset.sensitiveAriaLabel = value.getAttribute("aria-label");
     }
     row.dataset.tone = tone;
@@ -1049,29 +1030,44 @@
     return analysis.label + " " + (consensus.value || "未形成") + " · " + consensus.votes + " / 10 票";
   }
 
+  function environmentSummary(checks) {
+    var mismatch = checks.some(function (item) { return item.mismatch; });
+    var known = checks.length > 0 && checks.every(function (item) { return item.known; });
+    return {
+      known: known, mismatch: mismatch, tone: mismatch ? "warn" : known ? "good" : "neutral",
+      label: mismatch ? "存在地区差异" : known ? "未见明确冲突" : "部分证据待核对",
+      detail: checks.map(function (item) { return familyLabel(item.family) + "：" + (!item.known ? "未核对" : item.mismatch ? "与出口地区不同" : "未见明确冲突"); }).join("；") || "尚无可核对出口",
+    };
+  }
+
+  function localEnvironmentAssessment(analyses) {
+    return core.assessEnvironment(analyses, state.localReady ? state.observations.timezone : null, state.localReady ? state.observations.languages[0] : null);
+  }
+
   function updateDualStackRowSummaries() {
     var context = dualNetworkContext();
     var primary = context.primary;
     var country = primary.country;
     var countryLabel = context.countryText;
     var expected = context.expected;
-    var languageCountry = languageRegion(state.observations.languages[0]);
-    var timezoneMismatch = timezoneMismatchFor(country.value);
-    var languageMismatch = Boolean(country.value && languageCountry && country.value !== languageCountry);
+    var environment = localEnvironmentAssessment(context.analyses);
+    var timezoneCheck = environmentSummary(environment.timezone);
+    var languageCheck = environmentSummary(environment.language);
+    var timezoneMismatch = timezoneCheck.mismatch;
+    var languageMismatch = languageCheck.mismatch;
+    var environmentKnown = timezoneCheck.known && languageCheck.known;
+    var riskMissing = core.assessRisk(context.analyses).some(function (family) { return family.missing.length; });
     var asnFieldCount = context.intel.filter(function (record) { return sourceUsable(record) && Boolean(record.asn || record.organization); }).length;
     var typeFieldCount = context.intel.filter(function (record) { return sourceUsable(record) && Boolean(record.networkType); }).length;
     var riskFieldCount = context.intel.filter(function (record) {
-      return sourceUsable(record) && [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return value !== null; });
+      return sourceUsable(record) && [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return typeof value === "boolean"; });
     }).length;
     var riskFlags = context.intel.filter(function (record) {
       return sourceUsable(record) && (record.proxy === true || record.vpn === true || record.tor === true || record.hosting === true);
     });
-    var explicitConflicts = 0;
-    context.analyses.forEach(function (analysis) {
-      analysis.intel.forEach(function (record) {
-        if (core.compareIntel(record, { countryCode: analysis.country.value, asn: analysis.asn.value, organization: analysis.organization.value }).conflicts.length) explicitConflicts += 1;
-      });
-    });
+    var intelAssessment = core.assessIntel(context.analyses);
+    var explicitConflicts = intelAssessment.conflicts.length;
+    var nameDifferences = intelAssessment.organizationDifferences.length;
     var dnsRecords = state.dns.records;
     var dnsAssessment = core.assessDns(state.dns, context.analyses);
     var dnsCountryMatches = dnsAssessment.matched.length;
@@ -1084,8 +1080,8 @@
     var asnLines = context.analyses.map(function (analysis) { return familyVoteLine(analysis, "asn"); }).join("；") || "尚无 ASN 共识";
 
     setRow("position-consistency", {
-      value: !country.value ? "等待地理来源" : timezoneMismatch || languageMismatch || context.crossCountryMismatch ? "存在差异" : "未见明确差异",
-      tone: !country.value ? "neutral" : timezoneMismatch || languageMismatch || context.crossCountryMismatch ? "warn" : "good",
+      value: timezoneMismatch || languageMismatch || context.crossCountryMismatch ? "存在差异" : environmentKnown ? "未见明确差异" : "部分证据待核对",
+      tone: timezoneMismatch || languageMismatch || context.crossCountryMismatch ? "warn" : environmentKnown ? "good" : "neutral",
       result: context.crossCountryMismatch ? "IPv4 与 IPv6 的国家共识不同" : country.value ? "浏览器本地信号已与出口主流地区核对" : "尚无足够地理证据",
       evidence: "地址族结果：" + countryLines + "；系统时区 " + state.observations.timezone + "；浏览器语言 " + state.observations.languages.join(" · ") + "。",
       advice: "双栈分别形成共识；只有真实返回字段的差异才计为冲突。",
@@ -1119,14 +1115,14 @@
       advice: "双栈可能出现不同标签，应结合 ASN、组织和实际线路理解。",
     });
     setRow("risk-proxy-labels", {
-      value: riskFlags.length ? riskFlags.length + " 家标记风险" : riskFieldCount ? "未收到明确风险标记" : "证据不足",
-      tone: riskFlags.length ? "bad" : riskFieldCount ? "good" : "neutral",
+      value: riskFlags.length ? riskFlags.length + " 家标记风险" : riskMissing ? "部分标签未知" : riskFieldCount ? "未收到明确风险标记" : "证据不足",
+      tone: riskFlags.length ? "bad" : riskMissing || !riskFieldCount ? "neutral" : "good",
       result: riskFlags.length ? "存在明确 Proxy / VPN / Tor / Hosting 标记" : riskFieldCount ? "已返回风险字段的来源未给出明确标记" : "没有可判定字段",
       evidence: "仅统计明确返回 true 的字段；有效风险字段 " + riskFieldCount + " / " + expected + "。",
       advice: "公开接口的风险标签仅作参考，需按地址族查看具体来源。",
     });
-    setRow("system-timezone", { value: state.observations.timezone, tone: timezoneMismatch ? "warn" : "good", result: timezoneMismatch ? "与主要出口国家不一致" : "未发现明确时区冲突", evidence: "主要地址族国家为 " + (country.value || "未形成") + "；双栈地区为 " + countryLabel + "。", advice: "按真实使用地区核对；无法映射的时区不强行判定。" });
-    setRow("browser-language", { value: state.observations.languages.join(" · "), tone: languageMismatch ? "warn" : "good", result: languageMismatch ? "首选语言地区与主要出口不同" : "未发现明确语言冲突", evidence: "浏览器实际语言与 " + countryLabel + " 进行辅助比较。", advice: "语言是弱信号，应符合日常使用习惯。" });
+    setRow("system-timezone", { value: state.observations.timezone, tone: timezoneCheck.tone, result: timezoneCheck.detail, evidence: "按已取得的每个地址族分别与 " + countryLabel + " 核对，评分复用同一结果。", advice: "按真实使用地区核对；无法映射的时区不强行判定。" });
+    setRow("browser-language", { value: state.observations.languages.join(" · "), tone: languageCheck.tone, result: languageCheck.detail, evidence: "浏览器首选语言地区与每个地址族的 " + countryLabel + " 辅助比较；不含地区的语言保持未核对。", advice: "语言是弱信号，应符合日常使用习惯。" });
     setRow("emoji-rendering", { value: state.localSignals.canvasAvailable ? "Canvas 2D 可用" : "Canvas 2D 不可用", tone: state.localSignals.canvasAvailable ? "good" : "warn", result: "浏览器本地渲染能力已读取", evidence: "只报告 Canvas 2D 上下文能力，不伪造像素结论。", advice: "渲染能力是弱信号。" });
     setRow("chinese-fonts", { value: state.localSignals.fontApiAvailable ? "API 可用" : "API 不可用", tone: state.localSignals.fontApiAvailable ? "neutral" : "warn", result: "只确认字体加载接口能力", evidence: "不扫描字体宽度，也不推断本机安装字体。", advice: "字体枚举具有较高区分度，本页不执行枚举。" });
     setRow("dns-leak", { value: state.dns.error ? "检测失败" : state.dns.running ? "检测中…" : dnsRecords.length + " 个解析器", tone: dnsTone, result: state.dns.error ? "本轮未取得权威 DNS 结果" : dnsRecords.length ? "已取得真实解析器记录" : "等待解析器回传", evidence: state.dns.error || (dnsRecords.length + " 个解析器来自本轮权威探针。"), advice: "检测失败不等于没有泄漏。" });
@@ -1134,17 +1130,14 @@
     setRow("webrtc-leak", { value: primaryWebrtc.stunResponses.length + " / 10 STUN 响应", tone: primaryWebrtc.tone, result: primaryWebrtc.label, evidence: "主池同地址族分歧 " + primaryWebrtc.conflicts.length + " 个，缺少同族 HTTP 基准的候选 " + primaryWebrtc.unverified.length + " 个；另有 " + primaryWebrtc.hostIps.length + " 个去重公网 host 地址。", advice: "只在相同地址族内比较；host 不计 STUN 响应，待核对地址族不直接判为泄漏。" });
     setRow("stun-nodes", { value: supplementalStun.stunResponses.length + " / 10 STUN 响应", tone: supplementalStun.tone, result: supplementalStun.label, evidence: "补充池 10 个独立节点；公网 host 地址 " + supplementalStun.hostIps.length + " 个，与服务器反射候选分开统计。", advice: "响应少可能来自 UDP、代理规则或浏览器策略。" });
     setRow("majority-region", { value: context.countryText, tone: context.crossCountryMismatch ? "warn" : country.value ? "good" : "neutral", result: countryLines, evidence: "每族 10 家独立投票；失败和缺失不计票。", advice: "不要把 IPv4 与 IPv6 的票数直接合并。" });
-    setRow("conflict-check", { value: explicitConflicts + " 家明确冲突", tone: explicitConflicts ? "bad" : context.intelSummary.usable ? "good" : "neutral", result: explicitConflicts ? "逐地址族发现明确字段分歧" : "可核对字段未见明确冲突", evidence: "另外，跨地址族国家差异 " + (context.crossCountryMismatch ? "1" : "0") + " 项、ASN 差异 " + (context.crossAsnMismatch ? "1" : "0") + " 项。", advice: "字段缺失不算冲突；跨族差异需结合真实网络架构判断。" });
+    setRow("conflict-check", { value: explicitConflicts + " 家明确冲突" + (nameDifferences ? " · 组织名称差异" : intelAssessment.missing.length ? " · 部分字段待核对" : ""), tone: explicitConflicts ? "bad" : nameDifferences || intelAssessment.missing.length || !context.intelSummary.usable ? "neutral" : "good", result: explicitConflicts ? "国家 / ASN 存在明确字段冲突" : "已核对的国家 / ASN 未见明确冲突", evidence: intelAssessment.organizationDifferences.concat(intelAssessment.missing).join("；") || "跨地址族国家差异 " + Number(context.crossCountryMismatch) + " 项、ASN 差异 " + Number(context.crossAsnMismatch) + " 项。", advice: "缺失和弱共识不计冲突；组织名称可能存在不同写法，只列为参考，不凭名称判断不同网络。" });
     setRow("network-label-consensus", { value: context.networkTypeText, tone: typeFieldCount ? "good" : "neutral", result: "网络类型字段有效 " + typeFieldCount + " / " + expected, evidence: "逐地址族显示网络类型、组织、风险与失败状态。", advice: "单一标签不足以判断线路性质。" });
     setRow("ip-intel-sources", { value: "可用 " + context.intelSummary.usable + " / " + expected, tone: context.intelSummary.usable >= Math.max(1, Math.ceil(expected * 0.6)) ? "good" : context.intelSummary.usable ? "warn" : "neutral", result: "完整 " + context.intelSummary.complete + "、部分 " + context.intelSummary.partial + "、失败 " + context.intelSummary.failed, evidence: "每个实际取得的地址族各请求 10 家服务；本轮实际请求 " + context.intelSummary.attempted + " / " + expected + "。", advice: "自适应调度只降低并发峰值，不减少应检来源。" });
-    setRow("route-registry-sources", { value: "可用 " + context.routeSummary.usable + " / " + expected, tone: context.routeSummary.usable >= Math.max(1, Math.ceil(expected * 0.6)) ? "good" : context.routeSummary.usable ? "warn" : "neutral", result: "完整 " + context.routeSummary.complete + "、部分 " + context.routeSummary.partial + "、失败 " + context.routeSummary.failed, evidence: "每个可用地址族分别使用自身 ASN 运行 10 路注册与路由来源；实际请求 " + context.routeSummary.attempted + " / " + expected + "。", advice: "ASN 依赖来源在对应地址族共识形成后再启动。" });
-    setRow("route-registry-sources", { tone: routeAssessment.needsReview ? "warn" : routeAssessment.missingFamilies.length || !context.analyses.length ? "neutral" : "good", result: "ASN 分歧 " + routeAssessment.conflicts.length + " 项；查询对象不匹配 " + routeAssessment.invalid.length + " 项；多起源 " + routeAssessment.multiOrigin.length + " 项", advice: "按目标 IP 校验前缀与范围，再比较起源 ASN；ASN 补充资料不作为独立 IP 路由证据。" });
+    setRow("route-registry-sources", { value: "可用 " + context.routeSummary.usable + " / " + expected, tone: routeAssessment.needsReview ? "warn" : routeAssessment.missingFamilies.length || !context.analyses.length ? "neutral" : "good", result: "ASN 分歧 " + routeAssessment.conflicts.length + " 项；查询对象不匹配 " + routeAssessment.invalid.length + " 项；多起源 " + routeAssessment.multiOrigin.length + " 项", evidence: "每个可用地址族分别使用自身 ASN 运行 10 路注册与路由来源；实际请求 " + context.routeSummary.attempted + " / " + expected + "。", advice: "按目标 IP 校验前缀与范围，再比较起源 ASN；ASN 补充资料不作为独立 IP 路由证据。" });
     var networkSourceStatus = $("#network-source-status");
     if (networkSourceStatus) networkSourceStatus.textContent = "可用 " + context.intelSummary.usable + " / " + expected;
     if (!state.localReady) {
       ["system-timezone", "browser-language", "emoji-rendering", "chinese-fonts"].forEach(function (id) { setRow(id, { value: "等待检测", tone: "neutral", result: "尚未读取本地信号" }); });
-    } else if (!country.value || !core.timezoneCountries(state.observations.timezone).length) {
-      setRow("system-timezone", { value: state.observations.timezone, tone: "neutral", result: "时区或出口地区证据不足，未作一致性判断" });
     }
   }
 
@@ -1177,27 +1170,32 @@
     var groups = $$(".signal-group");
     function byTitle(title) { return groups.find(function (group) { return group.querySelector(".signal-group-title")?.textContent.trim() === title; }); }
     var primaryCountry = context.primary.country.value;
-    var languageCountry = languageRegion(state.observations.languages[0]);
-    var timezoneMismatch = timezoneMismatchFor(primaryCountry);
-    var identityMismatch = timezoneMismatch || Boolean(primaryCountry && languageCountry && languageCountry !== primaryCountry) || context.crossCountryMismatch;
+    var environment = localEnvironmentAssessment(context.analyses);
+    var timezoneCheck = environmentSummary(environment.timezone);
+    var languageCheck = environmentSummary(environment.language);
+    var environmentKnown = timezoneCheck.known && languageCheck.known;
+    var identityMismatch = timezoneCheck.mismatch || languageCheck.mismatch || context.crossCountryMismatch;
     var webrtc = webrtcAssessment();
     var dnsAssessment = core.assessDns(state.dns, context.analyses);
     var dnsMismatch = dnsAssessment.mismatch;
     var routeAssessment = core.assessRoutes(context.analyses);
     var exitText = activeFamilies().length === 2 ? "双栈出口已读取" : activeFamilies().length ? familyLabel(activeFamilies()[0]) + " 出口已读取" : "未取得出口";
+    var intelAssessment = core.assessIntel(context.analyses);
     setToneText(byTitle("出口 IP")?.querySelector(".signal-group-result"), state.running ? "实时检测中" : exitText + " · 可用 " + context.intelSummary.usable + " / " + context.expected, state.running ? "neutral" : activeFamilies().length ? "good" : "bad");
-    setToneText(byTitle("环境信号")?.querySelector(".signal-group-result"), !primaryCountry ? "等待地区共识" : identityMismatch ? "存在地区差异" : "未见明确不一致", !primaryCountry ? "neutral" : identityMismatch ? "warn" : "good");
+    setToneText(byTitle("环境信号")?.querySelector(".signal-group-result"), identityMismatch ? "存在地区差异" : environmentKnown ? "未见明确不一致" : "部分环境证据待核对", identityMismatch ? "warn" : environmentKnown ? "good" : "neutral");
     var leakNeedsReview = webrtc.conflicts.length || webrtc.unverified.length || webrtc.httpDisagreements.length || webrtc.incomplete.length || webrtc.missingFamilies.length || dnsMismatch || state.dns.error;
     var leakMissing = !state.running && (!webrtc.stunResponses.length || dnsAssessment.missing);
     setToneText(byTitle("网络泄漏")?.querySelector(".signal-group-result"), state.running ? "实时检测中" : leakNeedsReview ? "发现需核对信号" : leakMissing ? "泄漏证据不足" : "未发现明确泄漏", state.running ? "neutral" : leakNeedsReview || leakMissing ? "warn" : "good");
     setToneText(byTitle("多源互证")?.querySelector(".signal-group-result"), state.running ? "多源核对中" : context.crossCountryMismatch || context.crossAsnMismatch ? "IPv4 / IPv6 结果存在差异" : context.intelSummary.usable || context.routeSummary.usable ? "各地址族已独立核对" : "证据不足", state.running ? "neutral" : context.crossCountryMismatch || context.crossAsnMismatch ? "warn" : context.intelSummary.usable || context.routeSummary.usable ? "good" : "neutral");
     if (!state.running && routeAssessment.needsReview) setToneText(byTitle("多源互证")?.querySelector(".signal-group-result"), "路由归属存在待核对信号", "warn");
+    else if (!state.running && intelAssessment.conflicts.length) setToneText(byTitle("多源互证")?.querySelector(".signal-group-result"), "国家 / ASN 存在明确冲突", "warn");
+    else if (!state.running && !(context.crossCountryMismatch || context.crossAsnMismatch) && (intelAssessment.missing.length || intelAssessment.organizationDifferences.length)) setToneText(byTitle("多源互证")?.querySelector(".signal-group-result"), intelAssessment.missing.length ? "部分归属字段待核对" : "国家 / ASN 已核对 · 组织名称差异仅供参考", "neutral");
     function subsection(label) { return document.querySelector('.signal-subsection[aria-label="' + label + '"] .signal-subsection-status'); }
     var typeCount = context.intel.filter(function (record) { return sourceUsable(record) && record.networkType; }).length;
-    setToneText(subsection("位置一致性"), !primaryCountry ? "等待" : identityMismatch ? "部分匹配" : "未见冲突", !primaryCountry ? "neutral" : identityMismatch ? "warn" : "good");
+    setToneText(subsection("位置一致性"), identityMismatch ? "部分匹配" : environmentKnown ? "未见冲突" : "未核对", identityMismatch ? "warn" : environmentKnown ? "good" : "neutral");
     setToneText(subsection("网络类型"), "有效 " + typeCount + " / " + context.expected, typeCount ? "good" : "neutral");
-    setToneText(subsection("时区"), !primaryCountry || !core.timezoneCountries(state.observations.timezone).length ? "证据不足" : timezoneMismatch ? "不一致" : "未见冲突", !primaryCountry || !core.timezoneCountries(state.observations.timezone).length ? "neutral" : timezoneMismatch ? "warn" : "good");
-    setToneText(subsection("语言"), !primaryCountry ? "等待" : languageCountry && languageCountry !== primaryCountry ? "不一致" : "未见冲突", !primaryCountry ? "neutral" : languageCountry && languageCountry !== primaryCountry ? "warn" : "good");
+    setToneText(subsection("时区"), timezoneCheck.label, timezoneCheck.tone);
+    setToneText(subsection("语言"), languageCheck.label, languageCheck.tone);
     setToneText(subsection("DNS"), state.dns.running ? "检测中" : state.dns.error ? "检测失败" : dnsAssessment.label, state.dns.running ? "neutral" : dnsAssessment.tone);
     setToneText(subsection("WebRTC"), webrtc.label, webrtc.tone);
     setToneText(subsection("地理交叉"), context.countryText, context.crossCountryMismatch ? "warn" : primaryCountry ? "good" : "neutral");
@@ -1206,14 +1204,10 @@
 
   function networkAssessment() {
     var context = dualNetworkContext();
-    var primaryCountry = context.primary.country.value;
-    var languageCountry = languageRegion(state.observations.languages[0]);
     return core.assessOverview({
       families: context.analyses, webrtc: webrtcAssessment(), dns: state.dns, aiServices: state.aiServices,
-      timezoneMismatch: timezoneMismatchFor(primaryCountry),
-      languageMismatch: Boolean(primaryCountry && languageCountry && primaryCountry !== languageCountry),
-      crossCountryMismatch: context.crossCountryMismatch, crossAsnMismatch: context.crossAsnMismatch,
-      fieldConflicts: context.analyses.some(function (analysis) { return [analysis.country, analysis.asn, analysis.organization].some(function (vote) { return vote.conflicts > 0; }); }),
+      timezone: state.localReady ? state.observations.timezone : null,
+      language: state.localReady ? state.observations.languages[0] : null,
     });
   }
 
@@ -1222,13 +1216,19 @@
     var webrtc = webrtcAssessment();
     var assessment = networkAssessment();
     var coverage = assessment.coverage;
-    var score = assessment.score;
+    var score = state.detectionError ? null : assessment.score;
     var finished = Boolean(state.completedAt);
-    $(".score-number").textContent = state.running ? "…" : finished && score !== null ? String(score) : "—";
+    $(".score-number").textContent = state.running ? coverage + "%" : finished && score !== null ? String(score) : "—";
     var ring = $(".score-ring");
     var tone = assessment.needsReview || assessment.evidenceMissing ? "var(--amber)" : "var(--green)";
-    ring.style.background = !state.running && finished && score !== null ? "conic-gradient(" + tone + " 0 " + score + "%, #dcebe1 " + score + "% 100%)" : "conic-gradient(var(--blue) 0 " + coverage + "%, #dcebe1 " + coverage + "% 100%)";
-    ring.setAttribute("aria-label", state.running ? "实时检测进行中" : finished && score !== null ? "网络信号参考分 " + score + " 分，满分 100 分" : "证据不足，未生成网络参考分");
+    ring.style.background = state.running ? "conic-gradient(var(--blue) 0 " + coverage + "%, #dcebe1 " + coverage + "% 100%)" : finished && score !== null ? "conic-gradient(" + tone + " 0 " + score + "%, #dcebe1 " + score + "% 100%)" : "#dcebe1";
+    ring.setAttribute("role", state.running ? "progressbar" : "img");
+    ["aria-valuemin", "aria-valuemax", "aria-valuenow"].forEach(function (attribute, index) {
+      if (state.running) ring.setAttribute(attribute, String([0, 100, coverage][index]));
+      else ring.removeAttribute(attribute);
+    });
+    ring.setAttribute("aria-label", state.running ? "正在检测，当前证据覆盖率 " + coverage + "%，不是最终评分" : finished && score !== null ? "网络信号参考分 " + score + " 分，满分 100 分" + (assessment.evidenceMissing ? "，仅基于部分证据" : "") : "未生成网络参考分，请查看评分说明");
+    $(".score-label").textContent = state.running ? "检测中 · 证据覆盖" : finished && score !== null && assessment.evidenceMissing ? "参考分 · 部分证据" : "网络参考分";
     $("#summary-browser").textContent = state.localReady ? browserLabel() : "等待检测";
     $("#summary-coverage").textContent = coverage + "%";
     var chips = [
@@ -1242,15 +1242,45 @@
     var badge = $(".status-badge");
     var needsReview = assessment.needsReview || Boolean(state.detectionError);
     var incomplete = assessment.evidenceMissing;
-    badge.textContent = state.running ? "检测中" : !finished ? "等待检测" : needsReview ? "需要核对" : incomplete ? "证据不足" : "状态稳定";
+    badge.textContent = state.running ? "检测中" : !finished ? "等待检测" : needsReview ? "需要核对" : incomplete ? score === null ? "证据不足" : "部分证据待核对" : "状态稳定";
     badge.style.color = state.running || !finished ? "var(--blue)" : needsReview || incomplete ? "var(--amber)" : "var(--green-deep)";
     badge.style.background = state.running || !finished ? "var(--blue-soft)" : needsReview || incomplete ? "var(--amber-soft)" : "var(--green-soft)";
     var explanation = assessment.reasons.join("；");
-    $(".result-copy").textContent = state.running ? "正在分阶段读取实时来源，当前证据覆盖率 " + coverage + "%。" : !finished ? "确认开始后，将核对网络出口、泄漏、浏览器环境与 AI 服务路径。" : state.detectionError || explanation || (incomplete ? "部分关键证据缺失或服务响应不可核对，请展开明细查看。本轮不会把检测失败解释为安全。" : "本轮可观察信号未发现明确冲突；网络参考分不代表平台账号状态。");
+    $(".result-copy").textContent = state.running ? "正在分阶段读取实时来源，当前证据覆盖率 " + coverage + "%。" : !finished ? "确认开始后，将核对网络出口、泄漏、浏览器环境与 AI 服务路径。" : state.detectionError || explanation || "已核对信号未发现明确冲突；不代表未核对项安全或平台账号状态。";
+    renderScoreExplanation(assessment, finished);
     $("#result-run-state").textContent = state.running ? "正在实时检测" : finished ? state.detectionError ? "检测未完整结束" : "本次检测完成" : "尚未开始检测";
     if (state.completedAt) $("#run-time").textContent = formatRunTime(state.completedAt);
     var aiCompleted = state.aiServices.filter(function (record) { return !["pending", "loading"].includes(record.state); }).length;
-    setToneText($("#ai-service-summary"), !state.runId ? "等待检测" : aiCompleted < core.AI_SERVICES.length ? aiCompleted + " / 3 已完成" : assessment.aiMissing ? "部分响应不可核对" : "3 项已核对", !state.runId || aiCompleted < 3 ? "neutral" : assessment.aiMissing || needsReview ? "warn" : "good");
+    setToneText($("#ai-service-summary"), !state.runId ? "等待检测" : aiCompleted < core.AI_SERVICES.length ? aiCompleted + " / 3 已完成" : assessment.aiMismatch ? "存在受限或路径分歧" : assessment.aiMissing ? "部分响应不可核对" : "3 项已核对", !state.runId || aiCompleted < 3 ? "neutral" : assessment.aiMissing || assessment.aiMismatch ? "warn" : "good");
+  }
+
+  function weightText(value) { return String(Math.round(value * 100) / 100); }
+
+  function scoreExplanation(assessment) {
+    if (state.detectionError) return "未评分原因：本轮检测未完整结束，请重测；已取得的来源结果仍保留。";
+    if (assessment.score === null) return "未评分原因：" + assessment.scoreBlockers.join("；");
+    return (assessment.evidenceMissing ? "部分证据参考分" : "参考分") + "：已核对权重 " + weightText(assessment.assessedWeight) + " / 100；按已核对项目归一化计算，未核对项不计通过或扣分。";
+  }
+
+  function renderScoreExplanation(assessment, finished) {
+    var ready = finished && !state.running;
+    $("#score-explanation").textContent = ready ? scoreExplanation(assessment) : state.running ? "正在核对证据，完成后显示参考分及计算依据。" : "检测完成后显示参考分、依据及未核对范围。";
+    $("#score-missing").textContent = ready && assessment.missingReasons.length ? "未核对项：" + assessment.missingReasons.join("；") + "。缺失不代表安全或泄漏。" : "";
+    $("#score-missing").hidden = !$("#score-missing").textContent;
+    $("#score-notes").textContent = ready && assessment.notes.length ? "标签说明：" + assessment.notes.join("；") + "。" : "";
+    $("#score-notes").hidden = !$("#score-notes").textContent;
+    $("#score-details").hidden = !ready;
+    var list = $("#score-dimensions");
+    list.replaceChildren();
+    if (!ready) return;
+    assessment.dimensions.forEach(function (dimension) {
+      var item = document.createElement("li");
+      item.append(makeTextElement("strong", "", dimension.label));
+      var status = dimension.state === "review" ? "需核对" : dimension.state === "unknown" ? "未核对" : dimension.state === "partial" ? "部分核对" : "已核对";
+      item.append(makeTextElement("span", "", status + " · 权重 " + weightText(dimension.assessedWeight) + " / " + dimension.weight + " · 计入 " + weightText(dimension.earnedWeight)));
+      list.append(item);
+    });
+    $("#score-formula").textContent = assessment.score === null || state.detectionError ? "尚不满足评分条件；表中仅展示已取得的判断依据。" : "计算：" + weightText(assessment.earnedWeight) + " ÷ " + weightText(assessment.assessedWeight) + " × 100 ≈ " + assessment.score + " 分。权重为诊断性规则，不是平台风控模型；不同未核对范围的分数不宜直接比较。";
   }
 
   function updateDualStackWebrtcPanel() {
@@ -1427,7 +1457,13 @@
 
   function currentScoreText() {
     var value = $(".score-number").textContent.trim();
-    return /^\d+$/.test(value) ? value + " / 100" : "证据不足，未生成分数";
+    return /^\d+$/.test(value) ? value + " / 100" + (networkAssessment().evidenceMissing ? "（部分证据）" : "") : state.running ? "检测中，尚未生成分数" : "未生成分数";
+  }
+
+  function scoreReportLines() {
+    var assessment = networkAssessment();
+    if (state.running || !state.completedAt) return "评分说明：检测尚未完成，暂不输出最终判断。";
+    return ["来源覆盖率：" + assessment.coverage + "%", "评分说明：" + scoreExplanation(assessment), "未核对项：" + (assessment.missingReasons.join("；") || "无"), "标签说明：" + (assessment.notes.join("；") || "无名称差异提示")].join("\n");
   }
 
   function audioFingerprintReportText() {
@@ -1472,6 +1508,7 @@
       "AI Signal Guard · 通用数字环境检测",
       PROJECT_URL,
       "网络参考分：" + currentScoreText(),
+      scoreReportLines(),
       "需核对信号：" + (networkAssessment().reasons.join("；") || (networkAssessment().evidenceMissing ? "部分关键证据不足" : "未见明确冲突")),
       "出口 IPv4：" + reportFamilyIp("ipv4"),
       "出口 IPv6：" + reportFamilyIp("ipv6"),
@@ -1503,6 +1540,7 @@
       "【检测概览】",
       "环境画像：通用数字环境检测",
       "网络参考分：" + currentScoreText(),
+      scoreReportLines(),
       "隐私显示：" + (state.privacy ? "已隐藏敏感原值" : "显示原值"),
       "需核对信号：" + (networkAssessment().reasons.join("；") || (networkAssessment().evidenceMissing ? "部分关键证据不足" : "未见明确冲突")),
       "代理 / 机房标签来源：" + (networkAssessment().riskRecords.map(function (record) { return record.name; }).join("、") || "未收到明确标记或证据不足"),

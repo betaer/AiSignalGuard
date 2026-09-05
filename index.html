@@ -301,6 +301,17 @@
       .score-ring-content { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; text-align: center; transform: translateY(-1px); }
       .score-number { display: block; width: 100%; color: var(--green-deep); font-family: var(--mono); font-size: 38px; font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1; letter-spacing: -0.04em; text-align: center; text-indent: 0.04em; }
       .score-label { display: block; width: 100%; margin-top: 7px; color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.2; text-align: center; }
+      .score-explanation { position: relative; z-index: 1; margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft, #f4f8f5); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+      .score-explanation p { margin: 0; }
+      .score-explanation p + p:not([hidden]) { margin-top: 7px; }
+      #score-explanation { font-weight: 700; }
+      #score-missing { color: var(--ink-2); }
+      #score-notes, #score-formula { color: var(--muted); }
+      #score-details { margin-top: 10px; }
+      #score-details > summary { cursor: pointer; font-weight: 700; color: var(--green-deep); }
+      #score-dimensions { list-style: none; padding: 0; margin: 10px 0; }
+      #score-dimensions li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+      #score-dimensions li span { color: var(--ink-2); }
       .result-title-line { display: flex; align-items: center; gap: 7px; }
       .result-title { margin: 0 0 6px; font-size: clamp(23px, 4vw, 31px); line-height: 1.1; letter-spacing: -0.045em; }
       .result-copy { margin: 0 0 13px; color: var(--ink-2); font-size: 14px; }
@@ -758,6 +769,16 @@
             <div class="tag-row" aria-label="关键状态"><span class="chip neutral">实时来源检测中</span></div>
           </div>
         </div>
+        <div class="score-explanation" aria-label="评分依据与未核对项">
+          <p id="score-explanation">检测完成后显示参考分、依据及未核对范围。</p>
+          <p id="score-missing" hidden></p>
+          <p id="score-notes" hidden></p>
+          <details id="score-details" hidden>
+            <summary>查看评分构成与计算方式</summary>
+            <ul id="score-dimensions"></ul>
+            <p id="score-formula"></p>
+          </details>
+        </div>
         <div class="result-data-grid">
           <div class="data-item"><span class="data-label">出口 IPv4</span><span class="data-value sensitive-value" data-sensitive="ip" id="summary-exit-ipv4">检测中…</span></div>
           <div class="data-item"><span class="data-label">出口 IPv6</span><span class="data-value sensitive-value" data-sensitive="ip" id="summary-exit-ipv6">检测中…</span></div>
@@ -1085,8 +1106,8 @@
 
     <script src="signalSemantics.js?v=1.5.0"></script>
     <script src="v2/timezones.js?v=20260905-review2"></script>
-    <script src="v2/core.js?v=20260905-review2"></script>
+    <script src="v2/core.js?v=20260905-score1"></script>
     <script src="v2/evidence.js?v=20260905-review2"></script>
-    <script src="v2/app.js?v=20260905-review2"></script>
+    <script src="v2/app.js?v=20260905-progress1"></script>
   </body>
 </html>
