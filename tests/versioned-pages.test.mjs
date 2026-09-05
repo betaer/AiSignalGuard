@@ -16,6 +16,7 @@ const [latestHtml, v1Html, v2Html] = await Promise.all(
   Object.values(files).map((file) => readFile(file, "utf8")),
 );
 const packageJson = JSON.parse(await readFile(new URL("package.json", projectRoot), "utf8"));
+const latestRuntime = await readFile(new URL("v2/app.js", projectRoot), "utf8");
 
 function normalizeRelativeReferences(html, pathname) {
   const base = new URL(pathname, "https://version.test");
@@ -67,8 +68,8 @@ test("三个入口的规范地址和分享预览都统一指向唯一公开根�
     assert.ok(html.includes(`<link rel="canonical" href="${publicRoot}">`), name);
     assert.ok(html.includes(`<meta property="og:url" content="${publicRoot}">`), name);
   }
-  assert.ok(latestHtml.includes(`PROJECT_URL = "${publicRoot}"`));
-  assert.ok(v2Html.includes(`PROJECT_URL = "${publicRoot}"`));
+  assert.ok(latestRuntime.includes(`PROJECT_URL = "${publicRoot}"`));
+  for (const html of [latestHtml, v2Html]) assert.match(html, /src="(?:v2\/)?app\.js\?v=/);
 });
 
 test("最新版去除旧品牌词和多余截图分享文案", () => {
@@ -134,7 +135,7 @@ test("最新版页脚链接密码生成器且不再自返，JA3 / JA4 统一为�
 });
 
 test("最新版首次检测与重测共用 12 小时 Star 闸门", () => {
-  for (const html of [latestHtml, v2Html]) {
+  for (const html of [latestRuntime]) {
     assert.match(html, /pendingDetection:\s*null/);
     assert.match(html, /function requestDetection\(kind\)/);
     assert.match(html, /requestDetection\("initial"\)/);

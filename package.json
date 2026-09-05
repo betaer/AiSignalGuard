@@ -16,6 +16,8 @@
     "test:identity": "node --test tests/identity-analysis.test.mjs",
     "test:star-prompt": "node --test tests/star-prompt-flow.test.mjs",
     "test:v2-gate": "node tests/v2-initial-star-gate.e2e.mjs",
+    "test:v2": "node --test --experimental-test-coverage --test-coverage-include=v2/core.js --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80 tests/v2-detection.test.mjs",
+    "test:v2-ui": "node tests/v2-detection.e2e.mjs",
     "test:versions": "node --test tests/versioned-pages.test.mjs",
     "test:ipcx": "node --test tests/ipcx-evidence.test.mjs tests/ipcx-contract.test.mjs tests/ipcx-semantics.test.mjs",
     "test:ipcx-remix": "node --test tests/ipcx-remix-v1.2.0-contract.test.mjs && npm run test:ipcx-remix-v1.3",
@@ -24,10 +26,10 @@
     "test:ipcx-remix-v1.3-ui": "node tests/ipcx-remix-v1.3.0-ui.e2e.mjs",
     "test:ipcx-remix-semantics": "node tests/ipcx-remix-v1.2.0-semantics.e2e.mjs",
     "test:connectivity-live": "node tests/connectivity-live.mjs",
-    "test": "npm run test:identity && npm run test:star-prompt && npm run test:versions && npm run test:ipcx && npm run test:ipcx-remix && npm run build && node --test tests/sites-worker.test.mjs",
-    "test:e2e": "npm run test:v2-gate && node tests/e2e-smoke.mjs && node tests/ipcx-ui.e2e.mjs && npm run test:ipcx-remix-ui && npm run test:ipcx-remix-v1.3-ui && npm run test:ipcx-remix-semantics",
+    "test": "npm run test:identity && npm run test:star-prompt && npm run test:versions && npm run test:v2 && npm run test:ipcx && npm run test:ipcx-remix && npm run build && node --test tests/sites-worker.test.mjs",
+    "test:e2e": "npm run test:v2-gate && npm run test:v2-ui && node tests/e2e-smoke.mjs && node tests/ipcx-ui.e2e.mjs && npm run test:ipcx-remix-ui && npm run test:ipcx-remix-v1.3-ui && npm run test:ipcx-remix-semantics",
     "test:ipcx-ui": "node tests/ipcx-ui.e2e.mjs",
-    "check": "node --check app.js && node --check starPromptPolicy.js && node --check demo/app-new.js && node --check identityProfiles.js && node --check identityAnalysis.js && node --check ipcx-remix-v1.2.0.js && node --check ipcx-remix-v1.3.0.js && node --check signalSemantics.js && node --check networkEvidence.js && node --check signalGuardApp.js && node --check app.min.js && node --check demo/app-new.min.js && node scripts/build-min.mjs --check && node scripts/build-css.mjs --check && npm test",
+    "check": "node --check v2/core.js && node --check v2/timezones.js && node --check v2/evidence.js && node --check v2/app.js && node --check app.js && node --check starPromptPolicy.js && node --check demo/app-new.js && node --check identityProfiles.js && node --check identityAnalysis.js && node --check ipcx-remix-v1.2.0.js && node --check ipcx-remix-v1.3.0.js && node --check signalSemantics.js && node --check networkEvidence.js && node --check signalGuardApp.js && node --check app.min.js && node --check demo/app-new.min.js && node scripts/build-min.mjs --check && node scripts/build-css.mjs --check && npm test",
     "check:full": "npm run check && npm run test:e2e"
   },
   "devDependencies": {

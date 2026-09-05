@@ -128,6 +128,16 @@ test("serves fixed v1 and v2 directories while keeping one public share root", a
   }
 });
 
+test("serves the shared v2 runtime modules through the assets binding", async () => {
+  const worker = await loadWorker();
+  for (const [name, marker] of [["core", "AISGV2Core"], ["timezones", "AISGTimezoneCountries"], ["evidence", "AISGIpEvidence"], ["app", "runLiveDetection"]]) {
+    const response = await worker.fetch(new Request(`https://ai-signal-guard.example/v2/${name}.js?v=review`), { ASSETS: mockAssets() }, context());
+    assert.equal(response.status, 200, name);
+    assert.match(response.headers.get("content-type"), /^text\/javascript/);
+    assert.ok((await response.text()).includes(marker), name);
+  }
+});
+
 test("serves the browser bundle through the assets binding", async () => {
   const worker = await loadWorker();
   const response = await worker.fetch(

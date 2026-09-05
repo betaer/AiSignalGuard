@@ -28,14 +28,13 @@ AI Signal Guard does not determine a visitor's real nationality, occupation, or 
 | Module | What it checks | Why it matters |
 |---|---|---|
 | Exit IP | IPv4/IPv6, country and region, ASN, organization, network type, source conflicts | Shows what different address families and endpoints observe |
-| DNS leak | Standard and deeper DNS probes, resolver ownership | Checks whether DNS follows the expected network path |
-| WebRTC | Primary public candidates, supplemental STUN evidence, mDNS/private-address classification | Finds differences between browser candidates and HTTP exit addresses |
+| DNS leak | Random-subdomain probes, resolver addresses and country labels | Cross-checks resolver and exit regions; failures remain unknown |
+| WebRTC | Two pools collect all server-reflexive candidates and compare IPv4/IPv6 separately | Finds same-family HTTP differences and identifies incomplete gathering |
 | Route and registry | IANA, RIR, RIS, WHOIS, Cymru, PeeringDB, and related evidence | Cross-checks ASN, prefix, and registered organization |
-| Environment consistency | Browser language, system timezone, emoji, Chinese fonts, exposed device information | Finds obvious contradictions across geography, language, timezone, and browser signals |
+| Environment consistency | Language, IANA timezone territories, Canvas/font API availability, exposed device information | Cross-checks regional signals without forcing unknown or shared zones into one country |
 | Browser fingerprint surface | Canvas, local summaries, screen, platform, logical processors, memory estimate, WebAudio | Shows what the current browser exposes or can calculate |
-| Service connectivity | AI, content, commerce, developer, global, and China-focused sites | Determines whether this browser request path obtained a response |
-| AI path and status | Endpoint-side country/node labels and official status APIs | Separates path issues from publicly reported platform incidents |
-| Reports and sharing | Redacted Markdown diagnostics and short summaries | Supports manual review or user-controlled sharing with an AI assistant |
+| AI-service paths | ChatGPT/Claude public trace endpoints and fallback resources; a Gemini public resource | Separates readable paths, reachable resources, opaque responses, HTTP restrictions, timeouts, and failures |
+| Reports and sharing | Text reports and summaries following the privacy toggle | Supports manual review or user-controlled sharing; never automatically sent |
 
 ## Multi-source evidence architecture
 
@@ -46,7 +45,7 @@ The current v2 build validates these registry sizes and unique entries at startu
 | Evidence pool | Size | Scheduling |
 |---|---:|---|
 | IP-intelligence providers | 10 per available address family | IPv4 and IPv6 are queried and summarized separately |
-| Route and registry providers | 10 per available address family | Starts after an ASN consensus exists for that family |
+| Route and registry providers | 10 per available address family | Requires an observed exit; ASN-dependent probes additionally require consensus |
 | Primary WebRTC pool | 10 independent nodes | Each node uses its own `RTCPeerConnection` |
 | Supplemental STUN pool | 10 independent nodes | Does not reuse primary-pool candidates and preserves its own terminal state |
 
@@ -62,17 +61,19 @@ timeout or error → remains failure evidence and does not vote
 missing field   → contributes only available fields and does not fabricate a conflict
 ```
 
-Coverage means “the share of real sources that returned fields usable for the current metric.” It is neither page-loading progress nor a safety score.
+Detail coverage is the share of real sources returning usable fields. Overview coverage uses fixed module weights described below; failed HTTP discovery cannot shrink the denominator. Neither is page-loading progress or a safety score.
 
 ### Per-provider normalization
 
 IP providers use different schemas for country, region, ASN, organization, and proxy classifications. The project maintains provider-specific adapters and then converts responses into a common record. A field absent from one source is not guessed from unrelated fields.
 
+IPv6 representations are canonicalized before comparison. Organization votes normalize case, whitespace, punctuation, and ampersands without forcing different company names together. Consensus requires at least three eligible votes, a winner share of at least 60%, and a lead of at least two votes; ties, low counts, and weak majorities remain unresolved.
+
 ### Network reference score and coverage
 
-- The network reference score combines observable IP, route, DNS, WebRTC, and environment differences to help prioritize follow-up checks.
-- Coverage counts only fields that were actually returned and usable for the current metric; it is not loading progress and does not turn timeouts or failures into positive evidence.
-- When core evidence is insufficient, the product avoids pseudo-precise conclusions. Source conflicts remain visible and link back to their details.
+- Overview weights: HTTP exits 10%, IP intelligence 25%, routing 20%, completed STUN gathering 20%, DNS 15%, and AI probes 10%. An opaque AI response earns half an observation, not a usable-service result.
+- The reference score subtracts observed DNS-region differences, explicit proxy/hosting labels, WebRTC differences, and environment conflicts from coverage. It only prioritizes follow-up checks.
+- Without an HTTP baseline, reliable country consensus, necessary routing, complete same-family STUN comparison, or DNS evidence, the score is “—”; coverage below 60% also suppresses scoring. Unverifiable AI results or missing risk fields prevent a stable-state label.
 
 The network reference score is based on signals observable in the current run. It does not represent platform-account status, ban probability, or an internal platform risk-control decision.
 
@@ -80,16 +81,13 @@ The network reference score is based on signals observable in the current run. I
 
 ### Connectivity is not account state
 
-Service probes have two terminal labels:
+V2 distinguishes readable paths, reachable resources, unverifiable responses, HTTP restrictions/errors, timeouts, and unreadable requests. An opaque `no-cors` response exposes neither HTTP status nor body and cannot establish service health.
 
-- **Reachable:** a target or fallback endpoint produced a browser-observable HTTP response.
-- **Not connected this time:** neither the primary nor fallback probe produced a usable response signal in this run.
-
-“Reachable” does not mean logged in, account enabled, region unlocked, payments working, or the complete product functioning. “Not connected this time” does not prove an outage; browser extensions, DNS/TLS failure, cross-origin policy, network policy, and timeout can all cause it.
+A reachable resource does not mean logged in, account enabled, region unlocked, payments working, or a functioning conversation. Probe failure does not prove an outage; browser extensions, DNS/TLS failures, cross-origin rules, and timeouts may cause it. V2 does not fetch official incident feeds or test a complete conversation workflow.
 
 ### AI path is not physical location
 
-Country or node information returned by ChatGPT, Claude, OpenAI, Perplexity, or Cloudflare describes the path visible to that endpoint. It is not the physical location of a user, carrier, or server. Split tunneling, WARP, Private Relay, and domain-based proxy rules may give different endpoints different exits; the page preserves those differences.
+When readable, ChatGPT and Claude trace endpoints describe the path visible to that endpoint, not a user's, carrier's, or server's physical location. Gemini's resource probe exposes no exit address, and the page does not invent one. Split tunneling, WARP, Private Relay, and domain-based proxy rules may produce different exits; the page preserves those differences.
 
 ### Fingerprint summaries are not identities
 
@@ -101,27 +99,26 @@ AI Signal Guard is a static frontend application without a project-owned diagnos
 
 | Data or operation | External request | Detail |
 |---|---:|---|
-| Language, timezone, fonts, emoji, local fingerprint summaries | No | Read or computed in the current browser |
+| Language, timezone, font API availability, local fingerprint summaries | No | Read or computed in the current browser |
 | Three-round WebAudio check | No | Uses an offline audio graph only |
 | Exit IP and multi-source intelligence | Yes | Providers observe normal request metadata |
 | DNS diagnostics | Yes | Uses third-party DNS-leak services |
 | WebRTC/STUN | Yes | Connects to STUN services to obtain candidates |
-| Connectivity, AI path, official status | Yes | Requests public endpoints or fallbacks |
-| Share summary | No | Clipboard only; excludes IP, DNS, and fingerprint raw values |
+| AI paths and resources | Yes | Requests public endpoints or fallbacks without login credentials |
+| Share summary | No | Clipboard only; address redaction follows the privacy toggle |
 | Copy diagnostic for AI | No | Clipboard only; never auto-sends to an AI service |
-| Google Analytics | Yes | Basic visit measurement; diagnostic results are not uploaded as analytics events |
 
 Third-party services have their own logging, privacy, and availability boundaries. In highly sensitive environments, consider an isolated browser or controlled network before running external checks.
 
 ## Report redaction
 
-“Copy diagnostic for AI” applies a fixed redaction policy:
+The privacy toggle controls addresses in the page, share summary, and AI diagnostic report. Addresses are shown by default; enable privacy masking before sharing when desired:
 
-- IPv4 values preserve network-level context while hiding the host portion.
+- IPv4 keeps the first two octets and replaces the last two with `x.x`.
 - IPv6 values retain only a limited prefix, not the full address.
-- DNS, WebRTC, and AI-path addresses pass through the same redaction layer.
-- Raw mDNS, Canvas, and WebAudio identifiers are omitted.
-- Share summaries contain coverage, major anomalies or conflicts, and follow-up suggestions only.
+- DNS, WebRTC, routing ranges, and AI-path addresses, including addresses embedded in descriptions, use the same redaction layer.
+- Individual WebAudio digest display/copy follows the toggle. Overview reports omit raw WebAudio and Canvas digests.
+- Masking protects presentation and clipboard output; it does not alter diagnostic requests or erase raw evidence from page memory.
 
 The user chooses where to paste the report. The page does not automatically open an AI service, send the report, or create an external session.
 
@@ -131,7 +128,7 @@ The user chooses where to paste the report. The page does not automatically open
 - Check whether DNS and WebRTC expose addresses different from the HTTP exit.
 - Compare IPv4/IPv6, ASN, organization, region, language, and timezone consistency.
 - Understand the Canvas, WebAudio, font, and device-summary surface visible to a webpage.
-- Separate endpoint-path failures, browser-probe failures, and public platform incidents.
+- Separate endpoint-path differences, resource responses, and unverifiable browser probes.
 - Produce a redacted, human-reviewable network diagnostic report.
 
 ## Not appropriate for
@@ -147,7 +144,7 @@ The user chooses where to paste the report. The page does not automatically open
 2. On the first visit, choose to Star the project or select “test first” to continue. Refreshes and reruns within 12 hours do not repeat the prompt.
 3. Wait for IP, DNS, WebRTC, route, AI-service path, and browser-environment evidence to complete in stages.
 4. Read the network reference score, coverage, and anomaly notices before expanding source-level evidence.
-5. When needed, copy the redacted Markdown report and paste it manually into a destination you trust.
+5. Enable privacy masking if desired, then copy the text report and paste it manually into a destination you trust.
 
 ## Versioned entry points
 
@@ -191,13 +188,18 @@ The suite covers identity profiles, source registries, `voteEligible` semantics,
 
 ```text
 .
-├── index.html                     # Current production page and inline diagnostics
-├── networkEvidence.js             # IP, route, WebRTC/STUN sources and normalization
+├── index.html                     # Production template sharing the v2 runtime
+├── v2/index.html                  # Fixed v2 entry template
+├── v2/app.js                      # Page controller, scheduling, reports, reruns
+├── v2/evidence.js                 # V2 IP, route, WebRTC/STUN providers
+├── v2/core.js                     # IP normalization, deadlines, consensus, scoring, AI probes
+├── v2/timezones.js                # Versioned IANA timezone-to-country mapping
+├── networkEvidence.js             # Retained legacy IPCX evidence runtime
 ├── identityProfiles.js            # Retained experimental profile configuration
 ├── identityAnalysis.js            # Retained experimental profile analysis
 ├── signalSemantics.js             # Signal states and semantic boundaries
 ├── signalGuardApp.js              # IPCX application controller
-├── v1/ / v2/                      # Fixed version entry points
+├── v1/                            # Online archive with unchanged behavior
 ├── tests/                         # Node.js and Playwright regression tests
 ├── assets/                        # Product captures, social assets, and icons
 ├── docs/readme-en.md              # English README
