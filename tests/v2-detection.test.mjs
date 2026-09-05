@@ -129,7 +129,7 @@ function fakePeer({ complete = true, addresses = [ip, ipv6], onClose = () => {} 
     async setLocalDescription() {
       for (const address of addresses) {
         await Promise.resolve();
-        if (!closed) handlers.get("icecandidate")({ candidate: { type: "srflx", address } });
+        if (!closed) handlers.get("icecandidate")({ candidate: typeof address === "string" ? { type: "srflx", address } : address });
       }
       if (complete && !closed) handlers.get("icecandidate")({ candidate: null });
     },
@@ -144,6 +144,117 @@ test("单个 STUN 节点等待收集结束，保留并去重全部候选", async
   assert.equal(result.state, "success");
   assert.equal(result.gatheringComplete, true);
   assert.equal(closeCount, 1);
+});
+
+test("公网 host IPv6 参与泄漏核对，但不冒充 STUN 服务器响应", async () => {
+  const host = "2606:4700:4700::1111";
+  const addresses = [ip, { type: "host", address: host }, ...["192.168.1.2", "10.0.0.2", "127.0.0.1", "169.254.1.2", "100.64.0.1", "fc00::1", "fe80::1", "::1", "ff02::1", "device.local", "::ffff:192.168.1.1"].map(address => ({ type: "host", address })), { type: "relay", address: "8.8.8.8" }];
+  const result = await evidence.probeStunNode(evidence.STUN_NODES[0], { createPeerConnection: () => fakePeer({ addresses }) });
+  assert.deepEqual(result.observedIps, [ip, host]);
+  assert.deepEqual(result.hostIps, [host]);
+  assert.deepEqual(result.srflxIps, [ip]);
+  assert.equal(core.assessWebrtc([result], { ipv4: [ip], ipv6: [] }).unverified.length, 1);
+  const onlyHost = await evidence.probeStunNode(evidence.STUN_NODES[0], { createPeerConnection: () => fakePeer({ addresses: [{ type: "host", address: host }] }) });
+  const assessment = core.assessWebrtc([onlyHost], { ipv4: [], ipv6: [host] });
+  assert.equal(assessment.successes.length, 1);
+  assert.equal(assessment.stunResponses.length, 0);
+  assert.equal(assessment.tone, "warn");
+});
+
+test("路由响应须匹配查询对象，ASN 分歧进入总览而非只计成功数量", () => {
+  const source = id => evidence.ROUTE_SOURCES.find(item => item.id === id);
+  const normalize = (id, payload, targetIp = ip) => evidence.normalizeRoutePayload(source(id), payload, { targetIp, asn: "AS64501" });
+  for (const [id, payload] of [
+    ["ripe-network", { data: { asns: [64501], prefix: "198.51.100.0/24" } }],
+    ["rir-rdap", { startAddress: "198.51.100.0", endAddress: "198.51.100.255", name: "Wrong range" }],
+    ["peeringdb", { data: [{ asn: 64599, name: "Wrong ASN" }] }],
+    ["caida", { data: { asn: { asn: 64599 } } }],
+    ["hackertarget", '"198.51.100.1","64501","203.0.113.0/24","Example"'],
+  ]) {
+    const record = normalize(id, payload);
+    assert.equal(record.voteEligible, false, id);
+    assert.equal(record.state, "path_mismatch", id);
+  }
+  const differentOrigin = normalize("ripe-network", { data: { asns: [64599], prefix: "203.0.113.0/24" } });
+  assert.equal(differentOrigin.voteEligible, true, "真实目标 IP 的不同路由起源应保留，不能丢弃不利证据");
+  const input = overviewInput();
+  input.families[0].routes = [differentOrigin];
+  const assessment = core.assessOverview(input);
+  assert.equal(assessment.needsReview, true);
+  assert.match(assessment.reasons.join("；"), /路由.*ASN/);
+  const multiOrigin = normalize("ripe-network", { data: { asns: [64599, 64501], prefix: "203.0.113.0/24" } });
+  assert.deepEqual(multiOrigin.asns, ["AS64599", "AS64501"]);
+  input.families[0].routes = [multiOrigin];
+  assert.equal(core.assessRoutes(input.families).conflicts.length, 0, "多起源包含基准时不能误报排他性冲突");
+  assert.equal(core.assessRoutes(input.families).multiOrigin.length, 1);
+});
+
+test("未知地区与请求失败不计字段冲突，DNS 未知不显示一致", () => {
+  assert.equal(core.compareIntel({ ...good(), state: "network_error", voteEligible: false }, { countryCode: "CA" }).conflicts.length, 0);
+  assert.equal(core.compareIntel(good(), {}).comparable, 0);
+  assert.equal(core.compareIntel(good(), { countryCode: "CA" }).conflicts.length, 1);
+  const families = overviewInput().families;
+  assert.equal(core.assessDns({ state: "success", records: [{ observedIp: ip }] }, families).missing, true);
+  assert.equal(core.assessDns({ state: "success", records: [{ observedIp: ip, countryCode: "US" }] }, []).missing, true);
+  const dual = families.concat({ country: { value: "CA" } });
+  assert.equal(core.assessDns({ state: "success", records: [{ observedIp: ip, countryCode: "CA" }] }, dual).mismatch, false);
+});
+
+test("路由缺失与非法前缀不计有效，多起源的共同 ASN 不误报", () => {
+  const normalize = (id, payload, targetIp = ipv6) => evidence.normalizeRoutePayload(evidence.ROUTE_SOURCES.find(item => item.id === id), payload, { targetIp, asn: "AS64501" });
+  for (const prefix of ["2001:db8::/abc", "2001:db8::", "2001:db8::/129", "2001:db8::/1.5", "203.0.113.0/24"]) {
+    assert.equal(normalize("ripe-network", { data: { asns: [64501], prefix } }).voteEligible, false, prefix);
+  }
+  for (const [id, payload] of [
+    ["rir-rdap", { name: "No range" }], ["peeringdb", { data: [{ name: "No ASN" }] }],
+    ["ripe-announced", { data: { resource: "AS64501", prefixes: [{ prefix: "203.0.113.0/24" }] } }],
+    ["ripe-network", { data: { asns: [64501] } }],
+  ]) assert.equal(normalize(id, payload).voteEligible, false, id);
+  assert.equal(normalize("rir-rdap", { startAddress: "2001:db8::", endAddress: "2001:db8::ffff" }).voteEligible, true);
+  assert.equal(normalize("rir-rdap", { startAddress: "not-ip", endAddress: ipv6 }).voteEligible, false);
+  const announced = normalize("ripe-announced", { data: { resource: "AS64501", prefixes: [{ prefix: "203.0.113.0/24" }, { prefix: "2001:db8::/32" }] } });
+  assert.equal(announced.prefix, "2001:db8::/32");
+  const input = overviewInput();
+  input.families[0].routes = [announced];
+  assert.equal(core.assessOverview(input).score, null, "ASN 附属资料不能替代目标 IP 的路由起源");
+  input.families[0].routes = [{ ...good(), asns: ["AS64599", "AS64501"] }, { ...good("second"), asns: ["AS64501"] }];
+  assert.equal(core.assessRoutes(input.families).conflicts.length, 0);
+  input.families[0].routes[1].asns = ["AS64588"];
+  assert.equal(core.assessRoutes(input.families).conflicts.length, 2);
+});
+
+test("候选 SDP 只读取候选地址，不能把 raddr 当成公网候选", async () => {
+  const addresses = [
+    { candidate: "candidate:1 1 udp 123 host.local 1234 typ host raddr 8.8.8.8 rport 12" },
+    { candidate: "candidate:2 1 udp 123 2606:4700::1111 1234 typ host" },
+  ];
+  const record = await evidence.probeStunNode(evidence.STUN_NODES[0], { createPeerConnection: () => fakePeer({ addresses }) });
+  assert.deepEqual(record.observedIps, ["2606:4700::1111"]);
+});
+
+test("禁用持久存储时本页仍记住确认，异常或过远的时间戳不自动授权", () => {
+  const blocked = { get localStorage() { throw new Error("disabled"); }, get document() { throw new Error("disabled"); } };
+  const gate = core.createConfirmationPolicy({ scope: blocked });
+  assert.equal(gate.shouldPrompt(), true);
+  gate.remember();
+  assert.equal(gate.shouldPrompt(), false);
+  for (const value of ["NaN", "Infinity", String(Date.now() + 999999999)]) {
+    const scope = { localStorage: { getItem: () => value }, document: { cookie: "" } };
+    assert.equal(core.createConfirmationPolicy({ scope }).shouldPrompt(), true);
+  }
+});
+
+test("新版只保存明确确认的 12 小时许可，忽略旧弹窗展示时间戳", () => {
+  const values = new Map([["aisg-star-prompt-until", String(Date.now() + 43200000)]]);
+  const scope = { localStorage: { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) }, document: { cookie: "" }, location: { protocol: "https:" } };
+  let now = 1000;
+  const gate = core.createConfirmationPolicy({ scope, now: () => now });
+  assert.equal(gate.shouldPrompt(), true);
+  gate.remember();
+  assert.equal(gate.shouldPrompt(), false);
+  assert.equal(core.createConfirmationPolicy({ scope, now: () => now }).shouldPrompt(), false);
+  now += 43200001;
+  assert.equal(gate.shouldPrompt(), true);
 });
 
 test("STUN 超时保留部分证据，取消不留下连接", async () => {

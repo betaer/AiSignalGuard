@@ -137,14 +137,22 @@ async function assertStarAndCloseFlows() {
     const page = await closeFlow.context.newPage();
     await page.goto(`${baseUrl}/v2/`, { waitUntil: "domcontentloaded" });
     await page.locator("#star-support-dialog").waitFor({ state: "visible" });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.locator("#star-support-dialog").waitFor({ state: "visible" });
+    assert.equal(closeFlow.externalRequests.length, 0, "未确认就刷新仍须等待明确选择");
     await page.locator("#star-support-close").click();
     await page.waitForTimeout(250);
     assert.equal(closeFlow.externalRequests.length, 0, "关闭首次弹窗不应启动检测");
+    assert.equal(await page.locator("#audio-fingerprint-run").isDisabled(), true, "未确认前不能通过音频按钮绕过闸门");
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForTimeout(100);
-    assert.equal(await page.locator("#star-support-dialog").isVisible(), false, "关闭后 12 小时内刷新不应再次打扰");
+    assert.equal(await page.locator("#star-support-dialog").isVisible(), true, "关闭不代表同意检测，刷新后仍应等待确认");
+    assert.equal(closeFlow.externalRequests.length, 0, "关闭后的刷新不能绕过检测许可");
+    await page.locator("#star-support-continue").click();
     await page.waitForFunction(() => document.querySelector("#floating-recheck")?.disabled === true);
-    assert.ok(closeFlow.externalRequests.length > 0, "关闭后的刷新应直接开始检测");
+    assert.ok(closeFlow.externalRequests.length > 0, "明确点击先测试后才检测");
+    await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+    assert.equal(await page.locator("#star-support-dialog").isVisible(), false, "根页和 v2 共享明确确认的 12 小时许可");
   } finally {
     await closeFlow.context.close();
   }

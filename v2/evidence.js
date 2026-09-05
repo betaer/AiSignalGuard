@@ -804,7 +804,7 @@
     var parts = String(cidr).split("/");
     var network = normalizeIp(parts[0]);
     var prefixLength = Number(parts[1]);
-    if (!network || network.indexOf(":") >= 0 || prefixLength < 0 || prefixLength > 32) {
+    if (parts.length !== 2 || !/^\d+$/.test(parts[1]) || !network || network.indexOf(":") >= 0 || prefixLength < 0 || prefixLength > 32) {
       return false;
     }
     var mask = prefixLength === 0 ? 0 : (0xffffffff << (32 - prefixLength)) >>> 0;
@@ -827,7 +827,7 @@
     var parts = String(cidr).split("/");
     var network = normalizeIp(parts[0]);
     var prefixLength = Number(parts[1]);
-    if (!network || network.indexOf(":") < 0 || prefixLength < 0 || prefixLength > 128) {
+    if (parts.length !== 2 || !/^\d+$/.test(parts[1]) || !network || network.indexOf(":") < 0 || prefixLength < 0 || prefixLength > 128) {
       return false;
     }
     var ipBits = expandIpv6(ip)
@@ -884,7 +884,7 @@
     return null;
   }
 
-  function normalizeRoutePayload(source, payload, context) {
+  function parseRoutePayload(source, payload, context) {
     if (source.id === "iana") {
       var services = Array.isArray(payload && payload.services) ? payload.services : [];
       for (var serviceIndex = 0; serviceIndex < services.length; serviceIndex += 1) {
@@ -916,6 +916,7 @@
     }
     if (source.id === "ripe-network") {
       return routeRecord(source, {
+        asns: readPath(payload, ["data", "asns"]),
         asn: normalizeAsn(readPath(payload, ["data", "asns", 0])),
         prefix: readPath(payload, ["data", "prefix"]),
         detail: "RIPEstat RIS 路由可见结果",
@@ -929,6 +930,7 @@
           }, [])
         : [];
       return routeRecord(source, {
+        asns: flattened.filter(function (row) { return /^origin6?$/i.test(row && row.key); }).map(function (row) { return row.value; }),
         asn: normalizeAsn(findWhoisValue(flattened, /^origin$/i)),
         prefix: findWhoisValue(flattened, /^(?:route|route6)$/i),
         organization: findWhoisValue(flattened, /^(?:org-name|descr)$/i),
@@ -940,6 +942,7 @@
       var text = stringValue(answer);
       var columns = text ? text.replace(/^"|"$/g, "").split("|") : [];
       return routeRecord(source, {
+        asns: String(columns[0] || "").trim().split(/\s+/),
         asn: normalizeAsn(columns[0]),
         prefix: stringValue(columns[1]),
         countryCode: normalizeCountryCode(columns[2]),
@@ -976,11 +979,10 @@
           }).filter(Boolean)
         : [];
       return routeRecord(source, {
-        prefix: prefixValues.length
-          ? prefixValues[0] + (prefixValues.length > 1 ? " 等 " + prefixValues.length + " 条" : "")
-          : null,
+        asn: normalizeAsn(readPath(payload, ["data", "resource"])),
+        prefix: prefixValues.find(function (prefix) { return ipInCidr(context.targetIp, prefix); }) || null,
         detail: prefixValues.length
-          ? "RIPEstat 返回该 ASN 当前公告的 " + prefixValues.length + " 条前缀"
+          ? "RIPEstat 返回该 ASN 的 " + prefixValues.length + " 条前缀；仅展示包含目标 IP 的前缀"
           : "RIPEstat 未返回公告前缀",
       });
     }
@@ -993,6 +995,7 @@
       });
       if (csvValues.length >= 4) {
         return routeRecord(source, {
+          observedIp: normalizeIp(csvValues[0]),
           asn: normalizeAsn(csvValues[1]),
           prefix: stringValue(csvValues[2]),
           organization: stringValue(csvValues.slice(3).join(", ")),
@@ -1018,6 +1021,47 @@
       });
     }
     return routeRecord(source, {});
+  }
+
+  function ipInRange(ip, start, end) {
+    var values = [ip, start, end].map(normalizeIp);
+    if (values.some(function (value) { return !value || (value.includes(":")) !== values[0].includes(":"); })) return false;
+    var ordered = values.map(function (value) { return value.includes(":") ? expandIpv6(value).join("") : value.split(".").map(function (part) { return part.padStart(3, "0"); }).join(""); });
+    return ordered[1] <= ordered[0] && ordered[0] <= ordered[2];
+  }
+
+  function normalizeRoutePayload(source, payload, context) {
+    var record = parseRoutePayload(source, payload, context);
+    record.targetIp = context.targetIp;
+    record.queryAsn = context.asn || null;
+    record.routeScope = source.needsAsn ? "asn" : ["iana", "rir-rdap"].includes(source.id) ? "registry" : "ip";
+    var origins = Array.isArray(record.asns) ? record.asns : [record.asn];
+    record.asns = Array.from(new Set(origins.map(normalizeAsn).filter(Boolean)));
+    record.asn = record.asns[0] || null;
+    var mismatch = null;
+    var missing = null;
+    var echoedIp = record.observedIp || normalizeIp(payload && payload.ip);
+    if (echoedIp && echoedIp !== normalizeIp(context.targetIp)) mismatch = "回显 IP 与查询目标不同";
+    if (source.needsAsn) {
+      if (!record.asns.length) missing = "响应未提供可核对的查询 ASN";
+      else if (!record.asns.includes(context.asn)) mismatch = "响应 ASN 与查询 ASN 不同";
+      if (source.id === "ripe-announced" && !record.prefix) missing = "该 ASN 公告列表未提供覆盖目标 IP 的前缀";
+    }
+    if (source.id === "rir-rdap") {
+      if (!payload || !payload.startAddress || !payload.endAddress) missing = "RDAP 未提供可核对的地址范围";
+      else if (!ipInRange(context.targetIp, payload.startAddress, payload.endAddress)) mismatch = "RDAP 地址范围未包含查询 IP";
+    } else if (record.prefix && !ipInCidr(context.targetIp, record.prefix)) {
+      mismatch = "路由前缀无效、地址族不同或未包含查询 IP";
+    } else if (record.routeScope === "ip" && record.asns.length && !record.prefix) {
+      missing = "缺少覆盖查询 IP 的路由前缀，无法确认起源归属";
+    }
+    if (mismatch || missing) {
+      record.voteEligible = false;
+      record.state = mismatch ? "path_mismatch" : "partial";
+      record.status = mismatch ? "查询对象不匹配" : "证据不足";
+      record.detail = [mismatch || missing, record.detail].filter(Boolean).join("；");
+    }
+    return record;
   }
 
   async function runRouteEvidence(options) {
@@ -1094,12 +1138,9 @@
     if (direct) return direct;
     var text = stringValue(candidate && candidate.candidate);
     if (!text) return null;
-    var parts = text.split(/\s+/);
-    for (var index = 0; index < parts.length; index += 1) {
-      var value = normalizeIp(parts[index]);
-      if (value) return value;
-    }
-    return null;
+    // ICE grammar fixes the candidate address at field 5; never use raddr as the candidate.
+    var parts = text.trim().split(/\s+/);
+    return /^(?:a=)?candidate:/.test(parts[0]) ? normalizeIp(parts[4]) : null;
   }
 
   function probeStunNode(node, options) {
@@ -1117,6 +1158,8 @@
       var timer;
       var signal = config.signal;
       var candidates = new Set();
+      var srflxIps = new Set();
+      var hostIps = new Set();
 
       function finish(fields) {
         if (settled) return;
@@ -1141,13 +1184,15 @@
       function completeGathering(complete) {
         var ips = Array.from(candidates);
         finish({
-          state: ips.length ? complete ? "success" : "partial" : complete ? "no_candidates" : "timeout",
-          status: ips.length ? complete ? "已响应" : "候选收集未完成" : complete ? "无公网候选" : "超时",
+          state: ips.length ? complete && srflxIps.size ? "success" : "partial" : complete ? "no_candidates" : "timeout",
+          status: ips.length ? !complete ? "候选收集未完成" : srflxIps.size ? "STUN 已响应" : "仅有公网 host 候选" : complete ? "无公网候选" : "超时",
           observedIp: ips[0] || null,
           observedIps: ips,
+          srflxIps: Array.from(srflxIps),
+          hostIps: Array.from(hostIps),
           gatheringComplete: complete,
           voteEligible: ips.length > 0,
-          detail: ips.length ? "该节点收集到 " + ips.length + " 个不重复公网候选" + (complete ? "，收集已结束" : "；其余候选可能尚未返回") : "该节点未返回可比较的公网候选",
+          detail: "服务器反射候选 " + srflxIps.size + " 个，公网 host 候选 " + hostIps.size + " 个；" + (complete ? "收集已结束" : "收集未完成") + "。host 来自本地接口，不代表 STUN 服务器响应；局域网、链路本地、mDNS 与中继候选不计公网出口。",
         });
       }
 
@@ -1163,10 +1208,11 @@
           if (!candidate) return completeGathering(true);
           var type = candidate.type ||
             ((candidate.candidate || "").match(/\btyp\s+(\w+)/) || [])[1];
-          if (type !== "srflx") return;
+          if (type !== "srflx" && type !== "host") return;
           var ip = candidateAddress(candidate);
-          if (!ip) return;
+          if (!globalThis.AISGV2Core.isPublicCandidate(ip)) return;
           candidates.add(ip);
+          (type === "host" ? hostIps : srflxIps).add(ip);
         });
         peer.addEventListener("icegatheringstatechange", function () {
           if (peer.iceGatheringState === "complete") completeGathering(true);
@@ -1236,6 +1282,7 @@
     normalizeAsn: normalizeAsn,
     normalizeCountryCode: normalizeCountryCode,
     normalizeIntelPayload: normalizeIntelPayload,
+    normalizeRoutePayload: normalizeRoutePayload,
     createPendingRecord: createPendingRecord,
     createPendingRecords: createPendingRecords,
     classifyFailure: classifyFailure,

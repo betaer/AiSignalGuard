@@ -142,8 +142,84 @@
     return uniqueIps((record.observedIps || []).concat(record.observedIp || []));
   }
 
+  // Address scope, not a claim that an address is routed or reachable.
+  function isPublicCandidate(value) {
+    var ip = normalizeIp(value);
+    if (!ip) return false;
+    if (ip.startsWith("::ffff:")) {
+      var words = ip.slice(7).split(":").map(function (word) { return parseInt(word, 16); });
+      return isPublicCandidate([words[0] >> 8, words[0] & 255, words[1] >> 8, words[1] & 255].join("."));
+    }
+    if (ip.includes(":")) return /^[23][0-9a-f]{3}:/.test(ip);
+    var parts = ip.split(".").map(Number), a = parts[0], b = parts[1];
+    return !(a === 0 || a === 10 || a === 127 || a >= 224 ||
+      (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) ||
+      (a === 198 && (b === 18 || b === 19)));
+  }
+
+  function compareIntel(record, baseline) {
+    if (!record.voteEligible) return { comparable: 0, conflicts: [] };
+    return root.AISGIpSemantics.compareComparableFields(record, baseline);
+  }
+
+  function assessDns(dns, families) {
+    var records = dns.records.filter(function (record) { return normalizeIp(record.observedIp); });
+    var countries = families.map(function (family) { return family.country.value; }).filter(Boolean);
+    var matched = records.filter(function (record) { return record.countryCode && countries.includes(record.countryCode); });
+    var conflicts = records.filter(function (record) { return record.countryCode && countries.length && !countries.includes(record.countryCode); });
+    var missing = dns.state !== "success" || !records.length || !families.length || countries.length < families.length || records.some(function (record) { return !record.countryCode; });
+    return { records: records, matched: matched, conflicts: conflicts, mismatch: conflicts.length > 0, missing: missing, tone: conflicts.length ? "warn" : missing ? "neutral" : "good", label: conflicts.length ? "地区分歧" : missing ? "证据不足" : "已核对" };
+  }
+
+  function assessRoutes(families) {
+    var conflicts = [], invalid = [], multiOrigin = [], missingFamilies = [];
+    families.forEach(function (family) {
+      var baseline = (family.asn || consensus(family.intel, "asn")).value;
+      var origins = family.routes.filter(function (record) { return record.voteEligible && record.routeScope !== "asn" && (record.asns || [record.asn]).filter(Boolean).length; });
+      if (!baseline || !origins.length) missingFamilies.push(family.family);
+      var common = null;
+      origins.forEach(function (record) {
+        var asns = record.asns || [record.asn];
+        if (asns.length > 1) multiOrigin.push(record);
+        if (baseline && !asns.includes(baseline)) conflicts.push(record);
+        common = common === null ? asns : common.filter(function (asn) { return asns.includes(asn); });
+      });
+      if (origins.length > 1 && !common.length) origins.forEach(function (record) { if (!conflicts.includes(record)) conflicts.push(record); });
+      family.routes.forEach(function (record) { if (record.state === "path_mismatch") invalid.push(record); });
+    });
+    return { conflicts: conflicts, invalid: invalid, multiOrigin: multiOrigin, missingFamilies: missingFamilies, needsReview: Boolean(conflicts.length || invalid.length || multiOrigin.length) };
+  }
+
+  function createConfirmationPolicy(options) {
+    var config = options || {}, scope = config.scope || root, now = config.now || Date.now;
+    var key = "aisg-v2-detection-confirmed-until", ttl = 12 * 60 * 60 * 1000, memoryUntil = 0;
+    function valid(value) {
+      var until = Number(value), current = now();
+      return Number.isFinite(until) && until > current && until <= current + ttl ? until : 0;
+    }
+    return Object.freeze({
+      shouldPrompt: function () {
+        var until = valid(memoryUntil);
+        try { until = Math.max(until, valid(scope.localStorage.getItem(key))); } catch (error) {}
+        try {
+          var cookie = scope.document.cookie.split(/;\s*/).find(function (entry) { return entry.startsWith(key + "="); });
+          if (cookie) until = Math.max(until, valid(cookie.slice(key.length + 1)));
+        } catch (error) {}
+        return until === 0;
+      },
+      remember: function () {
+        memoryUntil = now() + ttl;
+        try { scope.localStorage.setItem(key, String(memoryUntil)); } catch (error) {}
+        try { scope.document.cookie = key + "=" + memoryUntil + "; Max-Age=43200; Path=/; SameSite=Lax" + (scope.location.protocol === "https:" ? "; Secure" : ""); } catch (error) {}
+        return memoryUntil;
+      },
+    });
+  }
+
   function assessWebrtc(records, exitIps) {
     var successes = records.filter(function (record) { return ["success", "partial"].includes(record.state) && candidateIps(record).length; });
+    var stunResponses = successes.filter(function (record) { return !record.srflxIps || record.srflxIps.length; });
     var byFamily = { ipv4: [], ipv6: [] };
     successes.forEach(function (record) {
       candidateIps(record).forEach(function (ip) {
@@ -162,13 +238,13 @@
     var httpDisagreements = ["ipv4", "ipv6"].filter(function (family) { return uniqueIps(exitIps[family]).length > 1; });
     var incomplete = successes.filter(function (record) { return record.gatheringComplete === false; });
     var missingFamilies = ["ipv4", "ipv6"].filter(function (family) { return uniqueIps(exitIps[family]).length && !byFamily[family].length; });
-    var needsReview = unverified.length || httpDisagreements.length || incomplete.length || missingFamilies.length;
+    var needsReview = unverified.length || httpDisagreements.length || incomplete.length || missingFamilies.length || !stunResponses.length;
     return {
-      successes: successes, ips: uniqueIps(successes.flatMap(candidateIps)), byFamily: byFamily,
+      successes: successes, stunResponses: stunResponses, hostIps: uniqueIps(successes.flatMap(function (record) { return record.hostIps || []; })), ips: uniqueIps(successes.flatMap(candidateIps)), byFamily: byFamily,
       matches: matches, conflicts: conflicts, unverified: unverified, httpDisagreements: httpDisagreements,
       incomplete: incomplete, missingFamilies: missingFamilies,
       tone: !successes.length ? "warn" : conflicts.length ? "bad" : needsReview ? "warn" : "good",
-      label: !successes.length ? "证据不足" : conflicts.length ? "同地址族候选分歧" : httpDisagreements.length ? "HTTP 出口存在多地址" : unverified.length ? "存在待核对地址族" : missingFamilies.length ? "部分地址族缺少候选" : incomplete.length ? "候选收集未完整结束" : "已收集候选与出口一致",
+      label: !successes.length ? "证据不足" : conflicts.length ? "同地址族候选分歧" : httpDisagreements.length ? "HTTP 出口存在多地址" : unverified.length ? "存在待核对地址族" : missingFamilies.length ? "部分地址族缺少候选" : incomplete.length ? "候选收集未完整结束" : !stunResponses.length ? "仅有公网 host 候选，STUN 响应未确认" : "已收集候选与出口一致",
     };
   }
 
@@ -180,10 +256,11 @@
     var routes = families.flatMap(function (family) { return family.routes; });
     var webrtc = input.webrtc;
     var dns = input.dns;
-    var dnsRecords = dns.records.filter(function (record) { return normalizeIp(record.observedIp); });
-    var countries = families.map(function (family) { return family.country.value; }).filter(Boolean);
-    var dnsMismatch = dnsRecords.some(function (record) { return record.countryCode && countries.length && !countries.includes(record.countryCode); });
-    var dnsMissing = dns.state !== "success" || !dnsRecords.length || dnsRecords.some(function (record) { return !record.countryCode; });
+    var dnsAssessment = assessDns(dns, families);
+    var dnsRecords = dnsAssessment.records;
+    var dnsMismatch = dnsAssessment.mismatch;
+    var dnsMissing = dnsAssessment.missing;
+    var routeAssessment = assessRoutes(families);
     var riskRecords = intel.filter(function (record) { return record.voteEligible && [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return value === true; }); });
     var riskKnown = intel.some(function (record) { return record.voteEligible && [record.proxy, record.vpn, record.tor, record.hosting].some(function (value) { return typeof value === "boolean"; }); });
     var ai = input.aiServices || [];
@@ -196,11 +273,14 @@
     });
     var aiMissing = ai.length !== 3 || ai.some(function (record) { return !["path_available", "reachable"].includes(record.state); });
     var aiCoverage = ai.reduce(function (sum, record) { return sum + (["path_available", "reachable", "restricted", "http_error"].includes(record.state) ? 1 : record.state === "unverified" ? 0.5 : 0); }, 0) / 3;
-    var coverage = Math.round((families.length ? 10 : 0) + 25 * usable(intel) / slots + 20 * usable(routes) / slots + 20 * webrtc.successes.filter(function (record) { return record.gatheringComplete !== false; }).length / 20 + (dnsRecords.length ? dnsMissing ? 7.5 : 15 : 0) + 10 * aiCoverage);
-    var scoreAvailable = families.length > 0 && families.every(function (family) { return family.country.strong && usable(family.intel) >= 3 && usable(family.routes) >= 1; }) && webrtc.successes.length > 0 && !webrtc.missingFamilies.length && !webrtc.unverified.length && !webrtc.incomplete.length && !dnsMissing && coverage >= 60;
+    var coverage = Math.round((families.length ? 10 : 0) + 25 * usable(intel) / slots + 20 * usable(routes) / slots + 20 * webrtc.stunResponses.filter(function (record) { return record.gatheringComplete !== false; }).length / 20 + (dnsRecords.length ? dnsMissing ? 7.5 : 15 : 0) + 10 * aiCoverage);
+    var scoreAvailable = families.length > 0 && families.every(function (family) { return family.country.strong && usable(family.intel) >= 3 && usable(family.routes) >= 1; }) && !routeAssessment.missingFamilies.length && webrtc.stunResponses.length > 0 && !webrtc.missingFamilies.length && !webrtc.unverified.length && !webrtc.incomplete.length && !dnsMissing && coverage >= 60;
     var reasons = [];
     if (webrtc.conflicts.length) reasons.push("WebRTC 候选与同族 HTTP 出口不同");
     if (dnsMismatch) reasons.push("DNS 解析器地区与已知出口不同");
+    if (routeAssessment.conflicts.length) reasons.push("路由起源 ASN 与 IP 情报或其他路由来源不同");
+    if (routeAssessment.invalid.length) reasons.push("路由响应与查询 IP、前缀或 ASN 不匹配");
+    if (routeAssessment.multiOrigin.length) reasons.push("路由返回多个起源 ASN，需核对多起源公告");
     if (riskRecords.length) reasons.push("来源返回明确代理或机房标签");
     if (input.fieldConflicts) reasons.push("IP 情报来源存在字段分歧");
     if (input.timezoneMismatch) reasons.push("时区与出口地区不同");
@@ -210,7 +290,7 @@
     if (aiMismatch) reasons.push("AI 服务返回受限状态或不同路径");
     var missing = !scoreAvailable || dnsMissing || !riskKnown || aiMissing;
     var penalties = (webrtc.conflicts.length ? 25 : 0) + (dnsMismatch ? 10 : 0) + (riskRecords.length ? 10 : 0) + (input.fieldConflicts ? 8 : 0) + (input.timezoneMismatch ? 5 : 0) + (input.languageMismatch ? 5 : 0) + (input.crossCountryMismatch ? 12 : 0) + (input.crossAsnMismatch ? 5 : 0) + (webrtc.httpDisagreements.length ? 8 : 0) + (aiMismatch ? 10 : 0);
-    return { coverage: Math.min(100, coverage), score: scoreAvailable ? Math.max(0, coverage - penalties) : null, reasons: reasons, dnsMissing: dnsMissing, dnsMismatch: dnsMismatch, riskRecords: riskRecords, aiMissing: aiMissing, needsReview: reasons.length > 0 || webrtc.unverified.length > 0, evidenceMissing: missing };
+    return { coverage: Math.min(100, coverage), score: scoreAvailable ? Math.max(0, coverage - penalties - (routeAssessment.needsReview ? 10 : 0)) : null, reasons: reasons, routes: routeAssessment, dnsMissing: dnsMissing, dnsMismatch: dnsMismatch, riskRecords: riskRecords, aiMissing: aiMissing, needsReview: reasons.length > 0 || webrtc.unverified.length > 0, evidenceMissing: missing };
   }
 
   var AI_SERVICES = Object.freeze([
@@ -251,5 +331,5 @@
     }
   }
 
-  root.AISGV2Core = Object.freeze({ normalizeIp: normalizeIp, ipFamily: ipFamily, uniqueIps: uniqueIps, maskSensitiveText: maskSensitiveText, maskDigest: maskDigest, request: request, consensus: consensus, timezoneCountries: timezoneCountries, languageRegion: languageRegion, candidateIps: candidateIps, assessWebrtc: assessWebrtc, assessOverview: assessOverview, AI_SERVICES: AI_SERVICES, probeAiService: probeAiService });
+  root.AISGV2Core = Object.freeze({ normalizeIp: normalizeIp, ipFamily: ipFamily, uniqueIps: uniqueIps, maskSensitiveText: maskSensitiveText, maskDigest: maskDigest, request: request, consensus: consensus, timezoneCountries: timezoneCountries, languageRegion: languageRegion, candidateIps: candidateIps, isPublicCandidate: isPublicCandidate, compareIntel: compareIntel, assessDns: assessDns, assessRoutes: assessRoutes, createConfirmationPolicy: createConfirmationPolicy, assessWebrtc: assessWebrtc, assessOverview: assessOverview, AI_SERVICES: AI_SERVICES, probeAiService: probeAiService });
 })(globalThis);

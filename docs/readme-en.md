@@ -29,7 +29,7 @@ AI Signal Guard does not determine a visitor's real nationality, occupation, or 
 |---|---|---|
 | Exit IP | IPv4/IPv6, country and region, ASN, organization, network type, source conflicts | Shows what different address families and endpoints observe |
 | DNS leak | Random-subdomain probes, resolver addresses and country labels | Cross-checks resolver and exit regions; failures remain unknown |
-| WebRTC | Two pools collect all server-reflexive candidates and compare IPv4/IPv6 separately | Finds same-family HTTP differences and identifies incomplete gathering |
+| WebRTC | Two pools collect server-reflexive and public host candidates, comparing IPv4/IPv6 separately | Finds same-family HTTP differences without counting host candidates as STUN responses |
 | Route and registry | IANA, RIR, RIS, WHOIS, Cymru, PeeringDB, and related evidence | Cross-checks ASN, prefix, and registered organization |
 | Environment consistency | Language, IANA timezone territories, Canvas/font API availability, exposed device information | Cross-checks regional signals without forcing unknown or shared zones into one country |
 | Browser fingerprint surface | Canvas, local summaries, screen, platform, logical processors, memory estimate, WebAudio | Shows what the current browser exposes or can calculate |
@@ -50,6 +50,10 @@ The current v2 build validates these registry sizes and unique entries at startu
 | Supplemental STUN pool | 10 independent nodes | Does not reuse primary-pool candidates and preserves its own terminal state |
 
 The two WebRTC/STUN pools produce up to 20 node attempts in total, but the product reports them as “10 primary + 10 supplemental” because the pools have different diagnostic roles.
+
+Public host candidates can expose native IPv6 interfaces and participate in same-family HTTP comparisons. Repeated host addresses across connections are not independent STUN responses. LAN, link-local, mDNS, and relay candidates are excluded from public-exit comparisons. Address-scope classification does not establish routability or reachability.
+
+Route responses are checked against the target IP, prefix, RDAP range, and queried ASN. Mismatched responses remain visible but do not count as usable evidence. ASN-scoped metadata cannot replace IP-origin evidence; origin conflicts and multiple-origin announcements feed the overview and reports.
 
 ### Only eligible evidence votes
 
@@ -72,7 +76,8 @@ IPv6 representations are canonicalized before comparison. Organization votes nor
 ### Network reference score and coverage
 
 - Overview weights: HTTP exits 10%, IP intelligence 25%, routing 20%, completed STUN gathering 20%, DNS 15%, and AI probes 10%. An opaque AI response earns half an observation, not a usable-service result.
-- The reference score subtracts observed DNS-region differences, explicit proxy/hosting labels, WebRTC differences, and environment conflicts from coverage. It only prioritizes follow-up checks.
+- The reference score subtracts observed DNS-region differences, explicit proxy/hosting labels, WebRTC differences, routing anomalies, and environment conflicts from coverage. It only prioritizes follow-up checks.
+- DNS uses the same known dual-stack exit countries throughout the page. Missing resolver geography or exit consensus remains unknown. Failed requests, self-echo path differences, and actual field conflicts are distinct; insufficient votes do not become geographic conflicts.
 - Without an HTTP baseline, reliable country consensus, necessary routing, complete same-family STUN comparison, or DNS evidence, the score is “—”; coverage below 60% also suppresses scoring. Unverifiable AI results or missing risk fields prevent a stable-state label.
 
 The network reference score is based on signals observable in the current run. It does not represent platform-account status, ban probability, or an internal platform risk-control decision.
@@ -141,8 +146,10 @@ The user chooses where to paste the report. The page does not automatically open
 ## Quick start
 
 1. Open [https://betaer.github.io/AiSignalGuard/](https://betaer.github.io/AiSignalGuard/).
-2. On the first visit, choose to Star the project or select “test first” to continue. Refreshes and reruns within 12 hours do not repeat the prompt.
+2. On the first visit, choose Star (opening the repository in a new window) or “test first” to start detection. Only that explicit choice is remembered for 12 hours, shared by the root and `/v2/`. Closing or refreshing an unconfirmed prompt does not authorize detection. Old prompt-display timestamps are not treated as consent.
 3. Wait for IP, DNS, WebRTC, route, AI-service path, and browser-environment evidence to complete in stages.
+
+An audio-only rerun is local offline computation and creates no network requests. A subsequent full rerun awaits the active audio task; additional audio tasks cannot overlap a full detection.
 4. Read the network reference score, coverage, and anomaly notices before expanding source-level evidence.
 5. Enable privacy masking if desired, then copy the text report and paste it manually into a destination you trust.
 

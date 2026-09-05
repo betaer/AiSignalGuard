@@ -926,7 +926,7 @@
             <div class="fingerprint-primary-body">
               <div class="audio-fingerprint-action">
                 <div class="audio-fingerprint-action-copy"><strong>确认开始检测后自动运行，也可以随时重新运行</strong><span>使用 OfflineAudioContext 连续离线渲染 3 轮；不会连接真实音频设备，也不会申请麦克风权限。</span></div>
-                <button class="audio-fingerprint-run" id="audio-fingerprint-run" type="button">开始音频指纹检测</button>
+                <button class="audio-fingerprint-run" id="audio-fingerprint-run" type="button" disabled>开始音频指纹检测</button>
               </div>
               <span class="visually-hidden" id="audio-fingerprint-announcement" role="status" aria-live="polite" aria-atomic="true">WebAudio 音频指纹尚未开始</span>
               <div class="audio-fingerprint-facts" id="audio-fingerprint-facts" aria-busy="false" aria-label="WebAudio 音频指纹检测结果">
@@ -1083,11 +1083,10 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="starPromptPolicy.js"></script>
     <script src="signalSemantics.js?v=1.5.0"></script>
-    <script src="v2/timezones.js?v=20260905-review"></script>
-    <script src="v2/core.js?v=20260905-review"></script>
-    <script src="v2/evidence.js?v=20260905-review"></script>
-    <script src="v2/app.js?v=20260905-review"></script>
+    <script src="v2/timezones.js?v=20260905-review2"></script>
+    <script src="v2/core.js?v=20260905-review2"></script>
+    <script src="v2/evidence.js?v=20260905-review2"></script>
+    <script src="v2/app.js?v=20260905-review2"></script>
   </body>
 </html>
